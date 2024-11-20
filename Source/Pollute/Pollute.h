@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleInterface.h"
-#include "Pollute/P_Utilities/Public/Pollute_Utilities.h"
+#include "Pollute/Public/P_Utilities/Pollute_Utilities.h"
 
 class FPolluteModule : public IModuleInterface
 {
