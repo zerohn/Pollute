@@ -2,7 +2,6 @@
 
 ANSK_ItemSpawnPoint::ANSK_ItemSpawnPoint()
 {
-	PrimaryActorTick.bCanEverTick = true;
 
 	// 스폰 포인트 기본 메시 생성 및 부모로 등록
 	// 디폴트 서브오브젝트 이름 : SpawnPointMesh
@@ -18,14 +17,4 @@ ANSK_ItemSpawnPoint::ANSK_ItemSpawnPoint()
 void ANSK_ItemSpawnPoint::BeginPlay()
 {
 	Super::BeginPlay();
-}
-
-void ANSK_ItemSpawnPoint::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-void ANSK_ItemSpawnPoint::ItemSpawnPoint()
-{
-
 }

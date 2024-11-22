@@ -2,6 +2,8 @@
 // 별도의 Enum을 정의하기 위한 C++ 파일을 생성할 때 C++ 부모 클래스 선택을 None으로 하는 것이 적합하다.
 // 코드의 간결성과 유지보수성을 높일 수 있다.
 
+// 구조체로 데이터 테이블을 활용하여 현재 빌드 XXXXXXXXXXXXXXX
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -24,5 +26,20 @@ enum class EItemEnumType : uint8
 };
 
 // 무기 아이템 : 마법 단검, 마법총
+UENUM(BlueprintType)
+enum class EWeaponEnumType : uint8
+{
+	None            UMETA(DisplayName = "None"),		// 기본값으로 사용
+	MagicDagger     UMETA(DisplayName = "마법 단검"),		// 마법 단검
+	MagicGun        UMETA(DisplayName = "마법총")		// 마법총
+};
 
 // 탈출 아이템 : 사다리, 낙하산, 저주 아이템(제단 아이템 랜덤 부여)
+UENUM(BlueprintType)
+enum class EEscapeEnumType : uint8
+{
+	None            UMETA(DisplayName = "None"),		// 기본값으로 사용
+	Ladder          UMETA(DisplayName = "사다리"),		// 사다리
+	Parachute       UMETA(DisplayName = "낙하산"),		// 낙하산
+	CurseItem       UMETA(DisplayName = "저주 아이템")	// 제단 아이템 랜덤 부여
+};
