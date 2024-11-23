@@ -4,7 +4,6 @@
 #include "GameFramework/Actor.h"
 #include "Engine/StaticMesh.h"
 #include "Components/StaticMeshComponent.h"
-#include "NSK_ItemEnumType.h"
 
 #include "NSK_ItemSpawnPoint.generated.h"
 
