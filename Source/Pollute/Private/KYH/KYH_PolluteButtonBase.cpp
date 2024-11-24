@@ -41,6 +41,7 @@ void UKYH_PolluteButtonBase::RefreshButtonText()
 			}
 		}
 	}
+	UpdateButtonText(ButtonText);
 }
 
 void UKYH_PolluteButtonBase::OnInputMethodChanged(ECommonInputType CurrentInputType)
