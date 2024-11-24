@@ -18,3 +18,11 @@ void ANSK_ItemSpawnPoint::BeginPlay()
 {
 	Super::BeginPlay();
 }
+
+void ANSK_ItemSpawnPoint::HideSpawnPointMesh()
+{
+	if (SpawnPointMesh)
+	{
+		SpawnPointMesh->DestroyComponent();
+	}
+}

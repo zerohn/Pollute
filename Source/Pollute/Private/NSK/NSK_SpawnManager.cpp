@@ -15,8 +15,6 @@ void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 액터 검색은
 {
 	Super::BeginPlay();
 
-    UE_LOG(LogTemp, Warning, TEXT("BeginPlay 호출됨"));
-
     // 맵에 있는 모든 ItemSpawnPoint 찾기
     // 템플릿 타입으로 지정한 클래스(예: MyActorClass)에 해당하는 액터들만 필터링하여 순회합니다.
     for (TActorIterator<ANSK_ItemSpawnPoint> It(GetWorld()); It; ++It)
@@ -64,6 +62,12 @@ void ANSK_SpawnManager::SpawnRandomItems()
                 SpawnMesh->SetStaticMesh(RandomRow->ItemMesh); // 메시를 데이터 테이블에서 설정된 메시로 지정
                 SpawnMesh->AttachToComponent(SpawnPoint->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform); // 메시를 스폰 포인트에 부착
                 SpawnMesh->RegisterComponent(); // 메시 컴포넌트 엔진에 등록
+
+                // 스폰 포인트 메시 숨기기
+                SpawnPoint->HideSpawnPointMesh();
+
+                // 스폰된 아이템의 이름 로그 출력
+                UE_LOG(LogTemp, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *RandomRow->ItemName.ToString(), *SpawnPoint->GetName());
             }
         }
     }
