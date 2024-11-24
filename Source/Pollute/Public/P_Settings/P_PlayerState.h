@@ -6,9 +6,6 @@
 #include "GameFramework/PlayerState.h"
 #include "P_PlayerState.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class POLLUTE_API AP_PlayerState : public APlayerState
 {
@@ -16,8 +13,10 @@ class POLLUTE_API AP_PlayerState : public APlayerState
 public:
 	AP_PlayerState(const FObjectInitializer& ObjectInitializer);
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
-	
+protected:
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+
+
 	
 };
