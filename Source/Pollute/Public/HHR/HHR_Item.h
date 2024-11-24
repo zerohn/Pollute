@@ -52,13 +52,17 @@ public:
 
 protected:
 	// 충돌 처리 함수
-	// TODO : Item pick up
 	UFUNCTION()
 	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	// TODO : Item Drop Down
 	UFUNCTION()
 	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+
+// 임시 Player HUD
+// TODO : UI Player Controller 혹은 다른 UI 관리자로부터 가져와서 변경
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	class UUserWidget* TestPlayerHUD;
 
 };

@@ -78,3 +78,5 @@ DerivedDataCache/*
 
 # Assets
 Content/StarterContent/*
+Content/FirstPerson/*
+Content/FirstPersonArms/*

@@ -40,5 +40,15 @@ public:
 	// Item ID로 검색 (안전 검색, 걍 검색)
 	FItemData& GetItemDataByID(int32 ItemID);
 
+
+// 임시 Player HUD
+// TODO : 수정
+public:
+	UPROPERTY()
+	class UHHR_TestPlayerHUD* TestPlayerHUDIns;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	TSubclassOf<class UHHR_TestPlayerHUD> PlayerHUDClass;
+
 	
 };

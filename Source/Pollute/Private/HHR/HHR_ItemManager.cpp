@@ -5,6 +5,8 @@
 
 #include "Engine/World.h"
 #include "HHR/HHR_Item.h"
+#include "Blueprint/UserWidget.h"
+#include "HHR/HHR_TestPlayerHUD.h"
 
 AHHR_ItemManager::AHHR_ItemManager()
 {
@@ -23,15 +25,23 @@ void AHHR_ItemManager::BeginPlay()
 		if(Pair.Value.ItemType == EItemType::CombineItem)
 		{
 			AHHR_Item* Item = GetWorld()->SpawnActor<AHHR_Item>(AHHR_Item::StaticClass(), FVector(0, loc, 50), GetActorRotation());
-			loc += 70;
+			loc += 130;
 
 			if(Item)
 			{
 				// Item Data Setting
 				Item->SetItemData(Pair.Value);
+				// TODO : 수정
+				TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
+				
+				TestPlayerHUDIns->AddToViewport();
+				
+				Item->TestPlayerHUD = TestPlayerHUDIns;
 			}
 		}
 	}
+
+	
 }
 
 void AHHR_ItemManager::LoadItemData(UDataTable* ItemDataTable)
