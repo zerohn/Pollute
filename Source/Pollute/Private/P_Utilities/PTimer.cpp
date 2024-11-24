@@ -14,68 +14,38 @@ PTimer::PTimer()
 PTimer::~PTimer()
 {
 }
-
-bool PTimer::StartTimerWithTryLock(const FString& Tag)
+bool PTimer::StartTimerWithLock(const FString& Tag)
 {
-	if(CriticalSection.TryLock())
+	FScopeLock Lock(&CriticalSection);
+	if (!TimerMap.Contains(Tag))
 	{
-		if(!TimerMap.Contains(Tag))
-		{
-			TimerMap.Add(Tag, FPlatformTime::Seconds());
-			CriticalSection.Unlock();
-			return true;
-		}
-		else
-		{
-			UE_LOG(PolluteLog, Log, TEXT("Already Contains TimerMap this Tag"));
-			return false;
-		}
+		TimerMap.Add(Tag, FPlatformTime::Seconds());
+		return true;
 	}
-	else
-	{
-		UE_LOG(PolluteLog, Log, TEXT("StartTimerWithTryLock: Already Contains TimerMap this Tag"));
-		return false;
-	}
+	UE_LOG(PolluteLog, Log, TEXT("Already Contains TimerMap this Tag"));
+	return false;
 }
 
-double PTimer::StopTimerWithTryLock(const FString& Tag)
+TOptional<double> PTimer::StopTimerWithLock(const FString& Tag)
 {
-	if(CriticalSection.TryLock())
+	FScopeLock Lock(&CriticalSection);
+	if (TimerMap.Contains(Tag))
 	{
-		if(TimerMap.Contains(Tag))
-		{
-			double StartTime = TimerMap[Tag];
-			TimerMap.Remove(Tag);
-			CriticalSection.Unlock();
-			return FPlatformTime::Seconds() - StartTime;
-		}
-		else
-		{
-			UE_LOG(PolluteLog, Log, TEXT("EndTimerWithTryLock: No timer found with tag '%s'"), *Tag);			
-			return -1.f;
-		}
+		double StartTime = TimerMap[Tag];
+		TimerMap.Remove(Tag);
+		return FPlatformTime::Seconds() - StartTime;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("EndTimerWithTryLock: Unable to lock TimerMap for tag '%s'"), *Tag);
-		return -1.f;
-	}
+	UE_LOG(PolluteLog, Log, TEXT("No timer found with tag '%s'"), *Tag);
+	return TOptional<double>();
 }
 
 double PTimer::GetElapsedTime(const FString& Tag)
 {
-	FScopeLock TimerLock(&CriticalSection);
-
-	if(TimerMap.Contains(Tag))
+	FScopeLock Lock(&CriticalSection);
+	if (TimerMap.Contains(Tag))
 	{
-		double StartTime = TimerMap[Tag];
-		return FPlatformTime::Seconds() - StartTime;
+		return FPlatformTime::Seconds() - TimerMap[Tag];
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("GetElapsedTime: No timer found with tag '%s'."), *Tag);
-		return -1.f;
-	}
-	
-	return 0;
+	UE_LOG(LogTemp, Warning, TEXT("GetElapsedTime: No timer found with tag '%s'."), *Tag);
+	return -1.0;
 }
