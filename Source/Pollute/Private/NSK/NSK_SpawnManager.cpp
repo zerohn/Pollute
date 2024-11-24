@@ -24,6 +24,9 @@ void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 액터 검색은
 
     // 랜덤 아이템 스폰
     SpawnRandomItems();
+
+    // 제단 아이템 선택
+    AssignAltarItems();
 }
 
 // 아이템을 랜덤하게 생성하는 함수
@@ -35,7 +38,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
     TArray<FSpawnItemData*> AllRows; // 데이터 테이블의 모든 행을 저장할 배열
     SpawnItemDataTable->GetAllRows(ContextString, AllRows); // 데이터 테이블의 모든 행을 AllRows 배열에 채움
 
-    // 스폰 포인트 중 8개를 랜덤으로 선택
+    // AllSpawnPoints 배열을 기반으로 랜덤한 스폰 지점 8개를 선택하는 로직
     TArray<ANSK_ItemSpawnPoint*> RandomSpawnPoints = AllSpawnPoints;
     RandomSpawnPoints.Sort([](const ANSK_ItemSpawnPoint& A, const ANSK_ItemSpawnPoint& B)
         {
@@ -67,7 +70,8 @@ void ANSK_SpawnManager::SpawnRandomItems()
                 SpawnPoint->HideSpawnPointMesh();
 
                 // 스폰된 아이템의 이름 로그 출력
-                UE_LOG(LogTemp, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *RandomRow->ItemName.ToString(), *SpawnPoint->GetName());
+                //UE_LOG(LogTemp, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *RandomRow->ItemName.ToString(), *SpawnPoint->GetName());
+                P_LOG(PolluteLog, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *RandomRow->ItemName.ToString(), *SpawnPoint->GetName()); // 프로젝트 로그 컨벤션
             }
         }
     }
@@ -78,6 +82,32 @@ void ANSK_SpawnManager::SpawnRandomItems()
         if (!SpawnPoint->bIsUsed) // 스폰되지 않은 포인트인 경우
         {
             SpawnPoint->Destroy(); // 스폰 포인트 제거
+        }
+    }
+}
+
+void ANSK_SpawnManager::AssignAltarItems()
+{
+    const FString ContextString(TEXT("SpawnDataTableContext"));
+    TArray<FSpawnItemData*> AllRows;
+    SpawnItemDataTable->GetAllRows(ContextString, AllRows);
+
+    // 8개의 생성된 아이템 중에서 랜덤하게 4가지 제단 아이템 선택
+    TArray<FSpawnItemData*> RandomizedItems = AllRows;
+    RandomizedItems.Sort([](const FSpawnItemData& A, const FSpawnItemData& B)
+        {
+            return FMath::RandBool();
+        });
+
+    SelectedAltarItems = TArray<FSpawnItemData*>(RandomizedItems.GetData(), 4);
+
+    // 선택된 제단 아이템 로그 출력
+    P_LOG(PolluteLog, Warning, TEXT("Altar Items Assigned :"));
+    for (const FSpawnItemData* AltarItem : SelectedAltarItems)
+    {
+        if (AltarItem)
+        {
+            P_LOG(PolluteLog, Warning, TEXT(" - %s"), *AltarItem->ItemName.ToString());
         }
     }
 }

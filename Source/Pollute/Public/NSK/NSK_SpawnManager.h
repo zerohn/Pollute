@@ -22,8 +22,12 @@ protected:
 public:
 	void SpawnRandomItems(); // 스폰할 아이템을 랜덤하게 생성하는 함수
 
+	void AssignAltarItems(); // 제단에 사용되는 4개의 재료 아이템 선택
+
 private:
 	UDataTable* SpawnItemDataTable; // 아이템 데이터 테이블
 
 	TArray<ANSK_ItemSpawnPoint*> AllSpawnPoints; // 게임 내 모든 스폰 포인트들을 저장
+
+	TArray<FSpawnItemData*> SelectedAltarItems; // 제단 아이템으로 선택된 아이템의 포인터 배열
 };
