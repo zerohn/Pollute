@@ -31,6 +31,10 @@ struct FItemData : public FTableRowBase
 	// 아이템 이름
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FText ItemName;
+
+	// UI에 띄울 아이템 이름
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	FText ItemUIName;
 	
 	// 아이템 타입
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")

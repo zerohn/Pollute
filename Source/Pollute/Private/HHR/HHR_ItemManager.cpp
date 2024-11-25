@@ -25,7 +25,7 @@ void AHHR_ItemManager::BeginPlay()
 		if(Pair.Value.ItemType == EItemType::CombineItem)
 		{
 			AHHR_Item* Item = GetWorld()->SpawnActor<AHHR_Item>(AHHR_Item::StaticClass(), FVector(0, loc, 50), GetActorRotation());
-			loc += 130;
+			loc += 150;
 
 			if(Item)
 			{
