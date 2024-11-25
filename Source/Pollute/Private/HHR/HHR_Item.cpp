@@ -21,7 +21,9 @@ AHHR_Item::AHHR_Item()
 
 	ItemMehsComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMehs"));
 	ItemMehsComp->SetupAttachment(ItemSphereComp);
-
+	ItemMehsComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	ItemSphereComp->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
 
 	// Overlap 델리게이트 바인딩
 	ItemSphereComp->OnComponentBeginOverlap.AddDynamic(this, &AHHR_Item::OnComponentBeginOverlap);
