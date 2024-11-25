@@ -39,8 +39,8 @@ public:
 	}
 
 	//
-	bool StartTimerWithTryLock(const FString& Tag);
-	double StopTimerWithTryLock(const FString& Tag);
+	bool StartTimerWithLock(const FString& Tag);
+	TOptional<double> StopTimerWithLock(const FString& Tag);
 
 	// 특정 타이머의 경과 시간을 반환
 	double GetElapsedTime(const FString& Tag);
