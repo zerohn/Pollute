@@ -72,7 +72,7 @@ void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent
 			UHHR_TestPlayerHUD* PlayerHUD = Cast<UHHR_TestPlayerHUD>(TestPlayerHUD);
 			if(PlayerHUD)
 			{
-				PlayerHUD->SetItemDialogText(ItemData.ItemName);
+				PlayerHUD->SetItemDialogText(ItemData.ItemUIName);
 				PlayerHUD->SetItemDialogVisibility(true);
 			}
 		}
