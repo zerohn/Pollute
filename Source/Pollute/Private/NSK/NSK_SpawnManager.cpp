@@ -4,7 +4,7 @@
 ANSK_SpawnManager::ANSK_SpawnManager()
 {
     // 아이템 데이터 테이블 로드
-    static ConstructorHelpers::FObjectFinder<UDataTable> ItemDataTable(TEXT("DataTable'/Game/NSK/DT/DT_SpawnItemData.DT_NSK_SpawnItemData'"));
+    static ConstructorHelpers::FObjectFinder<UDataTable> ItemDataTable(TEXT("DataTable'/Game/NSK/DT/DT_NSK_SpawnItemData.DT_NSK_SpawnItemData'"));
     if (ItemDataTable.Succeeded())
     {
         SpawnItemDataTable = ItemDataTable.Object;
@@ -15,6 +15,7 @@ ANSK_SpawnManager::ANSK_SpawnManager()
     {
         SpawnHintDataTable = AltarHintDataTable.Object;
     }
+}
 
 void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 액터 검색은 게임 시작 후 : 시작 전에 월드에 액터가 완전히 준비되지 않을 수 있음
 {
@@ -37,7 +38,7 @@ void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 액터 검색은
     SpawnRandomItems();
 
     // 2. 제단 아이템 선택
-    AssignAltarItems();
+    AssignAltarItems(); // 여기 터짐
 
     // 선택 함수 실행 후 결과로 힌트 스폰 (실행 순서 유의)
     
@@ -55,7 +56,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
     SpawnItemDataTable->GetAllRows(ContextString, AllRows); // 데이터 테이블의 모든 행을 AllRows 배열에 채움
 
     // AllSpawnPoints 배열을 기반으로 랜덤한 스폰 지점 8개를 선택하는 로직
-    TArray<ANSK_ItemSpawnPoint*> RandomSpawnPoints = AllSpawnPoints;
+    TArray<ANSK_ItemSpawnPoint*> RandomSpawnPoints = AllSpawnPoints; // 여기 터짐
     RandomSpawnPoints.Sort([](const ANSK_ItemSpawnPoint& A, const ANSK_ItemSpawnPoint& B)
         {
             return FMath::RandBool();
@@ -130,28 +131,44 @@ void ANSK_SpawnManager::AssignAltarItems()
 
 void ANSK_SpawnManager::SpawnAltarHint()
 {
-    // HintPoints와 AltarItems를 하나의 배열로 결합
-    TArray<TPair<ANSK_AltarHintPoint*, FSpawnItemData*>> CombinedArray;
+    const FString ContextString(TEXT("HintDataTableContext"));
+    TArray<FAltarHintData*> AllHintRows;
+    // 힌트 데이터 테이블에서 모든 행 가져오기
+    SpawnHintDataTable->GetAllRows(ContextString, AllHintRows);
 
-    // 힌트 포인트와 제단 아이템을 쌍으로 묶어 배열에 추가
-    for (int32 i = 0; i < SelectedAltarItems.Num() && i < AllHintPoints.Num(); i++)
+    // 제단 아이템 이름과 매칭되는 힌트 데이터 필터링
+    TArray<FAltarHintData*> MatchingHints;
+    for (FSpawnItemData* AltarItem : SelectedAltarItems)
     {
-        CombinedArray.Add(TPair<ANSK_AltarHintPoint*, FSpawnItemData*>(AllHintPoints[i], SelectedAltarItems[i]));
+        if (!AltarItem)
+            continue;
+
+        // HintName과 ItemName이 일치하는 데이터 찾기
+        FAltarHintData** MatchingHint = AllHintRows.FindByPredicate([&](FAltarHintData* HintData)
+            {
+                return HintData->HintName == AltarItem->ItemName;
+            });
+
+        if (MatchingHint)
+        {
+            MatchingHints.Add(*MatchingHint);
+        }
     }
 
-    // 배열을 랜덤하게 섞기
-    CombinedArray.Sort([](const TPair<ANSK_AltarHintPoint*, FSpawnItemData*>& A, const TPair<ANSK_AltarHintPoint*, FSpawnItemData*>& B)
+    // 힌트 포인트 랜덤화 및 할당
+    TArray<ANSK_AltarHintPoint*> RandomizedHintPoints = AllHintPoints;
+    RandomizedHintPoints.Sort([](const ANSK_AltarHintPoint& A, const ANSK_AltarHintPoint& B)
         {
             return FMath::RandBool();
         });
 
-    // 4개의 힌트 포인트에 힌트 활성화
-    for (int32 i = 0; i < 4 && i < CombinedArray.Num(); i++)
+    // 첫 4개의 힌트 포인트에 매칭된 힌트 설정
+    for (int32 i = 0; i < 4 && i < MatchingHints.Num() && i < RandomizedHintPoints.Num(); i++)
     {
-        ANSK_AltarHintPoint* HintPoint = CombinedArray[i].Key;
-        FSpawnItemData* AltarItem = CombinedArray[i].Value;
+        ANSK_AltarHintPoint* HintPoint = RandomizedHintPoints[i];
+        FAltarHintData* HintData = MatchingHints[i];
 
-        if (HintPoint && AltarItem)
+        if (HintPoint && HintData)
         {
             // 힌트 활성화
             HintPoint->bHintPointIsUsed = true;
@@ -159,21 +176,21 @@ void ANSK_SpawnManager::SpawnAltarHint()
             // 힌트 메시 설정
             if (HintPoint->HintPointMesh)
             {
-                HintPoint->HintPointMesh->SetStaticMesh(AltarItem->ItemMesh); // 알맞은 메시 설정
+                HintPoint->HintPointMesh->SetStaticMesh(HintData->HintMesh); // 메시 설정
             }
-            HintPoint->HintName = AltarItem->ItemName;
+            HintPoint->HintName = HintData->HintName;
 
             // 로그 출력
-            P_LOG(PolluteLog, Warning, TEXT("Hint Spawned: %s at HintPoint %s"), *AltarItem->ItemName.ToString(), *HintPoint->GetName());
+            P_LOG(PolluteLog, Warning, TEXT("Hint Spawned: %s at HintPoint %s"), *HintData->HintName.ToString(), *HintPoint->GetName());
         }
     }
 
     // 나머지 힌트 포인트 메시 숨기기
-    for (int32 i = 4; i < CombinedArray.Num(); i++)
+    for (int32 i = 4; i < RandomizedHintPoints.Num(); i++)
     {
-        if (CombinedArray[i].Key)
+        if (RandomizedHintPoints[i])
         {
-            CombinedArray[i].Key->HideHintPointMesh();
+            RandomizedHintPoints[i]->HideHintPointMesh();
         }
     }
 }
