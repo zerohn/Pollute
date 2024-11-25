@@ -20,11 +20,6 @@ public:
 
 
 
-
-
-
-
-
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
 	EPlayerMode PlayerMode = EPlayerMode::Human;

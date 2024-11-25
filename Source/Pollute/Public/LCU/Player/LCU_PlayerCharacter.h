@@ -58,6 +58,8 @@ public:
 	// Get, Set
 	EGender GetGender() {return Gender;}
 
+	bool GetHasCurse() {return bHasCurse;}
+	void SetHasCurse(bool bCurse) {bHasCurse = bCurse;}
 	// Get, Set 끝
 
 	void CarryCurse();

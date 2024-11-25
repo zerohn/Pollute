@@ -29,16 +29,24 @@ ALCU_Curse::ALCU_Curse()
 void ALCU_Curse::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	// 객체를 하나만 사용 할 수 있도록 미연에 방지한다.
 	if (Instance && Instance != this)
 	{
-		Destroy(); // 중복 생성 방지
+		Instance = nullptr; // 포인터 초기화
+		Destroy();
 	}
 	else
 	{
 		Instance = this;
 	}
+}
+
+void ALCU_Curse::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Instance = nullptr;
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -51,13 +59,13 @@ void ALCU_Curse::Tick(float DeltaTime)
 	{
 		CurrentCurseTime -= DeltaTime;
 		
-		// 시간이 0이 되면 콜백 해준다.
+		// 시간이 0이 되면 변신
 		if(CurrentCurseTime <= 0.f)
 		{
 			CurrentCurseTime = EndCurseTime;
 			bStartCurseTime = false;
-			// TODO
-			//P_SCREEN(5.f, FColor::Cyan, TEXT("ChangeMonster"));
+			//TODO
+			P_SCREEN(5.f, FColor::Cyan, TEXT("ChangeMonster"));
 			P_LOG(PolluteLog, Log, TEXT("ChangeMonster"));
 		}
 	}
@@ -70,6 +78,7 @@ void ALCU_Curse::StartCurseTimer(AActor* player)
 	Owner = player;
 
 	OwnerCharacter = Cast<ALCU_PlayerCharacter>(player);
+	OwnerCharacter->SetHasCurse(true);
 	
 	//P_SCREEN(5.f, FColor::Green, TEXT("SelectedPlayer"));
 	P_LOG(PolluteLog, Log, TEXT("SelectedPlayer"));

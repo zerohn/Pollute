@@ -30,20 +30,22 @@ void AP_GameMode::GetAllCharacters()
 
 void AP_GameMode::SelectPlayer()
 {
+	GetAllCharacters();
+
 	// 플레이어 배열이 비어 있는지 확인
-	if (AllPlayers.IsEmpty())
-	{
-		return;
-	}
+	if (AllPlayers.IsEmpty()) return;
 	
+	// Curse 유효성 검사
+	if (!Curse || !Curse->IsValidLowLevel()) return;
+
 	// 랜덤 인덱스 선택
 	int32 RandomIndex = UKismetMathLibrary::RandomIntegerInRange(0, AllPlayers.Num() - 1);
-
 	// 선택된 플레이어
 	AActor* SelectedPlayer = AllPlayers[RandomIndex];
 	
 	if (SelectedPlayer)
 	{
+		// 저주 시작
 		Curse->GetInstance(GetWorld())->StartCurseTimer(SelectedPlayer);
 	}
 	GetWorld()->GetTimerManager().ClearTimer(CurseSelectedTimer);
@@ -55,7 +57,6 @@ void AP_GameMode::BeginPlay()
 	
 	Curse = ALCU_Curse::GetInstance(GetWorld()); 
 
-	GetAllCharacters();
 	
 	GetWorld()->GetTimerManager().SetTimer(CurseSelectedTimer, this, &ThisClass::SelectPlayer, 5.f,false);
 }

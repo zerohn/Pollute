@@ -98,7 +98,6 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	UpdateCameraTransform();
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
-	
 }
 
 // Called to bind functionality to input
@@ -121,6 +120,7 @@ void ALCU_PlayerCharacter::Interact()
 
 AActor* ALCU_PlayerCharacter::GetClosestActorToCamera(const TSet<AActor*>& Actors)
 {
+	// 자료구조 안에 데이터가 없으면 반환
 	if (Actors.Num() == 0) return nullptr;
 
 	FVector CameraLocation = FollowCamera->GetComponentLocation();
@@ -128,6 +128,7 @@ AActor* ALCU_PlayerCharacter::GetClosestActorToCamera(const TSet<AActor*>& Actor
 	AActor* ClosestActor = nullptr;
 	float MinDistanceSquared = FLT_MAX;
 
+	// 액터들 중에 카메라와의 거리가 가장 가까운 액터를 선택합니다.
 	for (AActor* Actor : Actors)
 	{
 		if (!Actor) continue;
@@ -156,11 +157,9 @@ void ALCU_PlayerCharacter::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp
 		case ECC_Pawn: 
 			AddOverlappingPlayer(OtherActor);
 			break;
-
 		case ECC_GameTraceChannel1:
 			AddOverlappingItem(OtherActor);
 			break;
-
 		default:
 			break;
 		}
@@ -244,15 +243,13 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 	
 	// 현재 아이템이 없으니 픽업
 	if(!bHasItem)
-	{
-		// 부모 컴포넌트를 가져옴 (예: 스켈레탈 메시)
+	{		
 		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
 		if (!SkeletalMeshComp)
 		{
 			return;
 		}
-
-		// FinalOverlapItem의 루트 컴포넌트를 가져와 부착
+	
 		FinalOverapItem->AttachToComponent(
 				SkeletalMeshComp,                      
 				FAttachmentTransformRules::SnapToTargetIncludingScale, 
@@ -287,6 +284,7 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 
 void ALCU_PlayerCharacter::ShootTrace()
 {
+	if(!IsLocallyControlled()) return;
 	// 카메라 위치와 방향 가져오기
 	FVector CameraLocation;
 	FRotator CameraRotation;
