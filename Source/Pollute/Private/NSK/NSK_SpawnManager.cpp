@@ -3,13 +3,13 @@
 
 ANSK_SpawnManager::ANSK_SpawnManager()
 {
-    // ¾ÆÀÌÅÛ µ¥ÀÌÅÍ Å×ÀÌºí ·Îµå
-    static ConstructorHelpers::FObjectFinder<UDataTable> ItemDataTable(TEXT("DataTable'/Game/NSK/DT/DT_NSK_SpawnItemData.DT_NSK_SpawnItemData'"));
+    // ì•„ì´í…œ ë°ì´í„° í…Œì´ë¸” ë¡œë“œ
+    static ConstructorHelpers::FObjectFinder<UDataTable> ItemDataTable(TEXT("DataTable'/Game/HHR/Item/ItemDataTable.ItemDataTable'"));
     if (ItemDataTable.Succeeded())
     {
         SpawnItemDataTable = ItemDataTable.Object;
     }
-    // ÈùÆ® µ¥ÀÌÅÍ Å×ÀÌºí ·Îµå
+    // íŒíŠ¸ ë°ì´í„° í…Œì´ë¸” ë¡œë“œ
     static ConstructorHelpers::FObjectFinder<UDataTable> AltarHintDataTable(TEXT("DataTable'/Game/NSK/DT/DT_NSK_AltarHintData.DT_NSK_AltarHintData'"));
     if (AltarHintDataTable.Succeeded())
     {
@@ -17,46 +17,61 @@ ANSK_SpawnManager::ANSK_SpawnManager()
     }
 }
 
-void ANSK_SpawnManager::BeginPlay() // °ÔÀÓÀÌ ½ÃÀÛµÈ ÈÄ È£Ãâ -> ½ºÆù ¾×ÅÍ °Ë»öÀº °ÔÀÓ ½ÃÀÛ ÈÄ : ½ÃÀÛ Àü¿¡ ¿ùµå¿¡ ¾×ÅÍ°¡ ¿ÏÀüÈ÷ ÁØºñµÇÁö ¾ÊÀ» ¼ö ÀÖÀ½
+void ANSK_SpawnManager::BeginPlay() // ê²Œì„ì´ ì‹œì‘ëœ í›„ í˜¸ì¶œ -> ìŠ¤í° ì•¡í„° ê²€ìƒ‰ì€ ê²Œì„ ì‹œì‘ í›„ : ì‹œì‘ ì „ì— ì›”ë“œì— ì•¡í„°ê°€ ì™„ì „íˆ ì¤€ë¹„ë˜ì§€ ì•Šì„ ìˆ˜ ìˆìŒ
 {
 	Super::BeginPlay();
 
-    // ¸Ê¿¡ ÀÖ´Â ¸ğµç ItemSpawnPoint Ã£±â
-    // ÅÛÇÃ¸´ Å¸ÀÔÀ¸·Î ÁöÁ¤ÇÑ Å¬·¡½º(¿¹: MyActorClass)¿¡ ÇØ´çÇÏ´Â ¾×ÅÍµé¸¸ ÇÊÅÍ¸µÇÏ¿© ¼øÈ¸ÇÕ´Ï´Ù.
+    // ë§µì— ìˆëŠ” ëª¨ë“  ItemSpawnPoint ì°¾ê¸°
+    // í…œí”Œë¦¿ íƒ€ì…ìœ¼ë¡œ ì§€ì •í•œ í´ë˜ìŠ¤(ì˜ˆ: MyActorClass)ì— í•´ë‹¹í•˜ëŠ” ì•¡í„°ë“¤ë§Œ í•„í„°ë§í•˜ì—¬ ìˆœíšŒí•©ë‹ˆë‹¤.
     for (TActorIterator<ANSK_ItemSpawnPoint> It(GetWorld()); It; ++It)
     {
         AllSpawnPoints.Add(*It);
     }
 
-    // ¸Ê¿¡ ÀÖ´Â ¸ğµç AltarHintPoint Ã£±â
+    // ë§µì— ìˆëŠ” ëª¨ë“  AltarHintPoint ì°¾ê¸°
     for (TActorIterator<ANSK_AltarHintPoint> It(GetWorld()); It; ++It)
     {
         AllHintPoints.Add(*It);
     }
 
-    // 1. ·£´ı ¾ÆÀÌÅÛ ½ºÆù
+    // 1. ëœë¤ ì•„ì´í…œ ìŠ¤í°
     SpawnRandomItems();
 
-    // 2. Á¦´Ü ¾ÆÀÌÅÛ ¼±ÅÃ
-    AssignAltarItems(); // ¿©±â ÅÍÁü
+    // 2. ì œë‹¨ ì•„ì´í…œ ì„ íƒ
+    AssignAltarItems(); // ì—¬ê¸° í„°ì§
 
-    // ¼±ÅÃ ÇÔ¼ö ½ÇÇà ÈÄ °á°ú·Î ÈùÆ® ½ºÆù (½ÇÇà ¼ø¼­ À¯ÀÇ)
+    // ì„ íƒ í•¨ìˆ˜ ì‹¤í–‰ í›„ ê²°ê³¼ë¡œ íŒíŠ¸ ìŠ¤í° (ì‹¤í–‰ ìˆœì„œ ìœ ì˜)
     
-    // 3. ÈùÆ® ½ºÆù
-    SpawnAltarHint(); //¿©±â ÅÍÁü
+    // 3. íŒíŠ¸ ìŠ¤í°
+    SpawnAltarHint(); //ì—¬ê¸° í„°ì§
 }
 
-// ¾ÆÀÌÅÛÀ» ·£´ıÇÏ°Ô »ı¼ºÇÏ´Â ÇÔ¼ö
+// ì•„ì´í…œì„ ëœë¤í•˜ê²Œ ìƒì„±í•˜ëŠ” í•¨ìˆ˜
 void ANSK_SpawnManager::SpawnRandomItems()
 {
-    // µ¥ÀÌÅÍ Å×ÀÌºí¿¡¼­ ¸ğµç Çà °¡Á®¿À±â
-    // ContextString: µ¥ÀÌÅÍ Å×ÀÌºí¿¡¼­ µ¥ÀÌÅÍ¸¦ °¡Á®¿Ã ¶§ »ç¿ëµÇ´Â µğ¹ö±ë ¹®ÀÚ¿­
-    const FString ContextString(TEXT("SpawnDataTableContext"));
-    TArray<FSpawnItemData*> AllRows; // µ¥ÀÌÅÍ Å×ÀÌºíÀÇ ¸ğµç ÇàÀ» ÀúÀåÇÒ ¹è¿­
-    SpawnItemDataTable->GetAllRows(ContextString, AllRows); // µ¥ÀÌÅÍ Å×ÀÌºíÀÇ ¸ğµç ÇàÀ» AllRows ¹è¿­¿¡ Ã¤¿ò
+    TArray<FItemData*> CombineItems = FilterCombineItems(SpawnItemDataTable);
 
-    // AllSpawnPoints ¹è¿­À» ±â¹İÀ¸·Î ·£´ıÇÑ ½ºÆù ÁöÁ¡ 8°³¸¦ ¼±ÅÃÇÏ´Â ·ÎÁ÷
-    TArray<ANSK_ItemSpawnPoint*> RandomSpawnPoints = AllSpawnPoints; // ¿©±â ÅÍÁü
+    // ëœë¤ìœ¼ë¡œ 8ê°œ ì•„ì´í…œ ì„ íƒ
+    SpawnedItems.Empty(); // ë©¤ë²„ ë³€ìˆ˜ë¡œ ì €ì¥
+    for (int32 i = 0; i < 8 && CombineItems.Num() > 0; ++i)
+    {
+        int32 RandomIndex = FMath::RandRange(0, CombineItems.Num() - 1);
+        FItemData* RandomItem = CombineItems[RandomIndex];
+        SpawnedItems.Add(RandomItem); // ìŠ¤í°ëœ ì•„ì´í…œ ì €ì¥
+        CombineItems.RemoveAt(RandomIndex);
+    }
+
+    // ëœë¤ ìŠ¤í° í¬ì¸íŠ¸ ë°°ì—´ ì¤€ë¹„
+    TArray<ANSK_ItemSpawnPoint*> RandomSpawnPoints;
+    for (ANSK_ItemSpawnPoint* SpawnPoint : AllSpawnPoints)
+    {
+        if (SpawnPoint)
+        {
+            RandomSpawnPoints.Add(SpawnPoint);
+        }
+    }
+
+    // ëœë¤í•˜ê²Œ 8ê°œì˜ ìŠ¤í° í¬ì¸íŠ¸ ì„ íƒ
     RandomSpawnPoints.Sort([](const ANSK_ItemSpawnPoint& A, const ANSK_ItemSpawnPoint& B)
         {
             return FMath::RandBool();
@@ -64,63 +79,58 @@ void ANSK_SpawnManager::SpawnRandomItems()
 
     RandomSpawnPoints.SetNum(8);
 
-    // ·£´ı ¾ÆÀÌÅÛÀ» ¼±ÅÃÇÏ¿© ½ºÆù
-    for (ANSK_ItemSpawnPoint* SpawnPoint : RandomSpawnPoints)
+    // ì•„ì´í…œê³¼ í¬ì¸íŠ¸ ë§¤ì¹­ í›„ ìŠ¤í°
+    for (int32 i = 0; i < SpawnedItems.Num(); ++i)
     {
-        if (AllRows.Num() > 0)
+        FItemData* SelectedItem = SpawnedItems[i];
+        ANSK_ItemSpawnPoint* SpawnPoint = RandomSpawnPoints[i];
+
+        if (SelectedItem && SpawnPoint)
         {
-            // ·£´ı Çà ¼±ÅÃ
-            FSpawnItemData* RandomRow = AllRows[FMath::RandRange(0, AllRows.Num() - 1)];
+            SpawnPoint->bSpawnPointIsUsed = true;
 
-            if (RandomRow && SpawnPoint) // ¼±ÅÃ µ¥ÀÌÅÍ¿Í ½ºÆù Æ÷ÀÎÆ®°¡ À¯È¿ÇÑ °æ¿ì
+            UStaticMeshComponent* SpawnMesh = NewObject<UStaticMeshComponent>(SpawnPoint);
+            if (SpawnMesh && SelectedItem->ItemMesh)
             {
-                // ¾ÆÀÌÅÛ ½ºÆù
-                SpawnPoint->bSpawnPointIsUsed = true; // ½ºÆù Æ÷ÀÎÆ®°¡ »ç¿ëµÊ
-
-                // ½ºÆùµÈ ¾ÆÀÌÅÛÀÇ ¸Ş½Ã¸¦ »ı¼º
-                UStaticMeshComponent* SpawnMesh = NewObject<UStaticMeshComponent>(SpawnPoint); // ¸Ş½Ã ÄÄÆ÷³ÍÆ® »ı¼º
-                SpawnMesh->SetStaticMesh(RandomRow->ItemMesh); // ¸Ş½Ã¸¦ µ¥ÀÌÅÍ Å×ÀÌºí¿¡¼­ ¼³Á¤µÈ ¸Ş½Ã·Î ÁöÁ¤
-                SpawnMesh->AttachToComponent(SpawnPoint->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform); // ¸Ş½Ã¸¦ ½ºÆù Æ÷ÀÎÆ®¿¡ ºÎÂø
-                SpawnMesh->RegisterComponent(); // ¸Ş½Ã ÄÄÆ÷³ÍÆ® ¿£Áø¿¡ µî·Ï
-
-                // ½ºÆù Æ÷ÀÎÆ® ¸Ş½Ã ¼û±â±â
-                SpawnPoint->HideSpawnPointMesh();
-
-                // ½ºÆùµÈ ¾ÆÀÌÅÛÀÇ ÀÌ¸§ ·Î±× Ãâ·Â
-                //UE_LOG(LogTemp, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *RandomRow->ItemName.ToString(), *SpawnPoint->GetName());
-                P_LOG(PolluteLog, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *RandomRow->ItemName.ToString(), *SpawnPoint->GetName()); // ÇÁ·ÎÁ§Æ® ·Î±× ÄÁº¥¼Ç
+                SpawnMesh->SetStaticMesh(SelectedItem->ItemMesh);
+                SpawnMesh->AttachToComponent(SpawnPoint->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+                SpawnMesh->RegisterComponent();
             }
+
+            SpawnPoint->HideSpawnPointMesh();
+
+            P_LOG(PolluteLog, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *SelectedItem->ItemName.ToString(), *SpawnPoint->GetName());
         }
     }
 
-    // »ç¿ëµÇÁö ¾ÊÀº ½ºÆù Æ÷ÀÎÆ® Á¦°Å
     for (ANSK_ItemSpawnPoint* SpawnPoint : AllSpawnPoints)
     {
-        if (!SpawnPoint->bSpawnPointIsUsed) // ½ºÆùµÇÁö ¾ÊÀº Æ÷ÀÎÆ®ÀÎ °æ¿ì
+        if (SpawnPoint && !SpawnPoint->bSpawnPointIsUsed)
         {
-            SpawnPoint->Destroy(); // ½ºÆù Æ÷ÀÎÆ® Á¦°Å
+            SpawnPoint->Destroy();
         }
     }
 }
 
 void ANSK_SpawnManager::AssignAltarItems()
 {
-    const FString ContextString(TEXT("SpawnDataTableContext"));
-    TArray<FSpawnItemData*> AllRows;
-    SpawnItemDataTable->GetAllRows(ContextString, AllRows);
+    SelectedAltarItems.Empty();
 
-    // 8°³ÀÇ »ı¼ºµÈ ¾ÆÀÌÅÛ Áß¿¡¼­ ·£´ıÇÏ°Ô 4°¡Áö Á¦´Ü ¾ÆÀÌÅÛ ¼±ÅÃ
-    TArray<FSpawnItemData*> RandomizedItems = AllRows; // ¿©±â ÅÍÁü
-    RandomizedItems.Sort([](const FSpawnItemData& A, const FSpawnItemData& B)
-        {
-            return FMath::RandBool();
-        });
+    // ìŠ¤í°ëœ ì•„ì´í…œì—ì„œ 4ê°œ ì„ íƒ
+    int32 ItemCount = FMath::Min(SpawnedItems.Num(), 4);
+    TArray<FItemData*> TempSpawnedItems = SpawnedItems; // ë³µì‚¬ë³¸ ìƒì„±
 
-    SelectedAltarItems = TArray<FSpawnItemData*>(RandomizedItems.GetData(), 4);
+    for (int32 i = 0; i < ItemCount; ++i)
+    {
+        int32 RandomIndex = FMath::RandRange(0, TempSpawnedItems.Num() - 1);
+        FItemData* RandomItem = TempSpawnedItems[RandomIndex];
+        SelectedAltarItems.Add(RandomItem); // ì œë‹¨ ì•„ì´í…œì— ì¶”ê°€
+        TempSpawnedItems.RemoveAt(RandomIndex); // ì¤‘ë³µ ë°©ì§€
+    }
 
-    // ¼±ÅÃµÈ Á¦´Ü ¾ÆÀÌÅÛ ·Î±× Ãâ·Â
+    // ë¡œê·¸ ì¶œë ¥
     P_LOG(PolluteLog, Warning, TEXT("Altar Items Assigned :"));
-    for (const FSpawnItemData* AltarItem : SelectedAltarItems)
+    for (const FItemData* AltarItem : SelectedAltarItems)
     {
         if (AltarItem)
         {
@@ -133,20 +143,26 @@ void ANSK_SpawnManager::SpawnAltarHint()
 {
     const FString ContextString(TEXT("HintDataTableContext"));
     TArray<FAltarHintData*> AllHintRows;
-    // ÈùÆ® µ¥ÀÌÅÍ Å×ÀÌºí¿¡¼­ ¸ğµç Çà °¡Á®¿À±â
+
+    // íŒíŠ¸ ë°ì´í„° í…Œì´ë¸”ì—ì„œ ëª¨ë“  í–‰ ê°€ì ¸ì˜¤ê¸°
+    if (!SpawnHintDataTable)
+    {
+        P_LOG(PolluteLog, Error, TEXT("SpawnHintDataTable is null"));
+        return;
+    }
     SpawnHintDataTable->GetAllRows(ContextString, AllHintRows);
 
-    // Á¦´Ü ¾ÆÀÌÅÛ ÀÌ¸§°ú ¸ÅÄªµÇ´Â ÈùÆ® µ¥ÀÌÅÍ ÇÊÅÍ¸µ
+    // ì œë‹¨ ì•„ì´í…œ ì´ë¦„ê³¼ ë§¤ì¹­ë˜ëŠ” íŒíŠ¸ ë°ì´í„° í•„í„°ë§
     TArray<FAltarHintData*> MatchingHints;
-    for (FSpawnItemData* AltarItem : SelectedAltarItems)
+    for (const FItemData* AltarItem : SelectedAltarItems)
     {
         if (!AltarItem)
             continue;
 
-        // HintName°ú ItemNameÀÌ ÀÏÄ¡ÇÏ´Â µ¥ÀÌÅÍ Ã£±â
+        // HintNameê³¼ ItemNameì´ ì¼ì¹˜í•˜ëŠ” ë°ì´í„° ì°¾ê¸°
         FAltarHintData** MatchingHint = AllHintRows.FindByPredicate([&](FAltarHintData* HintData)
             {
-                return HintData->HintName == AltarItem->ItemName;
+                return HintData->HintName.ToString() == AltarItem->ItemName.ToString();
             });
 
         if (MatchingHint)
@@ -155,14 +171,14 @@ void ANSK_SpawnManager::SpawnAltarHint()
         }
     }
 
-    // ÈùÆ® Æ÷ÀÎÆ® ·£´ıÈ­ ¹× ÇÒ´ç
+    // íŒíŠ¸ í¬ì¸íŠ¸ë¥¼ ëœë¤í™”
     TArray<ANSK_AltarHintPoint*> RandomizedHintPoints = AllHintPoints;
     RandomizedHintPoints.Sort([](const ANSK_AltarHintPoint& A, const ANSK_AltarHintPoint& B)
         {
             return FMath::RandBool();
         });
 
-    // Ã¹ 4°³ÀÇ ÈùÆ® Æ÷ÀÎÆ®¿¡ ¸ÅÄªµÈ ÈùÆ® ¼³Á¤
+    // ì²« 4ê°œì˜ íŒíŠ¸ í¬ì¸íŠ¸ì— ë§¤ì¹­ëœ íŒíŠ¸ í• ë‹¹
     for (int32 i = 0; i < 4 && i < MatchingHints.Num() && i < RandomizedHintPoints.Num(); i++)
     {
         ANSK_AltarHintPoint* HintPoint = RandomizedHintPoints[i];
@@ -170,27 +186,45 @@ void ANSK_SpawnManager::SpawnAltarHint()
 
         if (HintPoint && HintData)
         {
-            // ÈùÆ® È°¼ºÈ­
+            // íŒíŠ¸ í™œì„±í™” ë° ë©”ì‹œ ì„¤ì •
             HintPoint->bHintPointIsUsed = true;
-
-            // ÈùÆ® ¸Ş½Ã ¼³Á¤
-            if (HintPoint->HintPointMesh)
+            if (HintPoint->HintPointMesh && HintData->HintMesh)
             {
-                HintPoint->HintPointMesh->SetStaticMesh(HintData->HintMesh); // ¸Ş½Ã ¼³Á¤
+                HintPoint->HintPointMesh->SetStaticMesh(HintData->HintMesh);
             }
             HintPoint->HintName = HintData->HintName;
 
-            // ·Î±× Ãâ·Â
+            // ë¡œê·¸ ì¶œë ¥
             P_LOG(PolluteLog, Warning, TEXT("Hint Spawned: %s at HintPoint %s"), *HintData->HintName.ToString(), *HintPoint->GetName());
         }
     }
 
-    // ³ª¸ÓÁö ÈùÆ® Æ÷ÀÎÆ® ¸Ş½Ã ¼û±â±â
+    // ì„ íƒë˜ì§€ ì•Šì€ íŒíŠ¸ í¬ì¸íŠ¸ ì‚­ì œ
     for (int32 i = 4; i < RandomizedHintPoints.Num(); i++)
     {
         if (RandomizedHintPoints[i])
         {
-            RandomizedHintPoints[i]->HideHintPointMesh();
+            RandomizedHintPoints[i]->Destroy(); // íŒíŠ¸ í¬ì¸íŠ¸ ì‚­ì œ
         }
     }
+}
+
+TArray<FItemData*> ANSK_SpawnManager::FilterCombineItems(UDataTable* DataTable)
+{
+    const FString ContextString(TEXT("ItemDataTableContext"));
+    TArray<FItemData*> AllItemRows;
+    TArray<FItemData*> CombineItems;
+
+    if (!DataTable) return CombineItems;
+
+    DataTable->GetAllRows(ContextString, AllItemRows);
+    for (FItemData* Item : AllItemRows)
+    {
+        if (Item && Item->ItemType == EItemType::CombineItem)
+        {
+            CombineItems.Add(Item);
+        }
+    }
+
+    return CombineItems;
 }
