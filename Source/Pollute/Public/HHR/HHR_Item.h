@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "HHR_ItemData.h"
 #include "GameFramework/Actor.h"
+#include "LCU/Interfaces/LCU_InteractInterface.h"
 #include "HHR_Item.generated.h"
 
 
 UCLASS()
-class POLLUTE_API AHHR_Item : public AActor
+class POLLUTE_API AHHR_Item : public AActor, public ILCU_InteractInterface
 {
 	GENERATED_BODY()
 	
@@ -25,10 +26,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
+/////////////////////////////////////////
+// Variables
+	
 // Components
 protected:
-	
 	// Item mesh comp
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
 	UStaticMeshComponent* ItemMehsComp;
@@ -43,12 +45,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item")
 	FItemData ItemData;
 
-
+/////////////////////////////////////////////
 // Functions
 public:
+	// Item Data Set
 	void SetItemData(const FItemData& data);
 	
-	// TODO : Item Use
+	// Player가 줍는 상호작용 
+	virtual void Interact() override;
+	// UI 띄우는 함수
+	virtual void SetVisibilityUI(bool Visible) override;
 
 protected:
 	// 충돌 처리 함수
@@ -63,6 +69,6 @@ protected:
 // TODO : UI Player Controller 혹은 다른 UI 관리자로부터 가져와서 변경
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
-	class UUserWidget* TestPlayerHUD;
+	class UHHR_TestPlayerHUD* PlayerHUD;
 
 };

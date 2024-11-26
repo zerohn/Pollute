@@ -19,6 +19,8 @@ void AHHR_ItemManager::BeginPlay()
 
 	float loc = 0;
 	// Combine Item만 임시 생성
+	TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
+	TestPlayerHUDIns->AddToViewport();
 	for(const TPair<int32, FItemData>& Pair : ItemDataMap)
 	{
 		// Combine Item만 생성
@@ -32,11 +34,7 @@ void AHHR_ItemManager::BeginPlay()
 				// Item Data Setting
 				Item->SetItemData(Pair.Value);
 				// TODO : 수정
-				TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
-				
-				TestPlayerHUDIns->AddToViewport();
-				
-				Item->TestPlayerHUD = TestPlayerHUDIns;
+				Item->PlayerHUD = TestPlayerHUDIns;
 			}
 		}
 	}
@@ -57,6 +55,7 @@ void AHHR_ItemManager::LoadItemData(UDataTable* ItemDataTable)
 			ItemDataMap.Add(ItemData->ItemID, *ItemData);
 		}
 	}
+	
 }
 
 void AHHR_ItemManager::LoadItemData()
