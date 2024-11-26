@@ -3,6 +3,7 @@
 
 #include "KYH/KYH_VoiceChatTest.h"
 #include "AudioCaptureComponent.h"
+#include "Engine/Engine.h"
 
 // Sets default values
 AKYH_VoiceChatTest::AKYH_VoiceChatTest()
@@ -13,6 +14,8 @@ AKYH_VoiceChatTest::AKYH_VoiceChatTest()
 	AudioCaptureComp = CreateDefaultSubobject<UAudioCaptureComponent>("AudioCapture Comp");
 	AudioCaptureComp->SetupAttachment(RootComponent);
 	AudioCaptureComp->OnAudioEnvelopeValue.AddDynamic(this, &AKYH_VoiceChatTest::OnAudioEnvelopeValue);
+
+	AudioCaptureComp->bEnableBaseSubmix = false;
 }
 
 // Called when the game starts or when spawned
@@ -20,6 +23,7 @@ void AKYH_VoiceChatTest::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	AudioCaptureComp->Activate(true);
 }
 
 // Called every frame
@@ -37,5 +41,9 @@ void AKYH_VoiceChatTest::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void AKYH_VoiceChatTest::OnAudioEnvelopeValue(const float EnvelopeValue)
 {
-	P_LOG(PolluteLog, Warning, TEXT("Volume : %f"), EnvelopeValue);
+	float env = EnvelopeValue;
+	
+	P_SCREEN(1.0f, FColor::Orange, TEXT("Volume : %f"), env);
+	
+	CurrentEnvelopeValue = env;
 }

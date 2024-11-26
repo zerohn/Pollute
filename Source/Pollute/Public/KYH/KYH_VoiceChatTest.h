@@ -22,6 +22,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	float CurrentEnvelopeValue;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -34,6 +35,8 @@ public:
 
 	UFUNCTION()
 	void OnAudioEnvelopeValue(const float EnvelopeValue);
+	UFUNCTION(BlueprintCallable)
+	float GetEnvelopeValue() const { return CurrentEnvelopeValue; }
 };
 
 
