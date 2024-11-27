@@ -95,6 +95,9 @@ void ANSK_SpawnManager::SpawnRandomItems()
                 SpawnMesh->SetStaticMesh(SelectedItem->ItemMesh);
                 SpawnMesh->AttachToComponent(SpawnPoint->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
                 SpawnMesh->RegisterComponent();
+                // 아이템 클래스 생성
+                // 
+                // 아이템 데이터 로드 
             }
 
             SpawnPoint->HideSpawnPointMesh();
