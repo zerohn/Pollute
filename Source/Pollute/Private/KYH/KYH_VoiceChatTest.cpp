@@ -45,5 +45,10 @@ void AKYH_VoiceChatTest::OnAudioEnvelopeValue(const float EnvelopeValue)
 	
 	P_SCREEN(1.0f, FColor::Orange, TEXT("Volume : %f"), env);
 	
-	CurrentEnvelopeValue = env;
+	CurrentEnvelopeValue = env * 3 * (MicVolume / 100.0f);
+}
+
+void AKYH_VoiceChatTest::SetMicVolume(const float NewVolume)
+{
+	MicVolume = NewVolume;
 }

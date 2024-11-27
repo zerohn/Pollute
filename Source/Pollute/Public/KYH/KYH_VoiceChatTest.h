@@ -23,6 +23,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	float CurrentEnvelopeValue;
+
+	float MicVolume = 100.0f;
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -37,6 +40,8 @@ public:
 	void OnAudioEnvelopeValue(const float EnvelopeValue);
 	UFUNCTION(BlueprintCallable)
 	float GetEnvelopeValue() const { return CurrentEnvelopeValue; }
+	UFUNCTION(BlueprintCallable)
+	void SetMicVolume(const float NewVolume = 100.0f); 
 };
 
 
