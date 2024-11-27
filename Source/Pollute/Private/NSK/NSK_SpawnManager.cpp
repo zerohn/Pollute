@@ -1,5 +1,6 @@
 #include "NSK/NSK_SpawnManager.h"
 #include "EngineUtils.h"
+#include <HHR/HHR_Item.h>
 
 ANSK_SpawnManager::ANSK_SpawnManager()
 {
@@ -87,22 +88,25 @@ void ANSK_SpawnManager::SpawnRandomItems()
 
         if (SelectedItem && SpawnPoint)
         {
-            SpawnPoint->bSpawnPointIsUsed = true;
+            // 아이템 스폰
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.Owner = this;
+            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-            UStaticMeshComponent* SpawnMesh = NewObject<UStaticMeshComponent>(SpawnPoint);
-            if (SpawnMesh && SelectedItem->ItemMesh)
+            // AHHR_Item 클래스의 인스턴스 생성
+            AHHR_Item* SpawnedItem = GetWorld()->SpawnActor<AHHR_Item>(AHHR_Item::StaticClass(), SpawnPoint->GetActorTransform(), SpawnParams);
+
+            if (SpawnedItem)
             {
-                SpawnMesh->SetStaticMesh(SelectedItem->ItemMesh);
-                SpawnMesh->AttachToComponent(SpawnPoint->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-                SpawnMesh->RegisterComponent();
-                // 아이템 클래스 생성
-                // 
-                // 아이템 데이터 로드 
+                // 아이템 데이터 초기화
+                SpawnedItem->SetItemData(*SelectedItem);
+
+                // 스폰 포인트 사용 상태 업데이트
+                SpawnPoint->bSpawnPointIsUsed = true;
+
+                P_LOG(PolluteLog, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *SelectedItem->ItemName.ToString(), *SpawnPoint->GetName());
             }
-
-            SpawnPoint->HideSpawnPointMesh();
-
-            P_LOG(PolluteLog, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *SelectedItem->ItemName.ToString(), *SpawnPoint->GetName());
+                SpawnPoint->Destroy();
         }
     }
 
