@@ -63,7 +63,7 @@ void AHHR_Item::Interact()
 	// 추후 사용
 
 	// 테스트 용 임시 UI 띄우기
-	//SetVisibilityUI(true);
+	SetVisibilityUI(true);
 }
 
 void AHHR_Item::SetVisibilityUI(bool Visible)
