@@ -17,6 +17,11 @@ class POLLUTE_API ALCU_PlayerController : public APlayerController
 public:
 	ALCU_PlayerController();
 
+public:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaTime) override;
+
 
 
 

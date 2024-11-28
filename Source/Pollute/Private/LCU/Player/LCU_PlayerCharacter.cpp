@@ -98,6 +98,11 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	UpdateCameraTransform();
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
+
+	if(bHasCurse)
+	{
+		P_LOG(PolluteLog, Log, TEXT("Curse have"));
+	}
 }
 
 // Called to bind functionality to input

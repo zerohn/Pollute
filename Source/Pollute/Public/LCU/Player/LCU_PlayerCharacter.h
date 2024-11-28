@@ -66,6 +66,7 @@ public:
 	void PickUpDropDown();
 	void ShootTrace();
 	
+	
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))

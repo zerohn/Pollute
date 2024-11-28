@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "P_GameManager.generated.h"
 
+class ALCU_PlayerCharacter;
+
 UCLASS()
 class POLLUTE_API AP_GameManager : public AActor
 {
@@ -23,11 +25,4 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
-	// 저주를 걸 플레이어를 선택.
-	void SelectPlayer();
-public:
-	// 싱글턴 객체
-	UPROPERTY(EditAnywhere)
-	ALCU_Curse* Curse;
 };

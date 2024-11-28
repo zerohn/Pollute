@@ -30,6 +30,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// 저주 시간을 초기화
+	void InitCurseTime();
+
 public:
 	// Get, Set
 	void SetCharacter(ALCU_PlayerCharacter* character) { OwnerCharacter = character; };
@@ -38,7 +41,7 @@ public:
 	// Get, Set 끝
 
 	//  저주 카운트 시작
-	void StartCurseTimer(AActor* player);
+	void StartCurseTimer(ALCU_PlayerCharacter* player);
 
 private:
 	// 폭탄을 소유하고 있는 한 사람
@@ -46,10 +49,10 @@ private:
 	ALCU_PlayerCharacter* OwnerCharacter;
 
 	UPROPERTY()
-	float EndCurseTime = 10.f;
+	float EndCurseTime = 20.f;
 
 	UPROPERTY()
-	float CurrentCurseTime = 10.f;
+	float CurrentCurseTime = 20.f;
 
 	bool bStartCurseTime = false;
 	
