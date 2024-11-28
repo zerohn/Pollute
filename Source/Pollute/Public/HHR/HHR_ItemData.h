@@ -12,7 +12,7 @@
 UENUM(BlueprintType)
 enum class EItemType : uint8
 {
-	AttackItem,
+	WeaponItem,
 	CombineItem,
 	EscapeItem,
 };

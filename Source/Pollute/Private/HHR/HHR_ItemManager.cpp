@@ -6,7 +6,7 @@
 #include "Engine/World.h"
 #include "HHR/HHR_Item.h"
 #include "Blueprint/UserWidget.h"
-#include "HHR/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_TestPlayerHUD.h"
 
 AHHR_ItemManager::AHHR_ItemManager()
 {
@@ -21,6 +21,7 @@ void AHHR_ItemManager::BeginPlay()
 	// Combine Item만 임시 생성
 	TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
 	TestPlayerHUDIns->AddToViewport();
+
 	for(const TPair<int32, FItemData>& Pair : ItemDataMap)
 	{
 		// Combine Item만 생성
@@ -61,7 +62,7 @@ void AHHR_ItemManager::LoadItemData(UDataTable* ItemDataTable)
 void AHHR_ItemManager::LoadItemData()
 {
 	// 직접 로드해서 가져오기
-	UDataTable* ItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/HHR/Item/ItemDataTable.ItemDataTable'"));
+	UDataTable* ItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/HHR/Item/Data/ItemDataTable.ItemDataTable'"));
 	
 	if(!ItemDataTable)
 	{

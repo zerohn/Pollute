@@ -6,7 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
-#include "HHR/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_TestPlayerHUD.h"
 
 // Sets default values
 AHHR_Item::AHHR_Item()
@@ -64,6 +64,11 @@ void AHHR_Item::Interact()
 
 	// 테스트 용 임시 UI 띄우기
 	SetVisibilityUI(true);
+
+	// 아이템과 캐릭터 상호작용
+	// -> 우리 프젝에서는 캐릭터에서 주로 기능을 수행할듯
+	// => 그래서 사실 Interact() 함수는 안 사용할 듯..
+	// => ?? InteractInterface에 SetvisibilityUI()를 만들어주는 게 맞는지 의문?
 }
 
 void AHHR_Item::SetVisibilityUI(bool Visible)
