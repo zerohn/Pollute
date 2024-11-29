@@ -65,7 +65,7 @@ public:
 	void CarryCurse();
 	void PickUpDropDown();
 	void ShootTrace();
-	
+
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
@@ -94,12 +94,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
 
-	
 	UPROPERTY()
 	FTimerHandle TraceHandle;
 
 	bool bHasCurse = false;
-	bool bHasItem = false;
-	
+    bool bHasItem = false;
 };
 
