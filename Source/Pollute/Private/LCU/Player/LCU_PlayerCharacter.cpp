@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "LCU/InteractActors/LCU_Curse.h"
 
 
 class UEnhancedInputComponent;
@@ -99,9 +100,9 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
 
-	if(bHasCurse)
+	if(bHasCurse && HasAuthority())
 	{
-		P_LOG(PolluteLog, Log, TEXT("Curse have"));
+		P_LOG(PolluteLog, Log, TEXT("%s"), *GetName());
 	}
 }
 
@@ -159,12 +160,15 @@ void ALCU_PlayerCharacter::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp
 		// 채널에 따른 처리
 		switch (ObjectType)
 		{
-		case ECC_Pawn: 
+		case ECC_Pawn:
+			if(OtherActor == this || !bHasCurse) break;
 			AddOverlappingPlayer(OtherActor);
 			break;
 		case ECC_GameTraceChannel1:
-			AddOverlappingItem(OtherActor);
-			break;
+			{				
+				AddOverlappingItem(OtherActor);
+				break;
+			}
 		default:
 			break;
 		}
@@ -237,8 +241,27 @@ void ALCU_PlayerCharacter::CarryCurse()
 	if(!FinalOverapPlayer) return;
 
 	
-	
-	
+	ServerRPC_CarryCurse();
+}
+
+void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
+{
+	NetMulticast_CarryCurse();
+}
+
+void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
+{
+	// 저주를 옮겨요	
+	FinalOverapPlayer->SetHasCurse(true);
+	bHasCurse = false;
+	ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
+
+	// 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
+	FinalOverapPlayer = nullptr;
+	if(!OverlappingPlayers.IsEmpty())
+	{
+		OverlappingPlayers.Empty();
+	}
 }
 
 void ALCU_PlayerCharacter::PickUpDropDown()

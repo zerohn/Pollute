@@ -35,7 +35,7 @@ public:
 
 public:
 	// Get, Set
-	void SetCharacter(ALCU_PlayerCharacter* character) { OwnerCharacter = character; };
+	void SetCharacter(ALCU_PlayerCharacter* character);
 	ALCU_PlayerCharacter* GetCharacter() { return OwnerCharacter; };
 
 	// Get, Set 끝
@@ -49,14 +49,14 @@ private:
 	ALCU_PlayerCharacter* OwnerCharacter;
 
 	UPROPERTY()
-	float EndCurseTime = 20.f;
+	float EndCurseTime = 100.f;
 
 	UPROPERTY()
-	float CurrentCurseTime = 20.f;
+	float CurrentCurseTime = 100.f;
 
 	bool bStartCurseTime = false;
 	
 private:
-	static ALCU_Curse* Instance;	
+	static ALCU_Curse* Instance;
 	
 };

@@ -23,8 +23,6 @@ void AP_GameState::SelectCursePlayer()
 void AP_GameState::BeginPlay()
 {
 	Super::BeginPlay();
-
-	GetAllCharacters();
 	
 	Curse = ALCU_Curse::GetInstance(GetWorld()); 
 	
@@ -85,8 +83,12 @@ void AP_GameState::RemoveHumanPlayer(ALCU_PlayerCharacter* humanPlayer)
 	}
 }
 
-void AP_GameState::SelectPlayer_Implementation()
+void AP_GameState::SelectPlayer()
 {
+	if(!HasAuthority()) return;
+	
+	GetAllCharacters();
+	
 	// 플레이어 배열이 비어 있는지 확인
 	if (HumanPlayers.IsEmpty()) return;
 	
@@ -100,11 +102,13 @@ void AP_GameState::SelectPlayer_Implementation()
 
 	GetWorld()->GetTimerManager().ClearTimer(CurseSelectedTimer);
 
+	P_LOG(PolluteLog, Log, TEXT("Curse have %s"), *SelectedPlayer->GetName());
+
 	// 선택된 플레이어로부터 저주를 시작합니다.
 	StartCurse(SelectedPlayer);
 }
 
-// 저주를 다시 시작 ( 저주를 가진 사람이 죽었을 때 호출 )
+// 저주를 다시 시작 ( 저주를 가진 사람이 죽거나 탈출 했을 때 호출 )
 void AP_GameState::RestartCurse_Implementation(ALCU_PlayerCharacter* selectedPlayer)
 {
 	RemoveHumanPlayer(selectedPlayer);

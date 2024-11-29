@@ -86,8 +86,14 @@ void ALCU_Curse::InitCurseTime()
 	CurrentCurseTime = EndCurseTime;
 }
 
-void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
+void ALCU_Curse::SetCharacter(ALCU_PlayerCharacter* character)
 {
+	OwnerCharacter = character;
+	Owner = character;
+}
+
+void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
+{	
 	if(!player)	return;
 	// 오너 및 현재 소유 중인 플레이어를 캐싱
 	Owner = player;
@@ -95,8 +101,8 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
 	
-	//P_SCREEN(5.f, FColor::Green, TEXT("SelectedPlayer"));
-	P_LOG(PolluteLog, Log, TEXT("SelectedPlayer"));
+	P_SCREEN(5.f, FColor::Green, TEXT("SelectedPlayer : %s"), *OwnerCharacter->GetName());
+	//P_LOG(PolluteLog, Log, TEXT("SelectedPlayer : %s"), *OwnerCharacter->GetName());
 	
 	// 저주 시작
 	bStartCurseTime = true;

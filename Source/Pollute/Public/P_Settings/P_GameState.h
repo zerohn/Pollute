@@ -33,7 +33,7 @@ public:
 	// 플레이어 저장 및 삭제 함수들 끝
 
 	// 저주를 걸 플레이어를 선택.
-	UFUNCTION(Server, Reliable)
+	UFUNCTION()
 	void SelectPlayer();
 
 	UFUNCTION(NetMulticast, Reliable)

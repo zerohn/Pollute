@@ -63,6 +63,10 @@ public:
 	// Get, Set 끝
 
 	void CarryCurse();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_CarryCurse();
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_CarryCurse();
 	void PickUpDropDown();
 	void ShootTrace();
 	
