@@ -60,11 +60,12 @@ void UP_GameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucces
 	{
 		P_SCREEN(3.0f, FColor::Green, TEXT("세션 생성 성공"));
 		// 세션 만든 클라이언트에서 만들어진 세션의 정해진 시작 레벨로 이동
-		//GetWorld()->ServerTravel(TEXT(""));
+		GetWorld()->ServerTravel(SessionLobbyLevelURL + TEXT("?Listen"));
 	}
 	else
 	{
 		P_SCREEN(3.0f, FColor::Orange, TEXT("세션 생성 실패"));
+	    OnCreateCompleteDelegates.ExecuteIfBound(false);
 	}
 }
 
