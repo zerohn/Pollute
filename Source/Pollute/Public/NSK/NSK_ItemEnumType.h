@@ -1,45 +1,45 @@
-// Enum¸¸ Á¤ÀÇÇÏ°í ´Ù¸¥ Å¬·¡½ºÀÇ »ó¼ÓÀ» ÇÊ¿ä·Î ÇÏÁö ¾ÊÀ» ¶§
-// º°µµÀÇ EnumÀ» Á¤ÀÇÇÏ±â À§ÇÑ C++ ÆÄÀÏÀ» »ı¼ºÇÒ ¶§ C++ ºÎ¸ğ Å¬·¡½º ¼±ÅÃÀ» NoneÀ¸·Î ÇÏ´Â °ÍÀÌ ÀûÇÕÇÏ´Ù.
-// ÄÚµåÀÇ °£°á¼º°ú À¯Áöº¸¼ö¼ºÀ» ³ôÀÏ ¼ö ÀÖ´Ù.
+/*// Enumë§Œ ì •ì˜í•˜ê³  ë‹¤ë¥¸ í´ë˜ìŠ¤ì˜ ìƒì†ì„ í•„ìš”ë¡œ í•˜ì§€ ì•Šì„ ë•Œ
+// ë³„ë„ì˜ Enumì„ ì •ì˜í•˜ê¸° ìœ„í•œ C++ íŒŒì¼ì„ ìƒì„±í•  ë•Œ C++ ë¶€ëª¨ í´ë˜ìŠ¤ ì„ íƒì„ Noneìœ¼ë¡œ í•˜ëŠ” ê²ƒì´ ì í•©í•˜ë‹¤.
+// ì½”ë“œì˜ ê°„ê²°ì„±ê³¼ ìœ ì§€ë³´ìˆ˜ì„±ì„ ë†’ì¼ ìˆ˜ ìˆë‹¤.
 
-// ±¸Á¶Ã¼·Î µ¥ÀÌÅÍ Å×ÀÌºíÀ» È°¿ëÇÏ¿© ÇöÀç ºôµå XXXXXXXXXXXXXXX
+// êµ¬ì¡°ì²´ë¡œ ë°ì´í„° í…Œì´ë¸”ì„ í™œìš©í•˜ì—¬ í˜„ì¬ ë¹Œë“œ XXXXXXXXXXXXXXX
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "NSK_ItemEnumType.generated.h"
 
-// Á¦´Ü ¾ÆÀÌÅÛ : »õÀÇ ±êÅĞ, »¡°£ ÃĞºÒ, ÀÎÇü, ÈòÁ¾ÀÌ, Á¾, Ã¥, ¸ø, ¼Õ¼ö°Ç
+// ì œë‹¨ ì•„ì´í…œ : ìƒˆì˜ ê¹ƒí„¸, ë¹¨ê°„ ì´›ë¶ˆ, ì¸í˜•, í°ì¢…ì´, ì¢…, ì±…, ëª», ì†ìˆ˜ê±´
 
-UENUM(BlueprintType) // ºí·ç ÇÁ¸°Æ®¿¡¼­ »ç¿ë °¡´ÉÇÏ°Ô
+UENUM(BlueprintType) // ë¸”ë£¨ í”„ë¦°íŠ¸ì—ì„œ ì‚¬ìš© ê°€ëŠ¥í•˜ê²Œ
 enum class EItemEnumType : uint8
 {
-	None			UMETA(DisplayName = "None"),	 // ±âº»°ªÀ¸·Î »ç¿ë
-	feather			UMETA(DisplayName = "»õÀÇ ±êÅĞ"), // »õÀÇ ±êÅĞ
-	candle			UMETA(DisplayName = "»¡°£ ÃĞºÒ"), // »¡°£ ÃĞºÒ
-	doll			UMETA(DisplayName = "ÀÎÇü"),		 // ÀÎÇü
-	paper			UMETA(DisplayName = "ÈòÁ¾ÀÌ"),	 // ÈòÁ¾ÀÌ
-	bell			UMETA(DisplayName = "Á¾"),		 // Á¾
-	book			UMETA(DisplayName = "Ã¥"),		 // Ã¥
-	nail			UMETA(DisplayName = "¸ø"),		 // ¸ø
-	handkerchief	UMETA(DisplayName = "¼Õ¼ö°Ç")	 // ¼Õ¼ö°Ç
+	None			UMETA(DisplayName = "None"),	 // ê¸°ë³¸ê°’ìœ¼ë¡œ ì‚¬ìš©
+	feather			UMETA(DisplayName = "ìƒˆì˜ ê¹ƒí„¸"), // ìƒˆì˜ ê¹ƒí„¸
+	candle			UMETA(DisplayName = "ë¹¨ê°„ ì´›ë¶ˆ"), // ë¹¨ê°„ ì´›ë¶ˆ
+	doll			UMETA(DisplayName = "ì¸í˜•"),		 // ì¸í˜•
+	paper			UMETA(DisplayName = "í°ì¢…ì´"),	 // í°ì¢…ì´
+	bell			UMETA(DisplayName = "ì¢…"),		 // ì¢…
+	book			UMETA(DisplayName = "ì±…"),		 // ì±…
+	nail			UMETA(DisplayName = "ëª»"),		 // ëª»
+	handkerchief	UMETA(DisplayName = "ì†ìˆ˜ê±´")	 // ì†ìˆ˜ê±´
 };
 
-// ¹«±â ¾ÆÀÌÅÛ : ¸¶¹ı ´Ü°Ë, ¸¶¹ıÃÑ
+// ë¬´ê¸° ì•„ì´í…œ : ë§ˆë²• ë‹¨ê²€, ë§ˆë²•ì´
 UENUM(BlueprintType)
 enum class EWeaponEnumType : uint8
 {
-	None            UMETA(DisplayName = "None"),		// ±âº»°ªÀ¸·Î »ç¿ë
-	MagicDagger     UMETA(DisplayName = "¸¶¹ı ´Ü°Ë"),		// ¸¶¹ı ´Ü°Ë
-	MagicGun        UMETA(DisplayName = "¸¶¹ıÃÑ")		// ¸¶¹ıÃÑ
+	None            UMETA(DisplayName = "None"),		// ê¸°ë³¸ê°’ìœ¼ë¡œ ì‚¬ìš©
+	MagicDagger     UMETA(DisplayName = "ë§ˆë²• ë‹¨ê²€"),		// ë§ˆë²• ë‹¨ê²€
+	MagicGun        UMETA(DisplayName = "ë§ˆë²•ì´")		// ë§ˆë²•ì´
 };
 
-// Å»Ãâ ¾ÆÀÌÅÛ : »ç´Ù¸®, ³«ÇÏ»ê, ÀúÁÖ ¾ÆÀÌÅÛ(Á¦´Ü ¾ÆÀÌÅÛ ·£´ı ºÎ¿©)
+// íƒˆì¶œ ì•„ì´í…œ : ì‚¬ë‹¤ë¦¬, ë‚™í•˜ì‚°, ì €ì£¼ ì•„ì´í…œ(ì œë‹¨ ì•„ì´í…œ ëœë¤ ë¶€ì—¬)
 UENUM(BlueprintType)
 enum class EEscapeEnumType : uint8
 {
-	None            UMETA(DisplayName = "None"),		// ±âº»°ªÀ¸·Î »ç¿ë
-	Ladder          UMETA(DisplayName = "»ç´Ù¸®"),		// »ç´Ù¸®
-	Parachute       UMETA(DisplayName = "³«ÇÏ»ê"),		// ³«ÇÏ»ê
-	CurseItem       UMETA(DisplayName = "ÀúÁÖ ¾ÆÀÌÅÛ")	// Á¦´Ü ¾ÆÀÌÅÛ ·£´ı ºÎ¿©
-};
+	None            UMETA(DisplayName = "None"),		// ê¸°ë³¸ê°’ìœ¼ë¡œ ì‚¬ìš©
+	Ladder          UMETA(DisplayName = "ì‚¬ë‹¤ë¦¬"),		// ì‚¬ë‹¤ë¦¬
+	Parachute       UMETA(DisplayName = "ë‚™í•˜ì‚°"),		// ë‚™í•˜ì‚°
+	CurseItem       UMETA(DisplayName = "ì €ì£¼ ì•„ì´í…œ")	// ì œë‹¨ ì•„ì´í…œ ëœë¤ ë¶€ì—¬
+};*/

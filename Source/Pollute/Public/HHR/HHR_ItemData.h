@@ -53,7 +53,11 @@ struct FItemData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FRotator ItemRotation;
 	
-	
+    // 비교 연산자 정의
+    bool operator==(const FItemData& Other) const
+    {
+        return ItemID == Other.ItemID && ItemName.EqualTo(Other.ItemName);
+    }
 };
 
 
