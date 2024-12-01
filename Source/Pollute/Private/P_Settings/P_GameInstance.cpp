@@ -19,10 +19,11 @@ void UP_GameInstance::Init()
 	{
 		// 서브 시스템 세션 인터페이스 가져오기
 		SessionInterface = Subsys->GetSessionInterface();
-		// 세션 델리게이트 바인딩 (생성, 파괴, 검색)
+		// 세션 델리게이트 바인딩 (생성, 파괴, 검색, 참가)
 		SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UP_GameInstance::OnCreateSessionComplete);
 		SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UP_GameInstance::OnDestroySessionComplete);
 		SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UP_GameInstance::OnFindSessionsComplete);
+		SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UP_GameInstance::OnJoinSessionComplete);
 	}
 }
 
@@ -58,6 +59,8 @@ void UP_GameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucces
 	if (bWasSuccessful)
 	{
 		P_SCREEN(3.0f, FColor::Green, TEXT("세션 생성 성공"));
+		// 세션 만든 클라이언트에서 만들어진 세션의 정해진 시작 레벨로 이동
+		//GetWorld()->ServerTravel(TEXT(""));
 	}
 	else
 	{
@@ -109,14 +112,43 @@ void UP_GameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 	{
 		TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
 
-		for (FOnlineSessionSearchResult SearchResult : SearchResults)
+		for (int32 i = 0; i < SearchResults.Num(); i++)
 		{
+			FOnlineSessionSearchResult SearchResult = SearchResults[i];
 			// 세션 이름 가져오기
 			FString SessionName;
 			SearchResult.Session.SessionSettings.Get(SessionKey, SessionName);
 
 			// 세션을 만든 유저 이름 가져오기
 			FString SessionCreator = SearchResult.Session.OwningUserName;
+
+			//FString SessionInfo = FString::Printf(TEXT("%s - %s"), *SessionName, *SessionCreator);
+			OnAddSessionDelegates.ExecuteIfBound(i, SessionName, SessionCreator);
 		}
+	}
+	OnFindCompleteDelegates.ExecuteIfBound(true);
+}
+
+void UP_GameInstance::JoinSelectSession(int32 Idx)
+{
+	TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
+	FString SessionName;
+	// 세션 정보 받아오기
+	SearchResults[Idx].Session.SessionSettings.Get(SessionKey, SessionName);
+	// 세션 정보와 일치하는 세션에 참가하기
+	SessionInterface->JoinSession(0, FName(SessionName), SearchResults[Idx]);
+}
+
+void UP_GameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	// 세션 참가 성공 시 동작
+	if (Result == EOnJoinSessionCompleteResult::Success)
+	{
+		// 세션 레벨 정보 URL 검색
+		FString URL;
+		SessionInterface->GetResolvedConnectString(SessionName, URL);
+		// 클라이언트에서 참가한 세션 시작 레벨 URL의 경로에 있는 레벨 입장
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		PC->ClientTravel(URL, ETravelType::TRAVEL_Absolute);
 	}
 }

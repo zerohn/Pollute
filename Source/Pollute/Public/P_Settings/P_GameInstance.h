@@ -7,12 +7,12 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "P_GameInstance.generated.h"
 
-
 /**
  * 
  */
 
-DECLARE_DELEGATE_OneParam(FAddSeesion, FString)
+DECLARE_DELEGATE_ThreeParams(FAddSession, int32, FString, FString)
+DECLARE_DELEGATE_OneParam(FFindComplete, bool)
 
 UCLASS()
 class POLLUTE_API UP_GameInstance : public UGameInstance
@@ -37,6 +37,10 @@ public:
 	UFUNCTION()
 	void FindSessions();
 	void OnFindSessionsComplete(bool bWasSuccessful);
+	// 세션 참가, 델리게이트
+	UFUNCTION()
+	void JoinSelectSession(int32 Idx);
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 protected:
 	// 세션 생성 키 값
@@ -46,7 +50,9 @@ protected:
 	// 세션 검색 처리
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 	// 세션이 검색 되었을 때 각 세션의 정보를 전달해주는 델리게이트
-	//FAddSession OnAddSession;
+	FAddSession OnAddSessionDelegates;
+	// 세션 검색이 완료 될 때 전달해주는 델리게이트
+	FFindComplete OnFindCompleteDelegates;
 private:
 	
 };

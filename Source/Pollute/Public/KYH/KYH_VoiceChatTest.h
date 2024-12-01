@@ -41,7 +41,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetEnvelopeValue() const { return CurrentEnvelopeValue; }
 	UFUNCTION(BlueprintCallable)
-	void SetMicVolume(const float NewVolume = 100.0f); 
+	void SetMicVolume(const float NewVolume = 100.0f);
 };
 
 
