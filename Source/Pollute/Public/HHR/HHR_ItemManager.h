@@ -28,7 +28,11 @@ protected:
 	TMap<int32, FItemData> ItemDataMap;
 
 	// 생성할 아이템 클래스
-	TSubclassOf<AActor> ItemClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+	TSubclassOf<class AHHR_Item> ItemClass;
+	// 무기
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+	TSubclassOf<class AHHR_KnifeItem> KnifeItemClass;
 	
 
 // Functions

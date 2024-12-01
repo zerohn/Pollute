@@ -6,7 +6,8 @@
 #include "Engine/World.h"
 #include "HHR/HHR_Item.h"
 #include "Blueprint/UserWidget.h"
-#include "HHR/HHR_TestPlayerHUD.h"
+#include "HHR/HHR_KnifeItem.h"
+#include "HHR/UI/HHR_TestPlayerHUD.h"
 
 AHHR_ItemManager::AHHR_ItemManager()
 {
@@ -19,12 +20,15 @@ void AHHR_ItemManager::BeginPlay()
 
 	float loc = 0;
 	// Combine Item만 임시 생성
+	TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
+	TestPlayerHUDIns->AddToViewport();
+
 	for(const TPair<int32, FItemData>& Pair : ItemDataMap)
 	{
 		// Combine Item만 생성
 		if(Pair.Value.ItemType == EItemType::CombineItem)
 		{
-			AHHR_Item* Item = GetWorld()->SpawnActor<AHHR_Item>(AHHR_Item::StaticClass(), FVector(0, loc, 50), GetActorRotation());
+			AHHR_Item* Item = GetWorld()->SpawnActor<AHHR_Item>(ItemClass, FVector(0, loc, 50), GetActorRotation());
 			loc += 150;
 
 			if(Item)
@@ -32,11 +36,20 @@ void AHHR_ItemManager::BeginPlay()
 				// Item Data Setting
 				Item->SetItemData(Pair.Value);
 				// TODO : 수정
-				TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
-				
-				TestPlayerHUDIns->AddToViewport();
-				
-				Item->TestPlayerHUD = TestPlayerHUDIns;
+				Item->PlayerHUD = TestPlayerHUDIns;
+			}
+		}
+		else if(Pair.Value.ItemType == EItemType::WeaponItem)
+		{
+			AHHR_Item* knife = GetWorld()->SpawnActor<AHHR_KnifeItem>(KnifeItemClass, FVector(0, loc, 50), GetActorRotation());
+			loc += 150;
+
+			if(knife)
+			{
+				// Item Data Setting
+				knife->SetItemData(Pair.Value);
+				// TODO : 수정
+				knife->PlayerHUD = TestPlayerHUDIns;
 			}
 		}
 	}
@@ -57,12 +70,13 @@ void AHHR_ItemManager::LoadItemData(UDataTable* ItemDataTable)
 			ItemDataMap.Add(ItemData->ItemID, *ItemData);
 		}
 	}
+	
 }
 
 void AHHR_ItemManager::LoadItemData()
 {
 	// 직접 로드해서 가져오기
-	UDataTable* ItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/HHR/Item/ItemDataTable.ItemDataTable'"));
+	UDataTable* ItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/HHR/Item/Data/ItemDataTable.ItemDataTable'"));
 	
 	if(!ItemDataTable)
 	{

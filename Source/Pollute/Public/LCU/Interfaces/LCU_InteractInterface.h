@@ -24,4 +24,7 @@ class POLLUTE_API ILCU_InteractInterface
 public:
 	// 상호작용을 받는 입장에서 호출
 	virtual void Interact() = 0;
+
+	// UI 보이게 하는 함수
+	virtual void SetVisibilityUI(bool Visible);
 };
