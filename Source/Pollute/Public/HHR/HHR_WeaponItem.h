@@ -14,8 +14,11 @@ class POLLUTE_API AHHR_WeaponItem : public AHHR_Item
 {
 	GENERATED_BODY()
 
+
 // 공격 함수
 public:
 	virtual void Attack();
+
+
 	
 };

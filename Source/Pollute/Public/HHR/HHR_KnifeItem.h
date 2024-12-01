@@ -14,6 +14,10 @@ class POLLUTE_API AHHR_KnifeItem : public AHHR_WeaponItem
 {
 	GENERATED_BODY()
 
+private:
+	FVector PrevEndPos;
+	
+
 public:
 	virtual void Attack() override;
 	

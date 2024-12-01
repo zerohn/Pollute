@@ -40,9 +40,9 @@ protected:
 	class USphereComponent* ItemSphereComp;
 
 	
-protected:
+public:
 	// Item Data
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item")
+	UPROPERTY(BlueprintReadOnly, Category="Item")
 	FItemData ItemData;
 
 /////////////////////////////////////////////
