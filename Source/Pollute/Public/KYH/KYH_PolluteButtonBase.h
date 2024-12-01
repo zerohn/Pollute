@@ -29,6 +29,9 @@ protected:
 	void UpdateButtonText(const FText& InText);
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateButtonStyle();
+
+	UFUNCTION(BlueprintCallable, Category = "Button")
+	FText GetButtonText() { return ButtonText; }
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Button", meta = (InlineEditConditionToggle))
