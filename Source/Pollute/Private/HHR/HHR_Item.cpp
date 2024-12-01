@@ -29,7 +29,6 @@ AHHR_Item::AHHR_Item()
 	ItemSphereComp->OnComponentBeginOverlap.AddDynamic(this, &AHHR_Item::OnComponentBeginOverlap);
 	ItemSphereComp->OnComponentEndOverlap.AddDynamic(this, &AHHR_Item::OnComponentEndOverlap);
 	
-
 }
 
 // Called when the game starts or when spawned
@@ -95,8 +94,10 @@ void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent
 	{
 		// Character이면 UI 띄우기
 		// 임시로 직접 가져와서 띄우기
+
 		P_LOG(PolluteLog, Warning, TEXT("UI 띄우기"));
 		if(PlayerHUD)
+
 		{
 			// TODO : 수정
 			P_LOG(PolluteLog, Warning, TEXT("Player HUD 있음"));
@@ -116,5 +117,18 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	// TODO : 필요 없음 ㅇㅅㅇ
 	// 테스트용
 	SetVisibilityUI(false);
+
+	if(Cast<ACharacter>(OtherActor))
+	{
+		//P_LOG(PolluteLog, Warning, TEXT("UI 안띄우기"));
+		if(TestPlayerHUD)
+		{
+			UHHR_TestPlayerHUD* PlayerHUD = Cast<UHHR_TestPlayerHUD>(TestPlayerHUD);
+			if(PlayerHUD)
+			{
+				PlayerHUD->SetItemDialogVisibility(false);
+			}
+		}
+	}
 }
 
