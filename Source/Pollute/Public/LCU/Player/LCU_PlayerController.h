@@ -17,10 +17,21 @@ class POLLUTE_API ALCU_PlayerController : public APlayerController
 public:
 	ALCU_PlayerController();
 
+public:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ChangeToSpector();
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ChangeToMonster();
 
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
 	EPlayerMode PlayerMode = EPlayerMode::Human;
+
+	// 몬스터 클래스 TSubclassOf 로 생성하기 
 };

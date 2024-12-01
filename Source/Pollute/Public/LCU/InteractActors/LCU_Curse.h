@@ -30,19 +30,24 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// 저주 시간을 초기화
+	void InitCurseTime();
+
 public:
 	// Get, Set
-	void SetCharacter(ALCU_PlayerCharacter* character) { OwnerCharacter = character; };
+	void SetCharacter(ALCU_PlayerCharacter* character);
 	ALCU_PlayerCharacter* GetCharacter() { return OwnerCharacter; };
 
 	// Get, Set 끝
 
 	//  저주 카운트 시작
-	void StartCurseTimer(AActor* player);
+	void StartCurseTimer(ALCU_PlayerCharacter* player);
 
 private:
 	// 폭탄을 소유하고 있는 한 사람
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	ALCU_PlayerCharacter* OwnerCharacter;
 
 	UPROPERTY()
@@ -54,6 +59,6 @@ private:
 	bool bStartCurseTime = false;
 	
 private:
-	static ALCU_Curse* Instance;	
+	static ALCU_Curse* Instance;
 	
 };

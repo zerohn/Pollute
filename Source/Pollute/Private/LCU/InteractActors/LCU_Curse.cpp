@@ -5,7 +5,11 @@
 
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "LCU/Player/LCU_PlayerController.h"
+#include "Net/UnrealNetwork.h"
+#include "P_Settings/P_GameState.h"
 
 ALCU_Curse* ALCU_Curse::Instance = nullptr;
 
@@ -54,8 +58,10 @@ void ALCU_Curse::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if(!HasAuthority()) return;
+	
 	// 저주의 카운트 다운을 시작
-	if(bStartCurseTime)
+	if(bStartCurseTime && OwnerCharacter)
 	{
 		CurrentCurseTime -= DeltaTime;
 		
@@ -64,25 +70,54 @@ void ALCU_Curse::Tick(float DeltaTime)
 		{
 			CurrentCurseTime = EndCurseTime;
 			bStartCurseTime = false;
+			
 			//TODO
+			// 사람 플레이어는 죽고 괴물이 되야해여
 			P_SCREEN(5.f, FColor::Cyan, TEXT("ChangeMonster"));
-			P_LOG(PolluteLog, Log, TEXT("ChangeMonster"));
+			
+			// TEST 일단 관전자로 바꾸어본다
+			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
+			if(P_pc)
+			{
+				P_pc->ServerRPC_ChangeToSpector();
+			}
+			
+			AP_GameState* P_GS =  Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
+			
+			// 다시 저주를 시작합니다.
+			if(!P_GS) return;
+			P_GS->SelectCursePlayer();
 		}
 	}
 }
 
-void ALCU_Curse::StartCurseTimer(AActor* player)
+void ALCU_Curse::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ALCU_Curse, OwnerCharacter);
+}
+
+void ALCU_Curse::InitCurseTime()
+{
+	CurrentCurseTime = EndCurseTime;
+}
+
+void ALCU_Curse::SetCharacter(ALCU_PlayerCharacter* character)
+{
+	OwnerCharacter = character;
+	Owner = character;
+}
+
+void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
+{	
 	if(!player)	return;
 	// 오너 및 현재 소유 중인 플레이어를 캐싱
 	Owner = player;
 
-	OwnerCharacter = Cast<ALCU_PlayerCharacter>(player);
+	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
-	
-	//P_SCREEN(5.f, FColor::Green, TEXT("SelectedPlayer"));
-	P_LOG(PolluteLog, Log, TEXT("SelectedPlayer"));
-	
+		
 	// 저주 시작
 	bStartCurseTime = true;
 }
