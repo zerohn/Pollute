@@ -84,6 +84,7 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 	{
 		PlayerHUD->SetItemDialogVisibility(false);
 	}
+
 }
 
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -118,7 +119,7 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	// 테스트용
 	SetVisibilityUI(false);
 
-	if(Cast<ACharacter>(OtherActor))
+	/*if(Cast<ACharacter>(OtherActor))
 	{
 		//P_LOG(PolluteLog, Warning, TEXT("UI 안띄우기"));
 		if(TestPlayerHUD)
@@ -129,6 +130,6 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 				PlayerHUD->SetItemDialogVisibility(false);
 			}
 		}
-	}
+	}*/
 }
 

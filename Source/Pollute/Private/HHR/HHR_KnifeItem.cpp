@@ -33,8 +33,7 @@ void AHHR_KnifeItem::Attack()
 		ObjectQueryParams,
 		params
 	);
-
-	
+    
 	if (isHit)
 	{
 		// 충돌시 Damage 적용
@@ -43,6 +42,37 @@ void AHHR_KnifeItem::Attack()
 	}
 
 	// blade의 괴적 적용을 위한 LineTrace
+    // 이전 EndPoint를 기억한 후에 LineTrace
+    FVector startBlade = PrevEndPos;
+    FVector endBlade = ItemMehsComp->GetSocketLocation("BladeEnd");
+
+    FCollisionQueryParams paramsB;
+    paramsB.AddIgnoredActor(this);
+
+    FCollisionObjectQueryParams ObjectQueryParamsB;
+    ObjectQueryParamsB.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel2);
+
+    FHitResult hitResultB;
+
+    //bool isHit = GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECollisionChannel::ECC_GameTraceChannel2, params);
+    bool isHitBlade = GetWorld()->LineTraceSingleByObjectType(
+        hitResultB,
+        startBlade,
+        endBlade,
+        ObjectQueryParamsB,
+        paramsB
+    );
+    // prevEndPos 업뎃
+    PrevEndPos = endBlade;
+    
+    if (isHitBlade)
+    {
+        // 충돌시 Damage 적용
+        // TODO : 몬스터 생성후 ApplyDamage() 로 수정
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, "Hit");
+    }
+
+    
 	
 	// DrawLineDebug
 	if (isHit)
@@ -53,6 +83,21 @@ void AHHR_KnifeItem::Attack()
 	{
 		DrawDebugLine(GetWorld(), start, end, FColor::Blue, true, 0.25);
 	}
+
+    // DrawLineDebug
+    if (isHitBlade)
+    {
+        DrawDebugLine(GetWorld(), startBlade, endBlade, FColor::Red, true, 0.25);
+    }
+    else
+    {
+        DrawDebugLine(GetWorld(), startBlade, endBlade, FColor::Blue, true, 0.25);
+    }
 	
 	
+}
+
+void AHHR_KnifeItem::SetPrevPos()
+{
+    PrevEndPos =ItemMehsComp->GetSocketLocation("BladeEnd");
 }

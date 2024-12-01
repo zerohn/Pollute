@@ -19,6 +19,6 @@ class POLLUTE_API AHHR_WeaponItem : public AHHR_Item
 public:
 	virtual void Attack();
 
-
+// TODO : 한번 사용시 사라지는 함수 
 	
 };

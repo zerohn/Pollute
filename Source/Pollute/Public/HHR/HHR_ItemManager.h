@@ -33,6 +33,8 @@ protected:
 	// 무기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
 	TSubclassOf<class AHHR_KnifeItem> KnifeItemClass;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+    TSubclassOf<class AHHR_Gun> GunItemClass;
 	
 
 // Functions

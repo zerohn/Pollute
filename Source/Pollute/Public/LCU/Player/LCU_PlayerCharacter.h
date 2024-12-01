@@ -60,6 +60,10 @@ public:
 
 	bool GetHasCurse() {return bHasCurse;}
 	void SetHasCurse(bool bCurse) {bHasCurse = bCurse;}
+
+    // ## 아이템 Get
+    AActor* GetItem() {return FinalOverapItem;}
+    
 	// Get, Set 끝
 
 	void CarryCurse();
@@ -69,6 +73,9 @@ public:
 	void NetMulticast_CarryCurse();
 	void PickUpDropDown();
 	void ShootTrace();
+
+    // IA에 Bind될 함수
+    void Attack();
 
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
@@ -97,6 +104,16 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
+
+    // HHR
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_Attack;
+    
+    // Montage
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
+    class UAnimMontage* KnifeAttackMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
+    class UAnimMontage* GunAttackMontage;
 
 	UPROPERTY()
 	FTimerHandle TraceHandle;

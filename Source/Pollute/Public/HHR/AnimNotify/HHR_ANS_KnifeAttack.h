@@ -17,5 +17,5 @@ class POLLUTE_API UHHR_ANS_KnifeAttack : public UAnimNotifyState
 protected:
 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) override;
 
-	
+	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) override;
 };

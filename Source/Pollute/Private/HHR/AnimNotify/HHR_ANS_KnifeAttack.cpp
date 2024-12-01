@@ -5,7 +5,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "HHR/HHR_KnifeItem.h"
-#include "HHR/Test/HHR_TestPlayerCharacter.h"
+#include "LCU/Player/LCU_PlayerCharacter.h"
 
 void UHHR_ANS_KnifeAttack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                       float FrameDeltaTime)
@@ -14,7 +14,7 @@ void UHHR_ANS_KnifeAttack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSeq
 	
 	// Character가 가지고 있는 아이템 가져오기
 	// knife Attack 호출
-	AHHR_TestPlayerCharacter* player = Cast<AHHR_TestPlayerCharacter>(MeshComp->GetOwner());
+	ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(MeshComp->GetOwner());
 	if(player)
 	{
 		AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(player->GetItem());
@@ -24,4 +24,21 @@ void UHHR_ANS_KnifeAttack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSeq
 		}
 	}
 	
+}
+
+void UHHR_ANS_KnifeAttack::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+    float TotalDuration)
+{
+    Super::NotifyBegin(MeshComp, Animation, TotalDuration);
+
+    // PrevEnd 저장
+    ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(MeshComp->GetOwner());
+    if(player)
+    {
+        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(player->GetItem());
+        if(knife)
+        {
+            knife->SetPrevPos();
+        }
+    }
 }
