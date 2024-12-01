@@ -20,10 +20,21 @@ void AHHR_KnifeItem::Attack()
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(this);
 
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_GameTraceChannel2);
+
 	FHitResult hitResult;
 
-	bool isHit = GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECollisionChannel::ECC_GameTraceChannel2, params);
+	//bool isHit = GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECollisionChannel::ECC_GameTraceChannel2, params);
+	bool isHit = GetWorld()->LineTraceSingleByObjectType(
+		hitResult,
+		start,
+		end,
+		ObjectQueryParams,
+		params
+	);
 
+	
 	if (isHit)
 	{
 		// 충돌시 Damage 적용
