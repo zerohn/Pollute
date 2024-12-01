@@ -36,7 +36,8 @@ public:
 	UFUNCTION()
 	void SelectPlayer();
 
-	UFUNCTION(NetMulticast, Reliable)
+	//UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION()
 	void StartCurse(ALCU_PlayerCharacter* selectedPlayer);
 
 	// 저주를 가진 사람의 사망 등의 이유로 다시 저주를 걸어야해요

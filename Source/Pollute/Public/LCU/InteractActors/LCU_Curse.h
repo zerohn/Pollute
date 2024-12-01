@@ -30,6 +30,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	// 저주 시간을 초기화
 	void InitCurseTime();
 
@@ -45,14 +47,14 @@ public:
 
 private:
 	// 폭탄을 소유하고 있는 한 사람
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	ALCU_PlayerCharacter* OwnerCharacter;
 
 	UPROPERTY()
-	float EndCurseTime = 100.f;
+	float EndCurseTime = 10.f;
 
 	UPROPERTY()
-	float CurrentCurseTime = 100.f;
+	float CurrentCurseTime = 10.f;
 
 	bool bStartCurseTime = false;
 	

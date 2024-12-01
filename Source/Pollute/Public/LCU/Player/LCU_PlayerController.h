@@ -22,10 +22,16 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ChangeToSpector();
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ChangeToMonster();
 
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
 	EPlayerMode PlayerMode = EPlayerMode::Human;
+
+	// 몬스터 클래스 TSubclassOf 로 생성하기 
 };

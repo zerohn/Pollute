@@ -7,6 +7,8 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "LCU/Player/LCU_PlayerController.h"
+#include "Net/UnrealNetwork.h"
 #include "P_Settings/P_GameState.h"
 
 ALCU_Curse* ALCU_Curse::Instance = nullptr;
@@ -56,6 +58,8 @@ void ALCU_Curse::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if(!HasAuthority()) return;
+	
 	// 저주의 카운트 다운을 시작
 	if(bStartCurseTime && OwnerCharacter)
 	{
@@ -66,19 +70,32 @@ void ALCU_Curse::Tick(float DeltaTime)
 		{
 			CurrentCurseTime = EndCurseTime;
 			bStartCurseTime = false;
+			
 			//TODO
 			// 사람 플레이어는 죽고 괴물이 되야해여
 			P_SCREEN(5.f, FColor::Cyan, TEXT("ChangeMonster"));
+			
+			// TEST 일단 관전자로 바꾸어본다
+			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
+			if(P_pc)
+			{
+				P_pc->ServerRPC_ChangeToSpector();
+			}
+			
 			AP_GameState* P_GS =  Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
-
-			// 저주가 터진 캐릭터를 사람 배열에서 삭제합니다.
+			
 			// 다시 저주를 시작합니다.
 			if(!P_GS) return;
-			P_GS->RemoveHumanPlayer(OwnerCharacter);
 			P_GS->SelectCursePlayer();
-						
 		}
 	}
+}
+
+void ALCU_Curse::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ALCU_Curse, OwnerCharacter);
 }
 
 void ALCU_Curse::InitCurseTime()
@@ -100,10 +117,7 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 
 	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
-	
-	P_SCREEN(5.f, FColor::Green, TEXT("SelectedPlayer : %s"), *OwnerCharacter->GetName());
-	//P_LOG(PolluteLog, Log, TEXT("SelectedPlayer : %s"), *OwnerCharacter->GetName());
-	
+		
 	// 저주 시작
 	bStartCurseTime = true;
 }

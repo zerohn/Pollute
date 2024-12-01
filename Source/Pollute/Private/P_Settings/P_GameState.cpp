@@ -55,6 +55,10 @@ TObjectPtr<ALCU_PlayerCharacter> AP_GameState::FindPlayer(ALCU_PlayerCharacter* 
 void AP_GameState::GetAllCharacters()
 {
 	if(!HasAuthority()) return;
+	if(!HumanPlayers.IsEmpty())
+	{
+		HumanPlayers.Empty();
+	}
 	TArray<AActor*> Actors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALCU_PlayerCharacter::StaticClass(), Actors);
 
@@ -116,7 +120,11 @@ void AP_GameState::RestartCurse_Implementation(ALCU_PlayerCharacter* selectedPla
 	SelectPlayer();
 }
 
-void AP_GameState::StartCurse_Implementation(ALCU_PlayerCharacter* selectedPlayer)
+//void AP_GameState::StartCurse_Implementation(ALCU_PlayerCharacter* selectedPlayer)
+//{
+//	ALCU_Curse::GetInstance(GetWorld())->StartCurseTimer(selectedPlayer);
+//}
+void AP_GameState::StartCurse(ALCU_PlayerCharacter* selectedPlayer)
 {
 	ALCU_Curse::GetInstance(GetWorld())->StartCurseTimer(selectedPlayer);
 }
