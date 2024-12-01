@@ -3,11 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "NSK/NSK_ItemDataStruct.h"
 #include "NSK/NSK_ItemSpawnPoint.h"
 
 #include "NSK/NSK_AltarHintPoint.h"
 #include "NSK/NSK_AltarHintDataStruct.h"
+#include "HHR/HHR_ItemData.h"
 
 #include "NSK_SpawnManager.generated.h"
 
@@ -23,24 +23,30 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	void SpawnRandomItems(); // ½ºÆùÇÒ ¾ÆÀÌÅÛÀ» ·£´ıÇÏ°Ô »ı¼º
+	void SpawnRandomItems(); // ìŠ¤í°í•  ì•„ì´í…œì„ ëœë¤í•˜ê²Œ ìƒì„±
 
-	void AssignAltarItems(); // Á¦´Ü¿¡ »ç¿ëµÇ´Â 4°³ÀÇ Àç·á ¾ÆÀÌÅÛ ¼±ÅÃ
+	void AssignAltarItems(); // ì œë‹¨ì— ì‚¬ìš©ë˜ëŠ” 4ê°œì˜ ì¬ë£Œ ì•„ì´í…œ ì„ íƒ
 
-	void SpawnAltarHint(); // ÈùÆ® »ı¼º
+	void SpawnAltarHint(); // íŒíŠ¸ ìƒì„±
+
 
 private:
-	// ¾ÆÀÌÅÛ
-	UDataTable* SpawnItemDataTable; // ¾ÆÀÌÅÛ µ¥ÀÌÅÍ Å×ÀÌºí
+	// ì•„ì´í…œ
+	UDataTable* SpawnItemDataTable; // ì•„ì´í…œ ë°ì´í„° í…Œì´ë¸”
 
-	TArray<ANSK_ItemSpawnPoint*> AllSpawnPoints; // °ÔÀÓ ³» ¸ğµç ½ºÆù Æ÷ÀÎÆ®µéÀ» ÀúÀå
+	TArray<ANSK_ItemSpawnPoint*> AllSpawnPoints; // ê²Œì„ ë‚´ ëª¨ë“  ìŠ¤í° í¬ì¸íŠ¸ë“¤ì„ ì €ì¥
 
-	TArray<FSpawnItemData*> SelectedAltarItems; // Á¦´Ü ¾ÆÀÌÅÛÀ¸·Î ¼±ÅÃµÈ ¾ÆÀÌÅÛÀÇ Æ÷ÀÎÅÍ ¹è¿­
+	TArray<FItemData*> SelectedAltarItems; // ì œë‹¨ ì•„ì´í…œìœ¼ë¡œ ì„ íƒëœ ì•„ì´í…œì˜ í¬ì¸í„° ë°°ì—´
 
-	// ÈùÆ®
-	UDataTable* SpawnHintDataTable; // ÈùÆ® µ¥ÀÌÅÍ Å×ÀÌºí
+    TArray<FItemData*> SpawnedItems; // ìŠ¤í°ëœ ì•„ì´í…œ ì €ì¥
 
-	TArray<ANSK_AltarHintPoint*> AllHintPoints; // ¸Ê¿¡ ¹èÄ¡µÈ ¸ğµç ÈùÆ® Æ÷ÀÎÆ® ÀúÀå
+	// íŒíŠ¸
+	UDataTable* SpawnHintDataTable; // íŒíŠ¸ ë°ì´í„° í…Œì´ë¸”
 
-	TArray<FAltarHintData*> AltarHintData;  // µ¥ÀÌÅÍ Å×ÀÌºí¿¡¼­ °¡Á®¿Â ÈùÆ® µ¥ÀÌÅÍ
+	TArray<ANSK_AltarHintPoint*> AllHintPoints; // ë§µì— ë°°ì¹˜ëœ ëª¨ë“  íŒíŠ¸ í¬ì¸íŠ¸ ì €ì¥
+
+	TArray<FAltarHintData*> AltarHintData;  // ë°ì´í„° í…Œì´ë¸”ì—ì„œ ê°€ì ¸ì˜¨ íŒíŠ¸ ë°ì´í„°
+
+    // í•„í„°ë§
+    TArray<FItemData*> FilterCombineItems(UDataTable* DataTable); // í•„í„°ë§ í•¨ìˆ˜
 };

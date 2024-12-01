@@ -1,29 +1,29 @@
-#pragma once
-
-#include "CoreMinimal.h"
-#include "Engine/DataTable.h"
-#include "Engine/StaticMesh.h"
-#include "NSK_ItemDataStruct.generated.h"
-
-USTRUCT(BlueprintType)
-struct FSpawnItemData : public FTableRowBase
-{
-    GENERATED_BODY()
-
-public:
-    // ¾ÆÀÌÅÛ ÀÌ¸§
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FName ItemName;
-
-    // ½ºÅÂÆ½ ¸Ş½Ã °æ·Î
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    UStaticMesh* ItemMesh;
-
-    // ¾ÆÀÌÅÛ ¼³¸í
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FText ItemDescription;
-
-    // Ä«Å×°í¸® (Á¦´Ü(Altar), ¹«±â, Å»Ãâ µî)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FString ItemCategory;
-};
+//#pragma once
+//
+//#include "CoreMinimal.h"
+//#include "Engine/DataTable.h"
+//#include "Engine/StaticMesh.h"
+//#include "NSK_ItemDataStruct.generated.h"
+//
+//USTRUCT(BlueprintType)
+//struct FSpawnItemData : public FTableRowBase
+//{
+//    GENERATED_BODY()
+//
+//public:
+//    // ì•„ì´í…œ ì´ë¦„
+//    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//    FName ItemName;
+//
+//    // ìŠ¤íƒœí‹± ë©”ì‹œ ê²½ë¡œ
+//    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//    UStaticMesh* ItemMesh;
+//
+//    // ì•„ì´í…œ ì„¤ëª…
+//    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//    FText ItemDescription;
+//
+//    // ì¹´í…Œê³ ë¦¬ (ì œë‹¨(Altar), ë¬´ê¸°, íƒˆì¶œ ë“±)
+//    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//    FString ItemCategory;
+//};

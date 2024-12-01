@@ -23,5 +23,8 @@ class POLLUTE_API ILCU_InteractInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	// 상호작용을 받는 입장에서 호출
-	virtual void Interact() = 0;	
+	virtual void Interact() = 0;
+
+	// UI 보이게 하는 함수
+	virtual void SetVisibilityUI(bool Visible);
 };
