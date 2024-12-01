@@ -56,6 +56,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Altar")
     void AddItemToSlot(FItemData Item);
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Altar")
+    bool bIsPlayerNearby;  // 플레이어가 근처에 있는지 여부
+
     // **G키 상호작용**
     UFUNCTION()
     void OnInteract();

@@ -102,7 +102,7 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 
 	if(bHasCurse && HasAuthority())
 	{
-		P_LOG(PolluteLog, Log, TEXT("%s"), *GetName());
+		//P_LOG(PolluteLog, Log, TEXT("%s"), *GetName());
 	}
 }
 

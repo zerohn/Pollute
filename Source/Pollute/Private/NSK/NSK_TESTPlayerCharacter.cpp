@@ -62,10 +62,12 @@ void ANSK_TESTPlayerCharacter::ResetHeldItem()
 
 FItemData ANSK_TESTPlayerCharacter::GetHeldItem() const
 {
+    P_LOG(PolluteLog, Warning, TEXT("HeldItem: %s"), *HeldItem.ItemName.ToString());
     return HeldItem;
 }
 
 void ANSK_TESTPlayerCharacter::SetNearbyAltar(ANSK_Altar* Altar)
 {
     NearbyAltar = Altar; // 근처 제단 참조 업데이트
+    P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정: %s"), Altar ? *Altar->GetName() : TEXT("nullptr"));
 }
