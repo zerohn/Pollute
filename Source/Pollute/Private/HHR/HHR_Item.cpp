@@ -6,7 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
-#include "HHR/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_TestPlayerHUD.h"
 
 // Sets default values
 AHHR_Item::AHHR_Item()
@@ -57,33 +57,67 @@ void AHHR_Item::SetItemData(const FItemData& data)
 	}
 }
 
+void AHHR_Item::Interact()
+{
+	// 추후 사용
+
+	// 테스트 용 임시 UI 띄우기
+	SetVisibilityUI(true);
+
+	// 아이템과 캐릭터 상호작용
+	// -> 우리 프젝에서는 캐릭터에서 주로 기능을 수행할듯
+	// => 그래서 사실 Interact() 함수는 안 사용할 듯..
+	// => ?? InteractInterface에 SetvisibilityUI()를 만들어주는 게 맞는지 의문?
+}
+
+void AHHR_Item::SetVisibilityUI(bool Visible)
+{
+	if(!PlayerHUD) return;
+	
+	// Item
+	if(Visible)
+	{
+		PlayerHUD->SetItemDialogText(ItemData.ItemUIName);
+		PlayerHUD->SetItemDialogVisibility(true);
+	}
+	else
+	{
+		PlayerHUD->SetItemDialogVisibility(false);
+	}
+}
+
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
-	if(Cast<ACharacter>(OtherActor))
+	// UI 처리 따로 함수로 빼서 Player Character에서 호출 
+	/*if(Cast<ACharacter>(OtherActor))
 	{
 		// Character이면 UI 띄우기
 		// 임시로 직접 가져와서 띄우기
-		//P_LOG(PolluteLog, Warning, TEXT("UI 띄우기"));
-		if(TestPlayerHUD)
+
+		P_LOG(PolluteLog, Warning, TEXT("UI 띄우기"));
+		if(PlayerHUD)
+
 		{
 			// TODO : 수정
 			P_LOG(PolluteLog, Warning, TEXT("Player HUD 있음"));
-			UHHR_TestPlayerHUD* PlayerHUD = Cast<UHHR_TestPlayerHUD>(TestPlayerHUD);
 			if(PlayerHUD)
 			{
 				PlayerHUD->SetItemDialogText(ItemData.ItemUIName);
 				PlayerHUD->SetItemDialogVisibility(true);
 			}
 		}
-	}
+	}*/
 	
 }
 
 void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	// TODO : 필요 없음 ㅇㅅㅇ
+	// 테스트용
+	SetVisibilityUI(false);
+
 	if(Cast<ACharacter>(OtherActor))
 	{
 		//P_LOG(PolluteLog, Warning, TEXT("UI 안띄우기"));

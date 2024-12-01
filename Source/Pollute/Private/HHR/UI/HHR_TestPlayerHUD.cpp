@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HHR/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_TestPlayerHUD.h"
 
-#include "HHR/HHR_ItemDialog.h"
+#include "HHR/UI/HHR_ItemDialog.h"
 
 
 void UHHR_TestPlayerHUD::NativeConstruct()

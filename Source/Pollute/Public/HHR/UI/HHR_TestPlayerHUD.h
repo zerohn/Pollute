@@ -39,8 +39,10 @@ public:
 
 // Functions
 public:
+	// Item Dialog visibility 설정
 	void SetItemDialogVisibility(bool Visible);
 
+	// ItemDialog wbp Text 세팅
 	void SetItemDialogText(FText Text);
 	
 };
