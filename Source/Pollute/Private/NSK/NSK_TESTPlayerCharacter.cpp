@@ -1,6 +1,8 @@
 #include "NSK/NSK_TESTPlayerCharacter.h"
 #include "Components/InputComponent.h"
 #include <Kismet/GameplayStatics.h>
+#include "EnhancedInputComponent.h"
+#include <EnhancedInputSubsystemInterface.h>
 
 ANSK_TESTPlayerCharacter::ANSK_TESTPlayerCharacter()
     : bHasItem(false), NearbyAltar(nullptr) // 제단 참조 초기화
@@ -17,15 +19,37 @@ void ANSK_TESTPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Player
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    // G키 입력을 제단 상호작용에 연결
-    PlayerInputComponent->BindAction("IA_G", IE_Pressed, this, &ANSK_TESTPlayerCharacter::OnInteract);
+    // Enhanced Input 컴포넌트 확인
+    UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+    if (!EnhancedInputComponent)
+    {
+        P_LOG(PolluteLog, Error, TEXT("EnhancedInputComponent가 없습니다."));
+        return;
+    }
+
+    // G 키 입력 액션 바인딩
+    if (IA_G)
+    {
+        EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ANSK_TESTPlayerCharacter::OnInteract);
+        P_LOG(PolluteLog, Warning, TEXT("G 키 입력 액션 바인딩 완료"));
+    }
+    else
+    {
+        P_LOG(PolluteLog, Error, TEXT("IA_G 입력 액션이 설정되지 않았습니다."));
+    }
 }
 
 void ANSK_TESTPlayerCharacter::OnInteract()
 {
+    P_LOG(PolluteLog, Warning, TEXT("OnInteract 호출"));
     if (NearbyAltar) // 근처에 제단이 있을 때만 상호작용
     {
-        NearbyAltar->HandlePlayerInteraction(this);
+        P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 있음, 상호작용 진행"));
+        NearbyAltar->OnInteract();
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 없음"));
     }
 }
 

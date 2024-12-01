@@ -51,6 +51,7 @@ void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
     if (PlayerCharacter)
     {
         PlayerCharacter->SetNearbyAltar(this); // 제단 참조 설정
+        P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료"));
     }
 }
 
@@ -61,15 +62,22 @@ void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* 
     if (PlayerCharacter)
     {
         PlayerCharacter->SetNearbyAltar(nullptr); // 제단 참조 해제
+        P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 해제 완료"));
     }
 }
 
 void ANSK_Altar::OnInteract()
 {
+    P_LOG(PolluteLog, Warning, TEXT("OnInteract 호출"));
     ANSK_TESTPlayerCharacter* PlayerCharacter = Cast<ANSK_TESTPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     if (PlayerCharacter)
     {
+        P_LOG(PolluteLog, Warning, TEXT("플레이어 캐릭터 감지됨"));
         HandlePlayerInteraction(PlayerCharacter);
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("플레이어 캐릭터 없음"));
     }
 }
 
