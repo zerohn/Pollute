@@ -10,6 +10,7 @@ void AHHR_Gun::Attack()
 {
     Super::Attack();
 
+
     // LineTrace로 총 쏘기
     FVector start = ItemMehsComp->GetSocketLocation("Fire");
     FVector end = start + GetActorRightVector() * Range;
@@ -48,6 +49,7 @@ void AHHR_Gun::Attack()
         DrawDebugLine(GetWorld(), start, end, FColor::Blue, true, 0.25);
     }
 
+    bIsUsed = true;
     DestoryDelay();
     
 }

@@ -14,7 +14,14 @@ class POLLUTE_API AHHR_WeaponItem : public AHHR_Item
 {
 	GENERATED_BODY()
 
+protected:
+    bool bIsUsed = false;
 
+// Getter Setter
+public:
+    bool GetIsUsed() {return bIsUsed;}
+    void SetIsUsed(bool value) {bIsUsed = value;}
+    
 // 공격 함수
 public:
 	virtual void Attack();

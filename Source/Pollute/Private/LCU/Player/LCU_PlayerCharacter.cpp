@@ -398,6 +398,7 @@ void ALCU_PlayerCharacter::Attack()
         UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
         if(animInstance)
         {
+            if(weapon->GetIsUsed()) return;
             if(knife)
             {
                 GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Montage play"));

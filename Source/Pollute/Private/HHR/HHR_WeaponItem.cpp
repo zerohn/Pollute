@@ -27,6 +27,6 @@ void AHHR_WeaponItem::DestoryDelay()
         }
         Destroy();
         
-    }), 5.f, false );
+    }), 1.5f, false );
     
 }

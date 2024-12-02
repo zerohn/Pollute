@@ -95,6 +95,7 @@ void AHHR_KnifeItem::Attack()
 
     // prevEndPos 업뎃
     PrevEndPos = endBlade;
+    bIsUsed = true;
 	
 }
 
