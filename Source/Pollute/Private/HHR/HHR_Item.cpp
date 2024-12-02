@@ -119,6 +119,7 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	// 테스트용
 	SetVisibilityUI(false);
 
+
 	/*if(Cast<ACharacter>(OtherActor))
 	{
 		//P_LOG(PolluteLog, Warning, TEXT("UI 안띄우기"));
@@ -131,5 +132,6 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 			}
 		}
 	}*/
+
 }
 
