@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "KYH_LobbyController.generated.h"
 
-class UCommonUserWidget;
+class UKYH_CommonUserLobby;
 /**
  * 
  */
@@ -20,6 +20,6 @@ public:
     virtual void BeginPlay() override;
 
     UPROPERTY(EditAnywhere, Category = "Session")
-    UCommonUserWidget* LobbyWidget;
+    UKYH_CommonUserLobby* LobbyWidget;
     
 };

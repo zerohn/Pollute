@@ -44,6 +44,9 @@ public:
 	void JoinSelectSession(int32 Idx);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+    UFUNCTION()
+    FName GetCurrentSessionName() { return JoinedSessionName; }
+    
 protected:
     
 	// 세션 생성 키 값
@@ -52,11 +55,13 @@ protected:
 	IOnlineSessionPtr SessionInterface;
 	// 세션 검색 처리
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+    FName JoinedSessionName;
     // 레벨 URL 변수
     UPROPERTY(EditAnywhere, Category = "Session")
     FString SessionLobbyLevelURL;
     UPROPERTY(EditAnywhere, Category = "Session")
     FString MainGameLevelURL;
+    
     
 public:
     
