@@ -13,6 +13,7 @@ void AKYH_LobbyController::BeginPlay()
     CreateWidget<UKYH_CommonUserLobby>(LobbyWidget);
     LobbyWidget->SetOwningPlayer(this);
     LobbyWidget->AddToViewport();
+    LobbyWidget->Init();
     
     SetInputMode(FInputModeUIOnly());
 }

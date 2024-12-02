@@ -48,6 +48,7 @@ void UP_GameInstance::CreateOwnSession(FName SessionName, int32 PlayerLimit)
 	// 세션 정보 설정 (세션 키값, 이름, 노출 정보 설정) 
 	SessionSettings.Set(SessionKey, SessionName.ToString(), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     // 세션 이름 저장
+    JoinedSessionName = SessionName;
 	// 클라이언트의 Unique Net ID 가져오기
 	FUniqueNetIdPtr NetID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
 	// 세션 생성
@@ -60,7 +61,6 @@ void UP_GameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucces
 	if (bWasSuccessful)
 	{
 		P_SCREEN(3.0f, FColor::Green, TEXT("세션 생성 성공"));
-        JoinedSessionName = SessionName;
 		// 세션 만든 클라이언트에서 만들어진 세션의 정해진 시작 레벨로 이동
 		GetWorld()->ServerTravel(SessionLobbyLevelURL + TEXT("?Listen"));
 	}
@@ -138,6 +138,7 @@ void UP_GameInstance::JoinSelectSession(int32 Idx)
 	FString SessionName;
 	// 세션 정보 받아오기
 	SearchResults[Idx].Session.SessionSettings.Get(SessionKey, SessionName);
+    JoinedSessionName = FName(SessionName);
 	// 세션 정보와 일치하는 세션에 참가하기
 	SessionInterface->JoinSession(0, FName(SessionName), SearchResults[Idx]);
 }

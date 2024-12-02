@@ -6,6 +6,7 @@
 #include "CommonUserWidget.h"
 #include "KYH_CommonUserLobby.generated.h"
 
+class AP_GameState;
 class UKYH_PlayerSlot;
 class UVerticalBox;
 class UP_GameInstance;
@@ -23,18 +24,20 @@ class POLLUTE_API UKYH_CommonUserLobby : public UCommonUserWidget
 public:
 
     virtual void NativeConstruct() override;
-
+    void Init();
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
     
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(Replicated, meta = (BindWidget))
     UCommonTextBlock* Text_SessionName;
     UPROPERTY(meta = (BindWidget))
     UKYH_PolluteButtonBase* Btn_Start;
     void StartGame();
-    UPROPERTY(ReplicatedUsing = OnRep_SetPlayerSlot, meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget))
     UVerticalBox* VerticalBox;
-    UFUNCTION()
-    void OnRep_SetPlayerSlot();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetPlayerSlotUI(AP_GameState* GameState);
+    UFUNCTION(NetMulticast, Reliable)
+    void ClientRPC_AddPlayerSlotUI(AP_GameState* GameState);
     UPROPERTY(EditDefaultsOnly, Category = "Session")
     TSubclassOf<UKYH_PlayerSlot> PlayerSlotClass;
     
