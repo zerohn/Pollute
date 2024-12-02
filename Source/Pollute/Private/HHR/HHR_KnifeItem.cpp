@@ -62,8 +62,7 @@ void AHHR_KnifeItem::Attack()
         ObjectQueryParamsB,
         paramsB
     );
-    // prevEndPos 업뎃
-    PrevEndPos = endBlade;
+
     
     if (isHitBlade)
     {
@@ -93,7 +92,9 @@ void AHHR_KnifeItem::Attack()
     {
         DrawDebugLine(GetWorld(), startBlade, endBlade, FColor::Blue, true, 0.25);
     }
-	
+
+    // prevEndPos 업뎃
+    PrevEndPos = endBlade;
 	
 }
 

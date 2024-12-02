@@ -47,5 +47,7 @@ void AHHR_Gun::Attack()
     {
         DrawDebugLine(GetWorld(), start, end, FColor::Blue, true, 0.25);
     }
+
+    DestoryDelay();
     
 }

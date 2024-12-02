@@ -62,7 +62,9 @@ public:
 	void SetHasCurse(bool bCurse) {bHasCurse = bCurse;}
 
     // ## 아이템 Get
-    AActor* GetItem() {return FinalOverapItem;}
+    class AHHR_Item* GetItem() {return ItemInHand;}
+    // 아이템 초기화 함수
+    void InitItem() {ItemInHand = nullptr;}
     
 	// Get, Set 끝
 
@@ -93,6 +95,8 @@ private:
 	ALCU_PlayerCharacter* FinalOverapPlayer;
 	UPROPERTY()
 	AActor* FinalOverapItem;
+    UPROPERTY()
+    class AHHR_Item* ItemInHand;
 	
 	// 성별 변수인데 성별따라 사용하는 애니메이션이 좀다를것
 	// 애님 인스턴스에서 사용되어짐

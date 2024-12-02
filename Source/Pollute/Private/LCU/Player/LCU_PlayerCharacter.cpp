@@ -283,10 +283,10 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 		}
 
 	    // HHR 수정 
-	    AHHR_Item* pickUpItem = Cast<AHHR_Item>(FinalOverapItem);
-	    if(pickUpItem)
+	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+	    if(ItemInHand)
 	    {
-	        pickUpItem->AttachToComponent(
+	        ItemInHand->AttachToComponent(
                 SkeletalMeshComp,                      
                 FAttachmentTransformRules::SnapToTargetIncludingScale, 
                 FName("PickUpSocket")                   
@@ -294,8 +294,10 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 	        P_SCREEN(1.f, FColor::Black, TEXT("TEST"));
 	        bHasItem = true;
 	        // 각 아이템 마다 위치 수정
-	        pickUpItem->SetActorRelativeLocation(pickUpItem->ItemData.ItemLocation);
-	        pickUpItem->SetActorRelativeRotation(pickUpItem->ItemData.ItemRotation);
+	        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
+	        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+	        // Item의 Owner 설정
+	        ItemInHand->SetOwner(this);
 	    }
 		
 	}
@@ -320,6 +322,8 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 		// 드롭 이후 초기화
 		FinalOverapItem = nullptr;
 		bHasItem = false;
+	    // Drop 후에 핸드에 있는 아이템 null 초기화
+	    ItemInHand = nullptr;
 	}	
 }
 
