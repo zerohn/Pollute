@@ -67,10 +67,10 @@ void ALCU_MonsterCharacter::Multicast_OnNotifyAttack_Implementation()
 
     // 트레이스 시작점과 끝점 계산
     FVector Start = SocketLocation;
-    FVector End = Start + SocketForwardVector * 300.0f; // 소켓 ForwardVector 방향으로 1000 단위 거리
+    FVector End = Start + SocketForwardVector * 50.0f; // 소켓 ForwardVector 방향으로 1000 단위 거리
 
     // 박스 크기 설정
-    FVector BoxHalfSize = FVector(10.0f, 10.0f, 50.0f); // 박스 크기 (너비 20, 높이 100)
+    FVector BoxHalfSize = FVector(30.0f, 30.0f, 50.0f); // 박스 크기 (너비 20, 높이 100)
 
     // 트레이스할 객체 유형 설정
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
@@ -92,7 +92,7 @@ void ALCU_MonsterCharacter::Multicast_OnNotifyAttack_Implementation()
         ObjectTypes,
         false,
         IgnoredActors,
-        EDrawDebugTrace::ForDuration, // 디버그용 선
+        EDrawDebugTrace::None, // 디버그용 선
         HitResult,
         true,
         FLinearColor::Red,

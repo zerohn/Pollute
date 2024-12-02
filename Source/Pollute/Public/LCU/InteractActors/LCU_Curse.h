@@ -51,7 +51,7 @@ private:
 	ALCU_PlayerCharacter* OwnerCharacter;
 
 	UPROPERTY()
-	float EndCurseTime = 10.f;
+	float EndCurseTime = 60.f;
 
 	UPROPERTY()
 	float CurrentCurseTime = 10.f;
