@@ -12,7 +12,8 @@
 void UP_GameInstance::Init()
 {
 	Super::Init();
-	
+
+    SetSessionKey(FName("Pollute"));
 	// 서브시스템 참조
 	IOnlineSubsystem* Subsys = IOnlineSubsystem::Get();
 	if (Subsys)
@@ -46,7 +47,7 @@ void UP_GameInstance::CreateOwnSession(FName SessionName, int32 PlayerLimit)
 	SessionSettings.NumPublicConnections = PlayerLimit;
 	// 세션 정보 설정 (세션 키값, 이름, 노출 정보 설정) 
 	SessionSettings.Set(SessionKey, SessionName.ToString(), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-
+    // 세션 이름 저장
 	// 클라이언트의 Unique Net ID 가져오기
 	FUniqueNetIdPtr NetID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
 	// 세션 생성
@@ -59,12 +60,14 @@ void UP_GameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucces
 	if (bWasSuccessful)
 	{
 		P_SCREEN(3.0f, FColor::Green, TEXT("세션 생성 성공"));
+        JoinedSessionName = SessionName;
 		// 세션 만든 클라이언트에서 만들어진 세션의 정해진 시작 레벨로 이동
-		//GetWorld()->ServerTravel(TEXT(""));
+		GetWorld()->ServerTravel(SessionLobbyLevelURL + TEXT("?Listen"));
 	}
 	else
 	{
 		P_SCREEN(3.0f, FColor::Orange, TEXT("세션 생성 실패"));
+	    OnCreateCompleteDelegates.ExecuteIfBound(false);
 	}
 }
 
@@ -144,6 +147,7 @@ void UP_GameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	// 세션 참가 성공 시 동작
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
+	    JoinedSessionName = SessionName;
 		// 세션 레벨 정보 URL 검색
 		FString URL;
 		SessionInterface->GetResolvedConnectString(SessionName, URL);
