@@ -28,7 +28,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -70,6 +70,9 @@ public:
 	void PickUpDropDown();
 	void ShootTrace();
 
+    // 죽으면 부르는 함수
+    void DieProcess();
+
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
@@ -100,6 +103,9 @@ private:
 
 	UPROPERTY()
 	FTimerHandle TraceHandle;
+
+    UPROPERTY(Replicated)
+    int32 HealthCount = 4;
 
 	bool bHasCurse = false;
     bool bHasItem = false;

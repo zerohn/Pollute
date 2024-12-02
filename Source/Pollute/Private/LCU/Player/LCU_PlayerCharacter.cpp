@@ -15,6 +15,8 @@
 #include "GameFramework/Controller.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LCU/InteractActors/LCU_Curse.h"
+#include "LCU/Player/LCU_PlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 
 class UEnhancedInputComponent;
@@ -99,11 +101,6 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	UpdateCameraTransform();
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
-
-	if(bHasCurse && HasAuthority())
-	{
-		P_LOG(PolluteLog, Log, TEXT("%s"), *GetName());
-	}
 }
 
 // Called to bind functionality to input
@@ -119,9 +116,21 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 }
 
+void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
+}
+
 void ALCU_PlayerCharacter::Interact()
 {
-	
+	HealthCount--;
+    if(HealthCount <= 0)
+    {
+        HealthCount = 0;
+        DieProcess();
+    }
 }
 
 AActor* ALCU_PlayerCharacter::GetClosestActorToCamera(const TSet<AActor*>& Actors)
@@ -365,5 +374,14 @@ void ALCU_PlayerCharacter::ShootTrace()
 			InteractInterface->Interact();
 		}
 	}
+}
+
+void ALCU_PlayerCharacter::DieProcess()
+{
+    ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(GetController());
+    if(pc)
+    {
+        pc->ServerRPC_ChangeToSpector();
+    }
 }
 
