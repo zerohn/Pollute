@@ -3,6 +3,8 @@
 
 #include "LCU/Animation/LCU_HumanAnim.h"
 
+#include "HHR/HHR_Gun.h"
+#include "HHR/HHR_KnifeItem.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
 
@@ -34,6 +36,36 @@ void ULCU_HumanAnim::NativeUpdateAnimation(float DeltaTime)
 		
 		// 움직임 상태 업데이트 (GroundSpeed가 특정 값 이상일 때만 True)
 		bIsMove = GroundSpeed > 3.0f; // 임계값은 3.0f로 설정
+
+	    // Gun 있는지 체크
+	    AHHR_Item* item = Cast<AHHR_Item>(LCU_player->GetItem());
+	    ItemInHand = item;
+	    if(item)
+	    {
+	        AHHR_Gun* gun = Cast<AHHR_Gun>(item);
+	        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(item);
+	        if(gun)
+	        {
+	            bIsGunInHand = true;
+	        }
+	        else if(knife)
+	        {
+	            bIsGunInHand = false;
+	            bIsItemInHand = false;
+	        }
+            else
+            {
+                // 일반 아이템
+                bIsGunInHand = false;
+                bIsItemInHand = true;
+            }
+	    }
+        else
+        {
+            bIsItemInHand = false;
+            bIsGunInHand = false;
+        }
+
 	}
 	else
 	{

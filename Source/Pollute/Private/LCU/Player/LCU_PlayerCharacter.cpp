@@ -13,8 +13,11 @@
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
+#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_WeaponItem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LCU/InteractActors/LCU_Curse.h"
+#include "Animation/AnimInstance.h"
 
 
 class UEnhancedInputComponent;
@@ -116,6 +119,7 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		EnhancedInputComponent->BindAction(IA_CarryCurse, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::CarryCurse);
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
+	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
 	}
 }
 
@@ -277,14 +281,25 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 		{
 			return;
 		}
-	
-		FinalOverapItem->AttachToComponent(
-				SkeletalMeshComp,                      
-				FAttachmentTransformRules::SnapToTargetIncludingScale, 
-				FName("PickUpSocket")                   
-			);
-			P_SCREEN(1.f, FColor::Black, TEXT("TEST"));
-			bHasItem = true;
+
+	    // HHR 수정 
+	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+	    if(ItemInHand)
+	    {
+	        ItemInHand->AttachToComponent(
+                SkeletalMeshComp,                      
+                FAttachmentTransformRules::SnapToTargetIncludingScale, 
+                FName("PickUpSocket")                   
+            );
+	        P_SCREEN(1.f, FColor::Black, TEXT("TEST"));
+	        bHasItem = true;
+	        // 각 아이템 마다 위치 수정
+	        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
+	        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+	        // Item의 Owner 설정
+	        ItemInHand->SetOwner(this);
+	    }
+		
 	}
 	// 아이템을 가지고 있으니 드랍다운
 	else
@@ -307,6 +322,8 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 		// 드롭 이후 초기화
 		FinalOverapItem = nullptr;
 		bHasItem = false;
+	    // Drop 후에 핸드에 있는 아이템 null 초기화
+	    ItemInHand = nullptr;
 	}	
 }
 
@@ -365,5 +382,33 @@ void ALCU_PlayerCharacter::ShootTrace()
 			InteractInterface->Interact();
 		}
 	}
+}
+
+void ALCU_PlayerCharacter::Attack()
+{
+    // Item 구하는 코드는 나중에 처리님이 들고 있는 아이템 추가하면 없애도 될듯
+    AHHR_WeaponItem* weapon = Cast<AHHR_WeaponItem>(FinalOverapItem);
+
+    GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Attack Click"));
+	
+    // Item 종류(칼, 총)에 따라 다른 Montage 실행
+    if(weapon)
+    {
+        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(weapon);
+        UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
+        if(animInstance)
+        {
+            if(weapon->GetIsUsed()) return;
+            if(knife)
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Montage play"));
+                animInstance->Montage_Play(KnifeAttackMontage, 1.0f);
+            }
+            else
+            {
+                animInstance->Montage_Play(GunAttackMontage, 1.0f);
+            }
+        }
+    }
 }
 

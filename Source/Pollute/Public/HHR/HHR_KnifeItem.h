@@ -16,9 +16,13 @@ class POLLUTE_API AHHR_KnifeItem : public AHHR_WeaponItem
 
 private:
 	FVector PrevEndPos;
-	
 
+
+    
 public:
 	virtual void Attack() override;
+
+    // 다른 방법 없나 ㅇㅅㅇ
+    void SetPrevPos();
 	
 };

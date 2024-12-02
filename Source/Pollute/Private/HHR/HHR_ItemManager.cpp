@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "HHR/HHR_Item.h"
 #include "Blueprint/UserWidget.h"
+#include "HHR/HHR_Gun.h"
 #include "HHR/HHR_KnifeItem.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 
@@ -41,16 +42,31 @@ void AHHR_ItemManager::BeginPlay()
 		}
 		else if(Pair.Value.ItemType == EItemType::WeaponItem)
 		{
-			AHHR_Item* knife = GetWorld()->SpawnActor<AHHR_KnifeItem>(KnifeItemClass, FVector(0, loc, 50), GetActorRotation());
-			loc += 150;
+		    if(Pair.Value.ItemName.ToString() == FString("Sword"))
+		    {
+		        AHHR_Item* knife = GetWorld()->SpawnActor<AHHR_KnifeItem>(KnifeItemClass, FVector(0, loc, 50), GetActorRotation());
+		        loc += 150;
+		        if(knife)
+		        {
+		            // Item Data Setting
+		            knife->SetItemData(Pair.Value);
+		            // TODO : 수정
+		            knife->PlayerHUD = TestPlayerHUDIns;
+		        }
+		    }
+            else
+            {
+                AHHR_Item* gun = GetWorld()->SpawnActor<AHHR_Gun>(GunItemClass, FVector(0, loc, 50), GetActorRotation());
+                loc += 150;
+                if(gun)
+                {
+                    // Item Data Setting
+                    gun->SetItemData(Pair.Value);
+                    // TODO : 수정
+                    gun->PlayerHUD = TestPlayerHUDIns;
+                }
+            }
 
-			if(knife)
-			{
-				// Item Data Setting
-				knife->SetItemData(Pair.Value);
-				// TODO : 수정
-				knife->PlayerHUD = TestPlayerHUDIns;
-			}
 		}
 	}
 
