@@ -31,6 +31,7 @@ public:
     UCommonTextBlock* Text_SessionName;
     UPROPERTY(meta = (BindWidget))
     UKYH_PolluteButtonBase* Btn_Start;
+    UFUNCTION()
     void StartGame();
     UPROPERTY(meta = (BindWidget))
     UVerticalBox* VerticalBox;

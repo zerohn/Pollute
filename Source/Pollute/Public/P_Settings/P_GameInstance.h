@@ -46,6 +46,8 @@ public:
 
     UFUNCTION()
     FName GetCurrentSessionName() { return JoinedSessionName; }
+
+    FString GetMainGameLevelURL() { return MainGameLevelURL; }
     
 protected:
     

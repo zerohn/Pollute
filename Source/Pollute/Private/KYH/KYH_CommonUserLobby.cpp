@@ -19,7 +19,8 @@
 void UKYH_CommonUserLobby::NativeConstruct()
 {
     Super::NativeConstruct();
-    
+
+    Btn_Start->OnClicked().AddUObject(this, &UKYH_CommonUserLobby::StartGame);
 }
 
 void UKYH_CommonUserLobby::Init()
@@ -46,7 +47,10 @@ void UKYH_CommonUserLobby::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 
 void UKYH_CommonUserLobby::StartGame()
 {
-    
+    //if (GameState->PlayerArray.Num() < 6) return;
+
+    UP_GameInstance* GI = Cast<UP_GameInstance>(GetWorld()->GetGameInstance());
+    GetWorld()->ServerTravel(GI->GetMainGameLevelURL(), true);
 }
 
 void UKYH_CommonUserLobby::ServerRPC_SetPlayerSlotUI_Implementation(AP_GameState* GameState)

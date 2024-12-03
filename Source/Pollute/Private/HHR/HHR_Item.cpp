@@ -5,6 +5,7 @@
 
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 
@@ -28,7 +29,12 @@ AHHR_Item::AHHR_Item()
 	// Overlap 델리게이트 바인딩
 	ItemSphereComp->OnComponentBeginOverlap.AddDynamic(this, &AHHR_Item::OnComponentBeginOverlap);
 	ItemSphereComp->OnComponentEndOverlap.AddDynamic(this, &AHHR_Item::OnComponentEndOverlap);
-	
+    
+    // Init Item Interact Widget
+    ItemInteractWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemInteractWidget"));
+    ItemInteractWidgetComp->SetupAttachment(RootComponent);
+    ItemInteractWidgetComp->SetRelativeLocation(FVector(0, 0, 100.0f));
+    ItemInteractWidgetComp->SetDrawSize(FVector2d(50, 50));
 }
 
 // Called when the game starts or when spawned
@@ -36,7 +42,8 @@ void AHHR_Item::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+    ItemInteractWidgetComp->SetWidgetClass(ItemWidgetClass);
+    ItemInteractWidgetComp->SetVisibility(false);
 }
 
 // Called every frame
@@ -60,9 +67,9 @@ void AHHR_Item::SetItemData(const FItemData& data)
 void AHHR_Item::Interact()
 {
 	// 추후 사용
-
+    
 	// 테스트 용 임시 UI 띄우기
-	SetVisibilityUI(true);
+	//SetVisibilityUI(true);
 
 	// 아이템과 캐릭터 상호작용
 	// -> 우리 프젝에서는 캐릭터에서 주로 기능을 수행할듯
@@ -90,6 +97,7 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    ItemInteractWidgetComp->SetVisibility(true);
 	// UI 처리 따로 함수로 빼서 Player Character에서 호출 
 	/*if(Cast<ACharacter>(OtherActor))
 	{
@@ -117,7 +125,8 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 {
 	// TODO : 필요 없음 ㅇㅅㅇ
 	// 테스트용
-	SetVisibilityUI(false);
+    ItemInteractWidgetComp->SetVisibility(false);
+	//SetVisibilityUI(false);
 
 	/*if(Cast<ACharacter>(OtherActor))
 	{
