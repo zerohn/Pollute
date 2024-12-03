@@ -40,12 +40,12 @@ void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 
     SpawnRandomItems();
 
     // 2. 제단 아이템 선택
-    AssignAltarItems(); // 여기 터짐
+    AssignAltarItems();
 
     // 선택 함수 실행 후 결과로 힌트 스폰 (실행 순서 유의)
     
     // 3. 힌트 스폰
-    SpawnAltarHint(); //여기 터짐
+    SpawnAltarHint();
 }
 
 // 아이템을 랜덤하게 생성하는 함수

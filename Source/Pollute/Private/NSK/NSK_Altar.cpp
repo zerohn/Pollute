@@ -162,26 +162,48 @@ void ANSK_Altar::CheckSlots()
 
 void ANSK_Altar::PlaceItemInSlot(const FItemData& Item, int32 SlotIndex)
 {
-    if (SlotLocations.IsValidIndex(SlotIndex))
+    // 함수 시작 부분 호출 확인
+    P_LOG(PolluteLog, Warning, TEXT("PlaceItemInSlot 호출됨: 슬롯 인덱스: %d, 아이템 이름: %s, 메시 유효성: %s"),
+        SlotIndex,
+        *Item.ItemName.ToString(),
+        Item.ItemMesh ? TEXT("유효함") : TEXT("nullptr"));
+
+    // 슬롯 유효성 검사
+    if (!SlotLocations.IsValidIndex(SlotIndex))
     {
-        UStaticMeshComponent* ItemMesh = NewObject<UStaticMeshComponent>(this);
-        if (Item.ItemMesh)
-        {
-            P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 배치: %s"), SlotIndex, *Item.ItemName.ToString());
-            ItemMesh->SetStaticMesh(Item.ItemMesh);
-        }
-        else
-        {
-            P_LOG(PolluteLog, Error, TEXT("아이템 메시가 비어 있음"));
-        }
-        ItemMesh->SetupAttachment(SlotLocations[SlotIndex]);
-        ItemMesh->SetRelativeLocation(FVector::ZeroVector);
-        ItemMesh->RegisterComponent();
+        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
+        return;
+    }
+
+    UStaticMeshComponent* ItemMesh = NewObject<UStaticMeshComponent>(this);
+    if (!ItemMesh)
+    {
+        P_LOG(PolluteLog, Error, TEXT("UStaticMeshComponent 생성 실패"));
+        return;
+    }
+
+    if (Item.ItemMesh)
+    {
+        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 배치: %s"), SlotIndex, *Item.ItemName.ToString());
+        ItemMesh->SetStaticMesh(Item.ItemMesh);
     }
     else
     {
-        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
+        P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 배치할 아이템의 메시가 비어 있음. 기본 메시를 사용하거나 오류 처리 필요."), SlotIndex);
+        // ItemMesh->SetStaticMesh(DefaultMesh); // 기본 메시가 있다면 설정
     }
+
+    if (!SlotLocations[SlotIndex])
+    {
+        P_LOG(PolluteLog, Error, TEXT("SlotLocations[%d]가 유효하지 않음"), SlotIndex);
+        return;
+    }
+
+    ItemMesh->SetupAttachment(SlotLocations[SlotIndex]);
+    ItemMesh->SetRelativeLocation(FVector::ZeroVector);
+    ItemMesh->RegisterComponent();
+
+    P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 메시 등록 완료"), SlotIndex);
 }
 
 void ANSK_Altar::RemoveItemFromSlot()
