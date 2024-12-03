@@ -36,9 +36,6 @@ public:
     // 근처 제단 설정 함수
     void SetNearbyAltar(ANSK_Altar* Altar);
 
-    // 플레이어가 아이템을 들고 있는지 여부
-    bool bHasItem;
-
 private:
     // 현재 들고 있는 아이템 데이터
     FItemData HeldItem;

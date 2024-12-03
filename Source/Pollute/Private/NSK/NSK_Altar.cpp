@@ -66,13 +66,6 @@ void ANSK_Altar::BeginPlay()
 void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    //ANSK_TESTPlayerCharacter* PlayerCharacter = Cast<ANSK_TESTPlayerCharacter>(OtherActor);
-    //if (PlayerCharacter)
-    //{
-    //    PlayerCharacter->SetNearbyAltar(this); // 제단 참조 설정
-    //    P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료"));
-    //}
-
     if (ANSK_TESTPlayerCharacter* Player = Cast<ANSK_TESTPlayerCharacter>(OtherActor))
     {
         if (!bIsPlayerNearby) // 중복 방지
@@ -87,13 +80,6 @@ void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-    //ANSK_TESTPlayerCharacter* PlayerCharacter = Cast<ANSK_TESTPlayerCharacter>(OtherActor);
-    //if (PlayerCharacter)
-    //{
-    //    PlayerCharacter->SetNearbyAltar(nullptr); // 제단 참조 해제
-    //    P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 해제 완료"));
-    //}
-
     if (ANSK_TESTPlayerCharacter* Player = Cast<ANSK_TESTPlayerCharacter>(OtherActor))
     {
         if (bIsPlayerNearby) // 중복 방지

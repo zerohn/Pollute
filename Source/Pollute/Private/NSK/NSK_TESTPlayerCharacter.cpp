@@ -5,7 +5,7 @@
 #include <EnhancedInputSubsystemInterface.h>
 
 ANSK_TESTPlayerCharacter::ANSK_TESTPlayerCharacter()
-    : bHasItem(false), NearbyAltar(nullptr) // 제단 참조 초기화
+    : NearbyAltar(nullptr) // 제단 참조 초기화
 {
 
 }

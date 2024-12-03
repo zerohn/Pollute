@@ -102,6 +102,8 @@ private:
 	FTimerHandle TraceHandle;
 
 	bool bHasCurse = false;
+
+public:
     bool bHasItem = false;
 };
 
