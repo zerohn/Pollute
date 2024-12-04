@@ -4,6 +4,7 @@
 #include "KYH/KYH_CommonUserLobby.h"
 
 #include "CommonTextBlock.h"
+#include "TimerManager.h"
 #include "Components/Image.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
@@ -21,6 +22,9 @@ void UKYH_CommonUserLobby::NativeConstruct()
     Super::NativeConstruct();
 
     Btn_Start->OnClicked().AddUObject(this, &UKYH_CommonUserLobby::StartGame);
+    
+    FTimerHandle AddSlotHandle;
+    GetWorld()->GetTimerManager().SetTimer(AddSlotHandle, this, &UKYH_CommonUserLobby::Init, 0.1f, false);
 }
 
 void UKYH_CommonUserLobby::Init()
@@ -35,6 +39,7 @@ void UKYH_CommonUserLobby::Init()
     {
         Btn_Start->SetVisibility(ESlateVisibility::Hidden);
     }
+    
     ServerRPC_SetPlayerSlotUI(GameState);
 }
 
@@ -48,15 +53,17 @@ void UKYH_CommonUserLobby::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 void UKYH_CommonUserLobby::StartGame()
 {
     //if (GameState->PlayerArray.Num() < 6) return;
-
+    P_LOG(PolluteLog, Warning, TEXT("Press Start"))
+    if (!GetWorld()->GetFirstPlayerController()->HasAuthority()) return;
     UP_GameInstance* GI = Cast<UP_GameInstance>(GetWorld()->GetGameInstance());
-    GetWorld()->ServerTravel(GI->GetMainGameLevelURL(), true);
+    GetWorld()->ServerTravel(GI->GetMainGameLevelURL() + "?Listen", true);
 }
 
 void UKYH_CommonUserLobby::ServerRPC_SetPlayerSlotUI_Implementation(AP_GameState* GameState)
 {
     if (!GameState) return;
     Text_SessionName->SetText(FText::FromName(Cast<UP_GameInstance>(GameState->GetGameInstance())->GetCurrentSessionName()));
+    
     ClientRPC_AddPlayerSlotUI(GameState);
 }
 
