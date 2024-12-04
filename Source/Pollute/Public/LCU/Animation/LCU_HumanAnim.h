@@ -31,6 +31,14 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
 	bool bIsMove;
-	
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+    bool bIsGunInHand;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+    bool bIsItemInHand;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+    TObjectPtr<class AHHR_Item> ItemInHand;
 	
 };

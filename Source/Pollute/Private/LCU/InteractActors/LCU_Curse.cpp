@@ -71,15 +71,10 @@ void ALCU_Curse::Tick(float DeltaTime)
 			CurrentCurseTime = EndCurseTime;
 			bStartCurseTime = false;
 			
-			//TODO
-			// 사람 플레이어는 죽고 괴물이 되야해여
-			P_SCREEN(5.f, FColor::Cyan, TEXT("ChangeMonster"));
-			
-			// TEST 일단 관전자로 바꾸어본다
 			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
 			if(P_pc)
 			{
-				P_pc->ServerRPC_ChangeToSpector();
+				P_pc->ServerRPC_ChangeToMonster();
 			}
 			
 			AP_GameState* P_GS =  Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));

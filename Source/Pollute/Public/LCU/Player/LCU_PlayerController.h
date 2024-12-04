@@ -33,5 +33,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
 	EPlayerMode PlayerMode = EPlayerMode::Human;
 
-	// 몬스터 클래스 TSubclassOf 로 생성하기 
+	// 몬스터 클래스 TSubclassOf 로 생성하기
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
+    TSubclassOf<class ALCU_MonsterCharacter> MonChar;
 };

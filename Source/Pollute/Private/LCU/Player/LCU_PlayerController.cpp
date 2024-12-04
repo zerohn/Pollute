@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/SpectatorPawn.h"
+#include "LCU/Player/LCU_MonsterCharacter.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
 {
@@ -46,9 +47,19 @@ void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
 
 void ALCU_PlayerController::ServerRPC_ChangeToMonster_Implementation()
 {
-	// TODO
-	// 몬스터로 변하기
+    if(!IsValid(MonChar)) return;
+    // 현재 Possess 하고 있는 폰 가져오기
+    APawn* player = GetPawn();
 
-	
+    UnPossess();
+
+    // Spector Pawn 생성
+    AGameModeBase* gm = GetWorld()->GetAuthGameMode();
+    ALCU_MonsterCharacter* MonSter = GetWorld()->SpawnActor<ALCU_MonsterCharacter>(MonChar,player->GetActorTransform());
+
+    // 생성된 Spector 로 Possess
+    Possess(MonSter);
+
+    player->Destroy();
 }
 

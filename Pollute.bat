@@ -1,0 +1,1 @@
+"D:\Epic Games\UE_5.4\Engine\Binaries\Win64\UnrealEditor.exe" "C:\Pollute\Pollute.uproject" -game -log -ResX=1280 -ResY=720 -WinX=10 -WinY=100
