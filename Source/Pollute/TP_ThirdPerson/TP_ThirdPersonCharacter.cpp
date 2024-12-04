@@ -113,6 +113,7 @@ void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+	    
 	}
 }
 

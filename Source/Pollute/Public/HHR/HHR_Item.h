@@ -31,20 +31,28 @@ public:
 	
 // Components
 protected:
-	// Item mesh comp
+	// Item mesh Component
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
 	UStaticMeshComponent* ItemMehsComp;
 
-	// Item Collision
+	// Item Collision Component
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
 	class USphereComponent* ItemSphereComp;
 
-	
+    // Item Interaction Widget Component
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
+    class UWidgetComponent* ItemInteractWidgetComp;
+    
 public:
+    
 	// Item Data
 	UPROPERTY(BlueprintReadOnly, Category="Item")
 	FItemData ItemData;
-
+    
+    // Item Interaction Widget Data
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item")
+    TSubclassOf<class UUserWidget> ItemWidgetClass;
+    
 /////////////////////////////////////////////
 // Functions
 public:
@@ -55,6 +63,7 @@ public:
 	virtual void Interact() override;
 	// UI 띄우는 함수
 	virtual void SetVisibilityUI(bool Visible) override;
+    
 
 protected:
 	// 충돌 처리 함수

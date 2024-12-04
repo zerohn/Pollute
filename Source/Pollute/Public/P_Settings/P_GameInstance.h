@@ -13,6 +13,7 @@
 
 DECLARE_DELEGATE_ThreeParams(FAddSession, int32, FString, FString)
 DECLARE_DELEGATE_OneParam(FFindComplete, bool)
+DECLARE_DELEGATE_OneParam(FCreateComplete, bool)
 
 UCLASS()
 class POLLUTE_API UP_GameInstance : public UGameInstance
@@ -20,6 +21,7 @@ class POLLUTE_API UP_GameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
+    
 	virtual void Init() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Session")
@@ -42,17 +44,35 @@ public:
 	void JoinSelectSession(int32 Idx);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+    UFUNCTION()
+    FName GetCurrentSessionName() { return JoinedSessionName; }
+
+    FString GetMainGameLevelURL() { return MainGameLevelURL; }
+    
 protected:
+    
 	// 세션 생성 키 값
 	FName SessionKey = NAME_None;
 	// 온라인 세션 인터페이스
 	IOnlineSessionPtr SessionInterface;
 	// 세션 검색 처리
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+    FName JoinedSessionName;
+    // 레벨 URL 변수
+    UPROPERTY(EditAnywhere, Category = "Session")
+    FString SessionLobbyLevelURL;
+    UPROPERTY(EditAnywhere, Category = "Session")
+    FString MainGameLevelURL;
+    
+    
+public:
+    
 	// 세션이 검색 되었을 때 각 세션의 정보를 전달해주는 델리게이트
 	FAddSession OnAddSessionDelegates;
 	// 세션 검색이 완료 될 때 전달해주는 델리게이트
 	FFindComplete OnFindCompleteDelegates;
+    // 세션 생성이 완료 될 때 전달해주는 델리게이트
+    FCreateComplete OnCreateCompleteDelegates;
 private:
 	
 };

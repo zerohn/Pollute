@@ -49,7 +49,9 @@ struct FItemData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	class UTexture2D* ItemImage;
 
-	// 캐릭터 socket에 부착되기 위한 Rotation 값
+	// 캐릭터 socket에 부착되기 위한 Rotation, Location 값
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+    FVector ItemLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FRotator ItemRotation;
 	

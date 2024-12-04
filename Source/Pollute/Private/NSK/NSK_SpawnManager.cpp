@@ -4,8 +4,10 @@
 
 ANSK_SpawnManager::ANSK_SpawnManager()
 {
+
     // 아이템 데이터 테이블 로드 경로
     /*static ConstructorHelpers::FObjectFinder<UDataTable> ItemDataTable(TEXT("/DataTable'/Game/HHR/Item/Data/ItemDataTable.ItemDataTable'"));
+
     if (ItemDataTable.Succeeded())
     {
         SpawnItemDataTable = ItemDataTable.Object;

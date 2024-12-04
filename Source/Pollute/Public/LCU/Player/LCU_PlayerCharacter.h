@@ -28,7 +28,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -60,6 +60,12 @@ public:
 
 	bool GetHasCurse() {return bHasCurse;}
 	void SetHasCurse(bool bCurse) {bHasCurse = bCurse;}
+
+    // ## 아이템 Get
+    class AHHR_Item* GetItem() {return ItemInHand;}
+    // 아이템 초기화 함수
+    void InitItem() {ItemInHand = nullptr;}
+    
 	// Get, Set 끝
 
 	void CarryCurse();
@@ -69,6 +75,13 @@ public:
 	void NetMulticast_CarryCurse();
 	void PickUpDropDown();
 	void ShootTrace();
+
+  // 죽으면 부르는 함수
+  void DieProcess();
+
+  // IA에 Bind될 함수
+  void Attack();
+
 
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
@@ -86,6 +99,8 @@ private:
 	ALCU_PlayerCharacter* FinalOverapPlayer;
 	UPROPERTY()
 	AActor* FinalOverapItem;
+    UPROPERTY()
+    class AHHR_Item* ItemInHand;
 	
 	// 성별 변수인데 성별따라 사용하는 애니메이션이 좀다를것
 	// 애님 인스턴스에서 사용되어짐
@@ -98,8 +113,21 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
 
+    // HHR
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_Attack;
+    
+    // Montage
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
+    class UAnimMontage* KnifeAttackMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
+    class UAnimMontage* GunAttackMontage;
+
 	UPROPERTY()
 	FTimerHandle TraceHandle;
+
+    UPROPERTY(Replicated)
+    int32 HealthCount = 4;
 
 	bool bHasCurse = false;
 
