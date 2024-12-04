@@ -97,7 +97,9 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    
     ItemInteractWidgetComp->SetVisibility(true);
+    
 	// UI 처리 따로 함수로 빼서 Player Character에서 호출 
 	/*if(Cast<ACharacter>(OtherActor))
 	{
@@ -123,9 +125,11 @@ void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent
 void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+
+    ItemInteractWidgetComp->SetVisibility(false);
+    
 	// TODO : 필요 없음 ㅇㅅㅇ
 	// 테스트용
-    ItemInteractWidgetComp->SetVisibility(false);
 	//SetVisibilityUI(false);
 
 	/*if(Cast<ACharacter>(OtherActor))
