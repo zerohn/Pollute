@@ -22,22 +22,41 @@ ANSK_Altar::ANSK_Altar()
         FString SlotName = FString::Printf(TEXT("Slot%d"), i + 1);
         USceneComponent* Slot = CreateDefaultSubobject<USceneComponent>(*SlotName);
         Slot->SetupAttachment(RootComponent);
+
+        // 블루프린트 편집 방지
+        Slot->SetMobility(EComponentMobility::Static);
+        Slot->bEditableWhenInherited = false;
+
         SlotLocations.Add(Slot);
     }
+
+    if (SlotLocations.Num() >= 4)
+    {
+        if (SlotLocations[0]->GetRelativeLocation().IsZero())
+        {
+            SlotLocations[0]->SetRelativeLocation(FVector(-50, 0, 50));
+            SlotLocations[1]->SetRelativeLocation(FVector(-25, 0, 50));
+            SlotLocations[2]->SetRelativeLocation(FVector(25, 0, 50));
+            SlotLocations[3]->SetRelativeLocation(FVector(50, 0, 50));
+        }
+        else
+        {
+            P_LOG(PolluteLog, Warning, TEXT("슬롯 위치가 이미 블루프린트에서 설정됨"));
+        }
+
+        for (int32 i = 0; i < SlotLocations.Num(); i++)
+        {
+            FVector Location = SlotLocations[i]->GetRelativeLocation();
+            P_LOG(PolluteLog, Warning, TEXT("Slot %d Location: %s"), i + 1, *Location.ToString());
+        }
+    }
+
+    bIsPlayerNearby = false;
 }
 
 void ANSK_Altar::BeginPlay()
 {
     Super::BeginPlay();
-
-    // 슬롯 위치 설정
-    if (SlotLocations.Num() >= 4)
-    {
-        SlotLocations[0]->SetRelativeLocation(FVector(50, 50, 50));
-        SlotLocations[1]->SetRelativeLocation(FVector(-50, 50, 50));
-        SlotLocations[2]->SetRelativeLocation(FVector(50, -50, 50));
-        SlotLocations[3]->SetRelativeLocation(FVector(-50, -50, 50));
-    }
 
     // 상호작용 트리거에 오버랩 이벤트 바인딩
     InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &ANSK_Altar::OnOverlapBegin);
@@ -47,22 +66,28 @@ void ANSK_Altar::BeginPlay()
 void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    ANSK_TESTPlayerCharacter* PlayerCharacter = Cast<ANSK_TESTPlayerCharacter>(OtherActor);
-    if (PlayerCharacter)
+    if (ANSK_TESTPlayerCharacter* Player = Cast<ANSK_TESTPlayerCharacter>(OtherActor))
     {
-        PlayerCharacter->SetNearbyAltar(this); // 제단 참조 설정
-        P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료"));
+        if (!bIsPlayerNearby) // 중복 방지
+        {
+            bIsPlayerNearby = true;
+            Player->SetNearbyAltar(this);
+            P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료: %s"), *GetName());
+        }
     }
 }
 
 void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-    ANSK_TESTPlayerCharacter* PlayerCharacter = Cast<ANSK_TESTPlayerCharacter>(OtherActor);
-    if (PlayerCharacter)
+    if (ANSK_TESTPlayerCharacter* Player = Cast<ANSK_TESTPlayerCharacter>(OtherActor))
     {
-        PlayerCharacter->SetNearbyAltar(nullptr); // 제단 참조 해제
-        P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 해제 완료"));
+        if (bIsPlayerNearby) // 중복 방지
+        {
+            bIsPlayerNearby = false;
+            Player->SetNearbyAltar(nullptr);
+            P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 해제 완료"));
+        }
     }
 }
 
@@ -85,9 +110,11 @@ void ANSK_Altar::HandlePlayerInteraction(ANSK_TESTPlayerCharacter* PlayerCharact
 {
     if (!PlayerCharacter || !PlayerCharacter->bHasItem)
     {
+        P_LOG(PolluteLog, Warning, TEXT("플레이어가 아이템을 들고 있지 않음"));
         return; // 플레이어가 아이템이 없으면 무시
     }
 
+    P_LOG(PolluteLog, Warning, TEXT("플레이어가 아이템을 들고 있음"));
     FItemData HeldItem = PlayerCharacter->GetHeldItem(); // 플레이어의 아이템 가져오기
     AddItemToSlot(HeldItem); // 제단에 아이템 추가
     PlayerCharacter->ResetHeldItem(); // 플레이어 아이템 초기화
@@ -135,15 +162,48 @@ void ANSK_Altar::CheckSlots()
 
 void ANSK_Altar::PlaceItemInSlot(const FItemData& Item, int32 SlotIndex)
 {
-    if (SlotLocations.IsValidIndex(SlotIndex))
+    // 함수 시작 부분 호출 확인
+    P_LOG(PolluteLog, Warning, TEXT("PlaceItemInSlot 호출됨: 슬롯 인덱스: %d, 아이템 이름: %s, 메시 유효성: %s"),
+        SlotIndex,
+        *Item.ItemName.ToString(),
+        Item.ItemMesh ? TEXT("유효함") : TEXT("nullptr"));
+
+    // 슬롯 유효성 검사
+    if (!SlotLocations.IsValidIndex(SlotIndex))
     {
-        // 슬롯 위치에 아이템 메시 배치
-        UStaticMeshComponent* ItemMesh = NewObject<UStaticMeshComponent>(this);
-        ItemMesh->SetStaticMesh(Item.ItemMesh); // 아이템 메시 설정
-        ItemMesh->SetupAttachment(SlotLocations[SlotIndex]);
-        ItemMesh->SetRelativeLocation(FVector::ZeroVector);
-        ItemMesh->RegisterComponent();
+        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
+        return;
     }
+
+    UStaticMeshComponent* ItemMesh = NewObject<UStaticMeshComponent>(this);
+    if (!ItemMesh)
+    {
+        P_LOG(PolluteLog, Error, TEXT("UStaticMeshComponent 생성 실패"));
+        return;
+    }
+
+    if (Item.ItemMesh)
+    {
+        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 배치: %s"), SlotIndex, *Item.ItemName.ToString());
+        ItemMesh->SetStaticMesh(Item.ItemMesh);
+    }
+    else
+    {
+        P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 배치할 아이템의 메시가 비어 있음. 기본 메시를 사용하거나 오류 처리 필요."), SlotIndex);
+        // ItemMesh->SetStaticMesh(DefaultMesh); // 기본 메시가 있다면 설정
+    }
+
+    if (!SlotLocations[SlotIndex])
+    {
+        P_LOG(PolluteLog, Error, TEXT("SlotLocations[%d]가 유효하지 않음"), SlotIndex);
+        return;
+    }
+
+    ItemMesh->SetupAttachment(SlotLocations[SlotIndex]);
+    ItemMesh->SetRelativeLocation(FVector::ZeroVector);
+    ItemMesh->RegisterComponent();
+
+    P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 메시 등록 완료"), SlotIndex);
 }
 
 void ANSK_Altar::RemoveItemFromSlot()

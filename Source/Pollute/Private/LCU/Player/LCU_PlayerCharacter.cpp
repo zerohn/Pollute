@@ -105,6 +105,12 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	UpdateCameraTransform();
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
+
+	if(bHasCurse && HasAuthority())
+	{
+		//P_LOG(PolluteLog, Log, TEXT("%s"), *GetName());
+	}
+
 }
 
 // Called to bind functionality to input
@@ -332,9 +338,11 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 		// 드롭 이후 초기화
 		FinalOverapItem = nullptr;
 		bHasItem = false;
+
 	    // Drop 후에 핸드에 있는 아이템 null 초기화
 	    ItemInHand = nullptr;
 	}	
+
 }
 
 void ALCU_PlayerCharacter::ShootTrace()

@@ -135,13 +135,14 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	/*if(Cast<ACharacter>(OtherActor))
 	{
 		//P_LOG(PolluteLog, Warning, TEXT("UI 안띄우기"));
-		if(TestPlayerHUD)
+		/*if(TestPlayerHUD)
 		{
 			UHHR_TestPlayerHUD* PlayerHUD = Cast<UHHR_TestPlayerHUD>(TestPlayerHUD);
 			if(PlayerHUD)
 			{
 				PlayerHUD->SetItemDialogVisibility(false);
 			}
+
 		}
 	}*/
 

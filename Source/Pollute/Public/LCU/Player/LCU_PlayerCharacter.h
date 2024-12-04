@@ -130,6 +130,8 @@ private:
     int32 HealthCount = 4;
 
 	bool bHasCurse = false;
+
+public:
     bool bHasItem = false;
 };
 
