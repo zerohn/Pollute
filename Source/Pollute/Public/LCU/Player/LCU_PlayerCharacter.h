@@ -118,10 +118,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
 
-    // NSK
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-    UInputAction* IA_G;
-
     // HHR
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
@@ -139,5 +135,27 @@ private:
     int32 HealthCount = 4;
 
 	bool bHasCurse = false;
-    bool bHasItem = false;
+
+    // NSK
+    public:
+
+        bool bHasItem = false;
+
+        // 제단 상호작용 키
+        UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+        UInputAction* IA_G;
+
+        // 현재 근처 제단
+        UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+        ANSK_Altar* NearbyAltar;
+
+        // 근처 제단 설정 함수
+        void SetNearbyAltar(ANSK_Altar* Altar);
+
+        // 현재 플레이어가 들고 있는 아이템 데이터
+        UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
+        FItemData HeldItem;
+
+        // 플레이어가 들고 있는 아이템 반환 함수
+        FItemData GetHeldItem() const;
 };

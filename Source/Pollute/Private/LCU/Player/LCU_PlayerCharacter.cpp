@@ -128,28 +128,6 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 }
 
-// NSK 캐릭터 제단 상호작용 로직
-void ALCU_PlayerCharacter::OnInteract()
-{
-    if (NearbyAltar && HeldItem.ItemMesh)
-    {
-        // 제단에 들고 있는 아이템 전달
-        NearbyAltar->AddItemToSlot(ItemInHand->ItemData);
-        P_LOG(PolluteLog, Warning, TEXT("아이템 %s를 제단에 등록"), *ItemInHand->ItemData.ItemName.ToString());
-
-        // 아이템 등록 후 캐릭터 상태 초기화
-        PickUpDropDown();
-    }
-    else if (!HeldItem.ItemMesh)
-    {
-        P_LOG(PolluteLog, Error, TEXT("현재 들고 있는 아이템이 없습니다!"));
-    }
-    else if (!NearbyAltar)
-    {
-        P_LOG(PolluteLog, Error, TEXT("주변에 제단이 없습니다!"));
-    }
-}
-
 void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -463,3 +441,35 @@ void ALCU_PlayerCharacter::Attack()
     }
 }
 
+// NSK
+void ALCU_PlayerCharacter::SetNearbyAltar(ANSK_Altar* Altar)
+{
+    NearbyAltar = Altar;
+}
+
+FItemData ALCU_PlayerCharacter::GetHeldItem() const
+{
+    return HeldItem;
+}
+
+// NSK 캐릭터 제단 상호작용 로직
+void ALCU_PlayerCharacter::OnInteract()
+{
+    if (NearbyAltar && HeldItem.ItemMesh)
+    {
+        // 제단에 들고 있는 아이템 전달
+        NearbyAltar->AddItemToSlot(ItemInHand->ItemData);
+        P_LOG(PolluteLog, Warning, TEXT("아이템 %s를 제단에 등록"), *ItemInHand->ItemData.ItemName.ToString());
+
+        // 아이템 등록 후 캐릭터 상태 초기화
+        PickUpDropDown();
+    }
+    else if (!HeldItem.ItemMesh)
+    {
+        P_LOG(PolluteLog, Error, TEXT("현재 들고 있는 아이템이 없습니다!"));
+    }
+    else if (!NearbyAltar)
+    {
+        P_LOG(PolluteLog, Error, TEXT("주변에 제단이 없습니다!"));
+    }
+}

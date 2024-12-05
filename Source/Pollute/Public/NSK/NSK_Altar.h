@@ -50,7 +50,7 @@ public:
 
     // **플레이어 상호작용 처리**
     UFUNCTION(BlueprintCallable, Category = "Altar")
-    void HandlePlayerInteraction(class ANSK_TESTPlayerCharacter* PlayerCharacter);
+    void HandlePlayerInteraction(class ALCU_PlayerCharacter* PlayerCharacter);
 
     // **슬롯에 아이템 추가**
     UFUNCTION(BlueprintCallable, Category = "Altar")

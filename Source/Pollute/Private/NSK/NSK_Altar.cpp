@@ -1,9 +1,9 @@
 #include "NSK/NSK_Altar.h"
-#include <NSK/NSK_TESTPlayerCharacter.h>
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include <LCU/Player/LCU_PlayerCharacter.h>
 
 ANSK_Altar::ANSK_Altar()
 {
@@ -70,7 +70,7 @@ void ANSK_Altar::BeginPlay()
 void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (ANSK_TESTPlayerCharacter* Player = Cast<ANSK_TESTPlayerCharacter>(OtherActor))
+    if (ALCU_PlayerCharacter* Player = Cast<ALCU_PlayerCharacter>(OtherActor))
     {
         if (!bIsPlayerNearby) // 중복 방지
         {
@@ -84,7 +84,7 @@ void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-    if (ANSK_TESTPlayerCharacter* Player = Cast<ANSK_TESTPlayerCharacter>(OtherActor))
+    if (ALCU_PlayerCharacter* Player = Cast<ALCU_PlayerCharacter>(OtherActor))
     {
         if (bIsPlayerNearby) // 중복 방지
         {
@@ -98,7 +98,7 @@ void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* 
 void ANSK_Altar::OnInteract()
 {
     P_LOG(PolluteLog, Warning, TEXT("OnInteract 호출"));
-    ANSK_TESTPlayerCharacter* PlayerCharacter = Cast<ANSK_TESTPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     if (PlayerCharacter)
     {
         P_LOG(PolluteLog, Warning, TEXT("플레이어 캐릭터 감지됨"));
@@ -110,7 +110,7 @@ void ANSK_Altar::OnInteract()
     }
 }
 
-void ANSK_Altar::HandlePlayerInteraction(ANSK_TESTPlayerCharacter* PlayerCharacter)
+void ANSK_Altar::HandlePlayerInteraction(ALCU_PlayerCharacter* PlayerCharacter)
 {
     if (!PlayerCharacter || !PlayerCharacter->bHasItem)
     {
@@ -119,9 +119,13 @@ void ANSK_Altar::HandlePlayerInteraction(ANSK_TESTPlayerCharacter* PlayerCharact
     }
 
     P_LOG(PolluteLog, Warning, TEXT("플레이어가 아이템을 들고 있음"));
-    FItemData HeldItem = PlayerCharacter->GetHeldItem(); // 플레이어의 아이템 가져오기
+    FItemData HeldItem = PlayerCharacter->HeldItem; // 플레이어의 아이템 가져오기
     AddItemToSlot(HeldItem); // 제단에 아이템 추가
     PlayerCharacter->PickUpDropDown(); // 플레이어 아이템 초기화
+
+    // 플레이어의 아이템 상태 초기화
+    PlayerCharacter->HeldItem = FItemData(); // 데이터 초기화
+    PlayerCharacter->bHasItem = false;       // 아이템을 들고 있지 않은 상태로 전환
 }
 
 void ANSK_Altar::AddItemToSlot(const FItemData& ItemData)
