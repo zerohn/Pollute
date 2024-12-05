@@ -76,11 +76,10 @@ public:
 	void PickUpDropDown();
 	void ShootTrace();
 
-  // 죽으면 부르는 함수
-  void DieProcess();
-
-  // IA에 Bind될 함수
-  void Attack();
+    // 죽으면 부르는 함수
+    void DieProcess();
+    // IA에 Bind될 함수
+    void Attack();
 
 
 private:
@@ -113,7 +112,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
 
-    // HHR
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
     
@@ -132,6 +130,7 @@ private:
 	bool bHasCurse = false;
 
 public:
+    // 필요 없음 
     bool bHasItem = false;
 };
 

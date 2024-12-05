@@ -6,6 +6,13 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 
+AHHR_Gun::AHHR_Gun()
+{
+    // Weapon type 설정
+    WeaponType = EWeaponType::TaserGun;
+    
+}
+
 void AHHR_Gun::Attack()
 {
     Super::Attack();

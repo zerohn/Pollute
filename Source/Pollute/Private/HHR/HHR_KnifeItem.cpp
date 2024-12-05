@@ -7,6 +7,11 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 
+AHHR_KnifeItem::AHHR_KnifeItem()
+{
+    WeaponType = EWeaponType::Knife;
+}
+
 void AHHR_KnifeItem::Attack()
 {
 	// Notify를 통해서 호출됨

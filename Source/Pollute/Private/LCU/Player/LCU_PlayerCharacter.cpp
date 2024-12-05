@@ -172,6 +172,8 @@ AActor* ALCU_PlayerCharacter::GetClosestActorToCamera(const TSet<AActor*>& Actor
 void ALCU_PlayerCharacter::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    // 저주 pass 동작 등 
+    
 	if (OtherActor && OtherActor != this && OtherComp)
 	{
 		// 충돌 채널 가져오기
@@ -271,7 +273,9 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
 
 void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
 {
-	// 저주를 옮겨요	
+	// 저주를 옮겨요
+    
+    // ? FinalOverlapPlayer와 저주를 옮기고 싶은 Player는 다르지 않나여..?
 	FinalOverapPlayer->SetHasCurse(true);
 	bHasCurse = false;
 	ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
@@ -290,7 +294,7 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 	if(!FinalOverapItem) return;
 	
 	// 현재 아이템이 없으니 픽업
-	if(!bHasItem)
+	if(!ItemInHand)
 	{		
 		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
 		if (!SkeletalMeshComp)
@@ -302,12 +306,12 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
 	    if(ItemInHand)
 	    {
+	        // TODO : Attach를 Multicast로 싸줘야 함 
 	        ItemInHand->AttachToComponent(
                 SkeletalMeshComp,                      
                 FAttachmentTransformRules::SnapToTargetIncludingScale, 
                 FName("PickUpSocket")                   
             );
-	        P_SCREEN(1.f, FColor::Black, TEXT("TEST"));
 	        bHasItem = true;
 	        // 각 아이템 마다 위치 수정
 	        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
@@ -328,7 +332,8 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 
 		// FinalOverlapItem을 월드에 분리
 		
-			// 아이템의 부모-자식 관계 해제
+	    // 아이템의 부모-자식 관계 해제
+	    // TODO : Detach를 Multicast로 싸줘야 함 
 		FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
 		// 위치 및 회전 설정
@@ -356,6 +361,7 @@ void ALCU_PlayerCharacter::ShootTrace()
 	// 트레이스 시작점과 끝점 계산
 	FVector Start = CameraLocation;
 	FVector End = Start + CameraRotation.Vector() * 1000.0f; // 카메라 방향으로 1000 단위 거리
+    DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.2f);
 
 	//  박스 크기 설정
 	FVector BoxHalfSize = FVector(10.0f, 10.0f, 50.0f); // 박스 크기 (너비 20, 높이 100)
@@ -415,27 +421,29 @@ void ALCU_PlayerCharacter::DieProcess()
 void ALCU_PlayerCharacter::Attack()
 {
     // Item 구하는 코드는 나중에 처리님이 들고 있는 아이템 추가하면 없애도 될듯
-    AHHR_WeaponItem* weapon = Cast<AHHR_WeaponItem>(FinalOverapItem);
-
-    GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Attack Click"));
+    AHHR_WeaponItem* weapon = Cast<AHHR_WeaponItem>(ItemInHand);
 	
     // Item 종류(칼, 총)에 따라 다른 Montage 실행
     if(weapon)
     {
-        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(weapon);
         UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
+        
         if(animInstance)
         {
             if(weapon->GetIsUsed()) return;
-            if(knife)
+
+            switch(weapon->GetWeaponType())
             {
-                GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Montage play"));
+            case EWeaponType::Knife:
                 animInstance->Montage_Play(KnifeAttackMontage, 1.0f);
-            }
-            else
-            {
+                break;
+            case EWeaponType::TaserGun:
                 animInstance->Montage_Play(GunAttackMontage, 1.0f);
+                break;
+            default:
+                break;
             }
+
         }
 
     }
