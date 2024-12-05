@@ -137,6 +137,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 void ALCU_PlayerCharacter::Interact()
 {
 	HealthCount--;
+    P_SCREEN(3.f, FColor::Magenta, TEXT("%s"), *GetName());
     if(HealthCount <= 0)
     {
         HealthCount = 0;
@@ -394,11 +395,11 @@ void ALCU_PlayerCharacter::ShootTrace()
 	{
 		AActor* HitActor = HitResult.GetActor();
 
-		ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
-		if(InteractInterface)
-		{
-			InteractInterface->Interact();
-		}
+		//ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
+		//if(InteractInterface)
+		//{
+		//	InteractInterface->Interact();
+		//}
 	}
 }
 

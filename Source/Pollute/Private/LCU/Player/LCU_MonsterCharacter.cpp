@@ -61,6 +61,7 @@ void ALCU_MonsterCharacter::Attack()
 
 void ALCU_MonsterCharacter::Multicast_OnNotifyAttack_Implementation()
 {
+    UE_LOG(LogTemp, Warning, TEXT("1111"));
     // AttackSocket의 위치와 방향 가져오기
     FVector SocketLocation = GetMesh()->GetSocketLocation(TEXT("AttackSocket"));
     FVector SocketForwardVector = GetMesh()->GetSocketRotation(TEXT("AttackSocket")).Vector();
@@ -92,12 +93,12 @@ void ALCU_MonsterCharacter::Multicast_OnNotifyAttack_Implementation()
         ObjectTypes,
         false,
         IgnoredActors,
-        EDrawDebugTrace::None, // 디버그용 선
+        EDrawDebugTrace::ForDuration, // 디버그용 선
         HitResult,
         true,
         FLinearColor::Red,
         FLinearColor::Green,
-        5.0f
+        4.0f
     );
 
     if (bHit)
