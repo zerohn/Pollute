@@ -42,7 +42,7 @@ public:
 
     // **슬롯 위치들**
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Altar")
-    TArray<USceneComponent*> SlotLocations;
+    TArray<UStaticMeshComponent*> SlotLocations;
 
     // **상호작용 트리거**
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Altar")
@@ -54,7 +54,11 @@ public:
 
     // **슬롯에 아이템 추가**
     UFUNCTION(BlueprintCallable, Category = "Altar")
-    void AddItemToSlot(FItemData Item);
+    void AddItemToSlot(const FItemData& ItemData);
+
+    // 슬롯에 등록된 아이템 데이터 관리 배열
+    UPROPERTY()
+    TArray<FItemData> SlotItems;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Altar")
     bool bIsPlayerNearby;  // 플레이어가 근처에 있는지 여부
@@ -78,7 +82,7 @@ private:
     void CheckSlots();
 
     // **슬롯 위치에 아이템 배치**
-    void PlaceItemInSlot(const FItemData& Item, int32 SlotIndex);
+    void PlaceItemInSlot(const FItemData& ItemMesh, int32 SlotIndex);
 
     // 슬롯 아이템 제거
     void RemoveItemFromSlot();

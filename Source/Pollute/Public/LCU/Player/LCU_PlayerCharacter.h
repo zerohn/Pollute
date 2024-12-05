@@ -6,6 +6,8 @@
 #include "LCU/Interfaces/LCU_InteractInterface.h"
 #include "Pollute/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "Pollute/Public/LCU/LCU_Properties/LCU_Property.h"
+#include "NSK/NSK_Altar.h"
+
 #include "LCU_PlayerCharacter.generated.h"
 
 UCLASS()
@@ -82,6 +84,9 @@ public:
   // IA에 Bind될 함수
   void Attack();
 
+  // NSK G키 상호작용 처리 함수
+  void OnInteract();
+
 
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
@@ -113,6 +118,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
 
+    // NSK
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* IA_G;
+
     // HHR
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
@@ -130,8 +139,5 @@ private:
     int32 HealthCount = 4;
 
 	bool bHasCurse = false;
-
-public:
     bool bHasItem = false;
 };
-

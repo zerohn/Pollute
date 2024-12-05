@@ -19,36 +19,40 @@ ANSK_Altar::ANSK_Altar()
     // 슬롯 위치 초기화
     for (int32 i = 0; i < 4; i++)
     {
+        // 슬롯 이름 생성
         FString SlotName = FString::Printf(TEXT("Slot%d"), i + 1);
-        USceneComponent* Slot = CreateDefaultSubobject<USceneComponent>(*SlotName);
+
+        // 슬롯 생성 및 루트에 부착
+        UStaticMeshComponent* Slot = CreateDefaultSubobject<UStaticMeshComponent>(*SlotName);
         Slot->SetupAttachment(RootComponent);
 
-        // 블루프린트 편집 방지
-        Slot->SetMobility(EComponentMobility::Static);
-        Slot->bEditableWhenInherited = false;
+        // 슬롯 초기 위치 설정
+        FVector SlotLocation;
+        switch (i)
+        {
+        case 0:
+            SlotLocation = FVector(-50, 0, 50);
+            break;
+        case 1:
+            SlotLocation = FVector(-25, 0, 50);
+            break;
+        case 2:
+            SlotLocation = FVector(25, 0, 50);
+            break;
+        case 3:
+            SlotLocation = FVector(50, 0, 50);
+            break;
+        }
+        Slot->SetRelativeLocation(SlotLocation);
 
+        // 슬롯을 배열에 추가
         SlotLocations.Add(Slot);
-    }
 
-    if (SlotLocations.Num() >= 4)
-    {
-        if (SlotLocations[0]->GetRelativeLocation().IsZero())
-        {
-            SlotLocations[0]->SetRelativeLocation(FVector(-50, 0, 50));
-            SlotLocations[1]->SetRelativeLocation(FVector(-25, 0, 50));
-            SlotLocations[2]->SetRelativeLocation(FVector(25, 0, 50));
-            SlotLocations[3]->SetRelativeLocation(FVector(50, 0, 50));
-        }
-        else
-        {
-            P_LOG(PolluteLog, Warning, TEXT("슬롯 위치가 이미 블루프린트에서 설정됨"));
-        }
+        // 슬롯 아이템 배열 초기화
+        SlotItems.Init(FItemData(), SlotLocations.Num());
 
-        for (int32 i = 0; i < SlotLocations.Num(); i++)
-        {
-            FVector Location = SlotLocations[i]->GetRelativeLocation();
-            P_LOG(PolluteLog, Warning, TEXT("Slot %d Location: %s"), i + 1, *Location.ToString());
-        }
+        // 로그 출력
+        P_LOG(PolluteLog, Warning, TEXT("Slot %d initialized at: %s"), i + 1, *SlotLocation.ToString());
     }
 
     bIsPlayerNearby = false;
@@ -117,18 +121,28 @@ void ANSK_Altar::HandlePlayerInteraction(ANSK_TESTPlayerCharacter* PlayerCharact
     P_LOG(PolluteLog, Warning, TEXT("플레이어가 아이템을 들고 있음"));
     FItemData HeldItem = PlayerCharacter->GetHeldItem(); // 플레이어의 아이템 가져오기
     AddItemToSlot(HeldItem); // 제단에 아이템 추가
-    PlayerCharacter->ResetHeldItem(); // 플레이어 아이템 초기화
+    PlayerCharacter->PickUpDropDown(); // 플레이어 아이템 초기화
 }
 
-void ANSK_Altar::AddItemToSlot(FItemData Item)
+void ANSK_Altar::AddItemToSlot(const FItemData& ItemData)
 {
-    if (Slots.Num() < 4)
+    for (int32 i = 0; i < SlotLocations.Num(); i++)
     {
-        Slots.Add(Item);
-        PlaceItemInSlot(Item, Slots.Num() - 1); // 슬롯 위치에 배치
+        // 빈 슬롯 찾기
+        if (!SlotItems[i].ItemMesh)
+        {
+            // 슬롯에 아이템 등록
+            SlotItems[i] = ItemData;
 
-        P_LOG(PolluteLog, Warning, TEXT("재단에 아이템 추가: %s"), *Item.ItemName.ToString());
+            // 슬롯에 아이템 배치
+            PlaceItemInSlot(ItemData, i);
+
+            P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 등록: %s"), i, *ItemData.ItemName.ToString());
+            return;
+        }
     }
+
+    P_LOG(PolluteLog, Warning, TEXT("슬롯이 가득 찼습니다. 더 이상 아이템을 등록할 수 없습니다."));
 
     if (Slots.Num() == 4)
     {
@@ -142,68 +156,57 @@ void ANSK_Altar::CheckSlots()
     {
         ShowSuccessMessage();
 
-        P_LOG(PolluteLog, Warning, TEXT("저주가 약해지면서 정문이 열립니다!"));
+        P_LOG(PolluteLog, Warning, TEXT("저주가 약해지면서 정문이 열립니다! 플레이어가 지나갈 때 탈출 처리 (로비 or 관전자 모드 선택 UI)"));
         if (DoorController)
         {
             DoorController->OpenDoor(); // 정문 열기
         }
 
-        // TODO: 플레이어가 지나갈 때 탈출 처리 (로비 or 관전자 모드)
+        // TODO: 플레이어가 지나갈 때 탈출 처리 (로비 or 관전자 모드 선택 UI)
     }
     else
     {
         ShowFailureMessage();
 
-        P_LOG(PolluteLog, Warning, TEXT("저주가 강력해지면서 죽음이 가까워 집니다."));
+        P_LOG(PolluteLog, Warning, TEXT("저주가 강력해지면서 죽음이 가까워 집니다. TODO: 저주 패널티 구현"));
 
         // TODO: 저주 패널티 구현
     }
 }
 
-void ANSK_Altar::PlaceItemInSlot(const FItemData& Item, int32 SlotIndex)
+void ANSK_Altar::PlaceItemInSlot(const FItemData& SlotItem, int32 SlotIndex)
 {
-    // 함수 시작 부분 호출 확인
-    P_LOG(PolluteLog, Warning, TEXT("PlaceItemInSlot 호출됨: 슬롯 인덱스: %d, 아이템 이름: %s, 메시 유효성: %s"),
-        SlotIndex,
-        *Item.ItemName.ToString(),
-        Item.ItemMesh ? TEXT("유효함") : TEXT("nullptr"));
-
-    // 슬롯 유효성 검사
-    if (!SlotLocations.IsValidIndex(SlotIndex))
+    if (SlotLocations.IsValidIndex(SlotIndex))
     {
-        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
-        return;
-    }
+        UStaticMeshComponent* SlotLocation = SlotLocations[SlotIndex];
+        if (!SlotLocation)
+        {
+            P_LOG(PolluteLog, Error, TEXT("슬롯 %d의 컴포넌트가 유효하지 않습니다."), SlotIndex);
+            return;
+        }
 
-    UStaticMeshComponent* ItemMesh = NewObject<UStaticMeshComponent>(this);
-    if (!ItemMesh)
-    {
-        P_LOG(PolluteLog, Error, TEXT("UStaticMeshComponent 생성 실패"));
-        return;
-    }
+        // 기존 메시를 제거하고 새 메시 컴포넌트 추가
+        UStaticMeshComponent* ItemMeshComp = NewObject<UStaticMeshComponent>(this);
+        if (SlotItem.ItemMesh)
+        {
+            ItemMeshComp->SetStaticMesh(SlotItem.ItemMesh);
+            P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 메시 등록: %s"), SlotIndex, *SlotItem.ItemName.ToString());
+        }
+        else
+        {
+            P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 아이템 메시가 없습니다."), SlotIndex);
+            return;
+        }
 
-    if (Item.ItemMesh)
-    {
-        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 배치: %s"), SlotIndex, *Item.ItemName.ToString());
-        ItemMesh->SetStaticMesh(Item.ItemMesh);
+        // 메시 컴포넌트를 슬롯에 연결
+        ItemMeshComp->SetupAttachment(SlotLocation);
+        ItemMeshComp->SetRelativeLocation(FVector::ZeroVector); // 슬롯 중앙 배치를 위한
+        ItemMeshComp->RegisterComponent();
     }
     else
     {
-        P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 배치할 아이템의 메시가 비어 있음. 기본 메시를 사용하거나 오류 처리 필요."), SlotIndex);
-        // ItemMesh->SetStaticMesh(DefaultMesh); // 기본 메시가 있다면 설정
+        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
     }
-
-    if (!SlotLocations[SlotIndex])
-    {
-        P_LOG(PolluteLog, Error, TEXT("SlotLocations[%d]가 유효하지 않음"), SlotIndex);
-        return;
-    }
-
-    ItemMesh->SetupAttachment(SlotLocations[SlotIndex]);
-    ItemMesh->SetRelativeLocation(FVector::ZeroVector);
-    ItemMesh->RegisterComponent();
-
-    P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 메시 등록 완료"), SlotIndex);
 }
 
 void ANSK_Altar::RemoveItemFromSlot()
