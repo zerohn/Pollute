@@ -30,14 +30,16 @@ public:
 public:
     void Attack();
     UFUNCTION(Server, Reliable)
+    void ServerRPC_OnSuccessHit(FHitResult HitResult, bool bHit);
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_OnSuccessHit(FHitResult HitResult, bool bHit);
+    UFUNCTION(Server, Reliable)
     void ServerRPC_Attack();
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_Attack();
     
-    UFUNCTION(Server, Reliable)
-    void ServerRPC_OnNotifyAttack();
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_OnNotifyAttack();
+    UFUNCTION()
+    void OnNotifyAttack();
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input)
     class UInputAction* IA_Attack;
@@ -49,6 +51,12 @@ public:
     class UAnimMontage* AttackMontage;
     
 
-    UPROPERTY(Replicated)
+    //UPROPERTY(Replicated)
+    UPROPERTY()
     bool bCanAttack = true;
+
+    UPROPERTY()
+    bool AttackStart = false;
+
+    
 };

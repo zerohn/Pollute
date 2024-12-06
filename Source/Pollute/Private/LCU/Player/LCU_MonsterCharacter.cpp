@@ -28,6 +28,11 @@ void ALCU_MonsterCharacter::BeginPlay()
 void ALCU_MonsterCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    if(AttackStart && IsLocallyControlled())
+    {
+        OnNotifyAttack();
+    }
 }
 
 // Called to bind functionality to input
@@ -46,7 +51,7 @@ void ALCU_MonsterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePro
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(ALCU_MonsterCharacter, bCanAttack);
+    //DOREPLIFETIME(ALCU_MonsterCharacter, bCanAttack);
 }
 
 void ALCU_MonsterCharacter::Attack()
@@ -59,19 +64,42 @@ void ALCU_MonsterCharacter::Attack()
     ServerRPC_Attack();
 }
 
-void ALCU_MonsterCharacter::Multicast_OnNotifyAttack_Implementation()
+void ALCU_MonsterCharacter::NetMulticast_OnSuccessHit_Implementation(FHitResult HitResult, bool bHit)
 {
-    UE_LOG(LogTemp, Warning, TEXT("1111"));
-    // AttackSocket의 위치와 방향 가져오기
-    FVector SocketLocation = GetMesh()->GetSocketLocation(TEXT("AttackSocket"));
-    FVector SocketForwardVector = GetMesh()->GetSocketRotation(TEXT("AttackSocket")).Vector();
+    if (bHit)
+    {
+        AActor* HitActor = HitResult.GetActor();
 
+        // 인터페이스 호출
+        ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
+        if (InteractInterface )
+        {
+            InteractInterface->Interact();
+        }
+    }
+}
+
+void ALCU_MonsterCharacter::ServerRPC_OnSuccessHit_Implementation(FHitResult HitResult, bool bHit)
+{
+    NetMulticast_OnSuccessHit(HitResult, bHit);
+}
+
+void ALCU_MonsterCharacter::OnNotifyAttack()
+{
+    if(!IsLocallyControlled()) return;
+    // AttackSocket의 위치와 방향 가져오기
+    //FVector SocketLocation = GetMesh()->GetSocketLocation(TEXT("AttackSocket"));
+    //FVector SocketForwardVector = GetMesh()->GetSocketRotation(TEXT("AttackSocket")).Vector();
+    
     // 트레이스 시작점과 끝점 계산
-    FVector Start = SocketLocation;
-    FVector End = Start + SocketForwardVector * 50.0f; // 소켓 ForwardVector 방향으로 1000 단위 거리
+    //FVector Start = SocketLocation;
+    //FVector End = Start + SocketForwardVector * 50.0f; // 소켓 ForwardVector 방향으로 1000 단위 거리
+
+    FVector StartLocation = GetActorLocation();
+    FVector EndLocation = StartLocation + GetActorForwardVector()* 200.f;
 
     // 박스 크기 설정
-    FVector BoxHalfSize = FVector(30.0f, 30.0f, 50.0f); // 박스 크기 (너비 20, 높이 100)
+    FVector BoxHalfSize = FVector(100.0f, 100.0f, 50.0f); // 
 
     // 트레이스할 객체 유형 설정
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
@@ -86,8 +114,8 @@ void ALCU_MonsterCharacter::Multicast_OnNotifyAttack_Implementation()
     // BoxTraceSingleForObjects 호출
     bool bHit = UKismetSystemLibrary::BoxTraceSingleForObjects(
         GetWorld(),
-        Start,
-        End,
+        StartLocation,
+        EndLocation,
         BoxHalfSize,
         FRotator::ZeroRotator, // 방향은 ForwardVector로 이미 설정했으므로 필요 없음
         ObjectTypes,
@@ -101,23 +129,7 @@ void ALCU_MonsterCharacter::Multicast_OnNotifyAttack_Implementation()
         4.0f
     );
 
-    if (bHit)
-    {
-        AActor* HitActor = HitResult.GetActor();
-
-        // 인터페이스 호출
-        ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
-        if (InteractInterface && bCanAttack)
-        {
-            InteractInterface->Interact();
-            bCanAttack = false;
-        }
-    }
-}
-
-void ALCU_MonsterCharacter::ServerRPC_OnNotifyAttack_Implementation()
-{
-    Multicast_OnNotifyAttack();
+    ServerRPC_OnSuccessHit(HitResult, bHit);
 }
 
 void ALCU_MonsterCharacter::ServerRPC_Attack_Implementation()

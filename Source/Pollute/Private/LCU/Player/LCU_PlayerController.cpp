@@ -45,7 +45,7 @@ void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
 
 }
 
-void ALCU_PlayerController::ServerRPC_ChangeToMonster_Implementation()
+void ALCU_PlayerController::ChangeToMonster()
 {
     if(!IsValid(MonChar)) return;
     // 현재 Possess 하고 있는 폰 가져오기

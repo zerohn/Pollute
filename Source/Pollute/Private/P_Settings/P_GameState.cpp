@@ -54,7 +54,6 @@ TObjectPtr<ALCU_PlayerCharacter> AP_GameState::FindPlayer(ALCU_PlayerCharacter* 
 
 void AP_GameState::GetAllCharacters()
 {
-	if(!HasAuthority()) return;
 	if(!HumanPlayers.IsEmpty())
 	{
 		HumanPlayers.Empty();
