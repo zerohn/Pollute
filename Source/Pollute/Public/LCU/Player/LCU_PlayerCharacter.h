@@ -6,7 +6,10 @@
 #include "LCU/Interfaces/LCU_InteractInterface.h"
 #include "Pollute/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "Pollute/Public/LCU/LCU_Properties/LCU_Property.h"
+#include "P_Settings/PlayData.h"
 #include "LCU_PlayerCharacter.generated.h"
+
+enum class EPlayerType : uint8;
 
 UCLASS()
 class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , public ILCU_InteractInterface
@@ -133,5 +136,10 @@ private:
 
 public:
     bool bHasItem = false;
+
+    UPROPERTY(EditAnywhere)
+    EPlayerType PlayerType = EPlayerType::Eric;
+    UPROPERTY(EditDefaultsOnly)
+    TArray<USkeletalMesh*> PlayerMeshType;
 };
 

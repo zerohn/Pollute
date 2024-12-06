@@ -6,6 +6,7 @@
 #include "CommonUserWidget.h"
 #include "KYH_PlayerSlot.generated.h"
 
+enum class EPlayerType : uint8;
 class UCommonTextBlock;
 class UImage;
 
@@ -19,7 +20,7 @@ class POLLUTE_API UKYH_PlayerSlot : public UCommonUserWidget
 
 public:
 
-    void Init(FName InPlayerName, UImage* InPlayerThumbnail);
+    void Init(FName InPlayerName, EPlayerType InPlayerType);
     
 protected:
     
@@ -28,6 +29,8 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UImage* Player_Thumbnail;
 
+    UPROPERTY(EditDefaultsOnly, Category = "PlayerSlot")
+    TArray<UTexture*> PlayerThumbImage;
 private:
     
 };
