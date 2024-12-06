@@ -132,6 +132,8 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
+    DOREPLIFETIME(ALCU_PlayerCharacter, FinalOverapItem);
+    
 }
 
 void ALCU_PlayerCharacter::Interact()
@@ -274,8 +276,6 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
 void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
 {
 	// 저주를 옮겨요
-    
-    // ? FinalOverlapPlayer와 저주를 옮기고 싶은 Player는 다르지 않나여..?
 	FinalOverapPlayer->SetHasCurse(true);
 	bHasCurse = false;
 	ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
@@ -290,66 +290,82 @@ void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
 
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
-	// 주울 수 있는 아이템이 없으면 나가야함
-	if(!FinalOverapItem) return;
 	
-	// 현재 아이템이 없으니 픽업
-	if(!ItemInHand)
-	{		
-		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-		if (!SkeletalMeshComp)
-		{
-			return;
-		}
+	
+    ServerRPC_PickUpDropDown(FinalOverapItem);
+}
 
-	    // HHR 수정 
-	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
-	    if(ItemInHand)
-	    {
-	        // TODO : Attach를 Multicast로 싸줘야 함 
-	        ItemInHand->AttachToComponent(
+void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation(AActor* PickUpItem)
+{
+    NetMulticast_PickUpDropDown(PickUpItem);
+}
+
+void ALCU_PlayerCharacter::NetMulticast_PickUpDropDown_Implementation(AActor* PickUpItem)
+{
+    // 주울 수 있는 아이템이 없으면 나가야함
+    if(!FinalOverapItem) return;
+    
+    P_LOG(PolluteLog, Warning, TEXT("PickUp"))
+    // 현재 아이템이 없으니 픽업
+    if(!ItemInHand)
+    {
+        
+        USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
+        if (!SkeletalMeshComp)
+        {
+            return;
+        }
+
+        // HHR 수정 
+        ItemInHand = Cast<AHHR_Item>(PickUpItem);
+        if(ItemInHand)
+        {
+            //P_SCREEN(3.0f, FColor::Black, TEXT("서버에서도 호출?"));
+            // TODO : Attach를 Multicast로 싸줘야 함 
+            ItemInHand->AttachToComponent(
                 SkeletalMeshComp,                      
                 FAttachmentTransformRules::SnapToTargetIncludingScale, 
                 FName("PickUpSocket")                   
             );
-	        bHasItem = true;
-	        // 각 아이템 마다 위치 수정
-	        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
-	        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
-	        // Item의 Owner 설정
-	        ItemInHand->SetOwner(this);
-	    }
+            bHasItem = true;
+            // 각 아이템 마다 위치 수정
+            ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
+            ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+            // Item의 Owner 설정
+            ItemInHand->SetOwner(this);
+        }
 		
-	}
-	// 아이템을 가지고 있으니 드랍다운
-	else
-	{
-		FVector CharacterLocation = GetActorLocation();
-		// 캐릭터 발 아래 위치
-		FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
-		// 아이템이 캐릭터 방향을 따라 회전하도록 설정
-		FRotator DropRotation = GetActorRotation(); 
+    }
+    // 아이템을 가지고 있으니 드랍다운
+    else
+    {
+        FVector CharacterLocation = GetActorLocation();
+        // 캐릭터 발 아래 위치
+        FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
+        // 아이템이 캐릭터 방향을 따라 회전하도록 설정
+        FRotator DropRotation = GetActorRotation(); 
 
-		// FinalOverlapItem을 월드에 분리
+        // FinalOverlapItem을 월드에 분리
 		
-	    // 아이템의 부모-자식 관계 해제
-	    // TODO : Detach를 Multicast로 싸줘야 함 
-		FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        // 아이템의 부모-자식 관계 해제
+        // TODO : Detach를 Multicast로 싸줘야 함 
+        PickUpItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-		// 위치 및 회전 설정
-		FinalOverapItem->SetActorLocation(DropLocation);
-		FinalOverapItem->SetActorRotation(DropRotation);
+        // 위치 및 회전 설정
+        PickUpItem->SetActorLocation(DropLocation);
+        PickUpItem->SetActorRotation(DropRotation);
 
-		// 드롭 이후 초기화
-		FinalOverapItem = nullptr;
-		bHasItem = false;
+        // 드롭 이후 초기화
+        PickUpItem = nullptr;
+        bHasItem = false;
 
-	    // Drop 후에 핸드에 있는 아이템 null 초기화
-	    ItemInHand = nullptr;
-	}	
+        // Drop 후에 핸드에 있는 아이템 null 초기화
+        ItemInHand = nullptr;
+    }
 
+
+    
 }
-
 void ALCU_PlayerCharacter::ShootTrace()
 {
 	if(!IsLocallyControlled()) return;
@@ -361,7 +377,7 @@ void ALCU_PlayerCharacter::ShootTrace()
 	// 트레이스 시작점과 끝점 계산
 	FVector Start = CameraLocation;
 	FVector End = Start + CameraRotation.Vector() * 1000.0f; // 카메라 방향으로 1000 단위 거리
-    DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.2f);
+    //DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.2f);
 
 	//  박스 크기 설정
 	FVector BoxHalfSize = FVector(10.0f, 10.0f, 50.0f); // 박스 크기 (너비 20, 높이 100)
@@ -400,13 +416,14 @@ void ALCU_PlayerCharacter::ShootTrace()
 	{
 		AActor* HitActor = HitResult.GetActor();
 
-		ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
+		/*ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
 		if(InteractInterface)
 		{
 			InteractInterface->Interact();
-		}
+		}*/
 	}
 }
+
 
 
 void ALCU_PlayerCharacter::DieProcess()

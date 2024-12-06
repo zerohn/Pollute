@@ -73,8 +73,13 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
+    void ShootTrace();
+
 	void PickUpDropDown();
-	void ShootTrace();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_PickUpDropDown(AActor* PickUpItem);
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_PickUpDropDown(AActor* PickUpItem);
 
     // 죽으면 부르는 함수
     void DieProcess();
@@ -96,7 +101,7 @@ private:
 	// 최종 선택된 액터를 관리하는 변수
 	UPROPERTY()
 	ALCU_PlayerCharacter* FinalOverapPlayer;
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AActor* FinalOverapItem;
     UPROPERTY()
     class AHHR_Item* ItemInHand;
