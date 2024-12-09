@@ -11,6 +11,7 @@
  * 
  */
 
+enum class EPlayerType : uint8;
 DECLARE_DELEGATE_ThreeParams(FAddSession, int32, FString, FString)
 DECLARE_DELEGATE_OneParam(FFindComplete, bool)
 DECLARE_DELEGATE_OneParam(FCreateComplete, bool)
@@ -64,9 +65,11 @@ protected:
     FString SessionLobbyLevelURL;
     UPROPERTY(EditAnywhere, Category = "Session")
     FString MainGameLevelURL;
-    
+    // 플레이어의 캐릭터 타입 저장 변수
     
 public:
+    
+    TArray<EPlayerType> PlayerTypes;
     
 	// 세션이 검색 되었을 때 각 세션의 정보를 전달해주는 델리게이트
 	FAddSession OnAddSessionDelegates;
@@ -74,6 +77,9 @@ public:
 	FFindComplete OnFindCompleteDelegates;
     // 세션 생성이 완료 될 때 전달해주는 델리게이트
     FCreateComplete OnCreateCompleteDelegates;
+
+    // 저장된 플레이어의 캐릭터 타입을 반환해 주는 함수
+    TArray<EPlayerType> GetPlayerTypes() const { return PlayerTypes; }
 private:
 	
 };

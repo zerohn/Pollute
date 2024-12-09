@@ -42,6 +42,8 @@ protected:
     
 public:
 
+    UFUNCTION()
+    void SetButtonVisibility(bool bIsVisible);
     UFUNCTION(Server, Reliable)
     void ChangeCharacterLeft();
     UFUNCTION(Server, Reliable)
