@@ -13,7 +13,8 @@ enum class EPlayerType : uint8
     Sophia UMETA(DisplayName = "Sophia"),
     Carla UMETA(DisplayName = "Carla"),
     Nathan UMETA(DisplayName = "Nathan"),
-    Claudia UMETA(DisplayName = "Claudia")
+    Claudia UMETA(DisplayName = "Claudia"),
+    Count UMETA(CLASS_Hidden)
 };
 
 /**

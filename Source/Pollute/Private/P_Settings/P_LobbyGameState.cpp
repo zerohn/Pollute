@@ -14,6 +14,7 @@ void AP_LobbyGameState::BeginPlay()
 
     LobbyWidget = CreateWidget<UKYH_CommonUserLobby>(GetWorld(), LobbyWidgetClass);
     LobbyWidget->AddToViewport();
+    LobbyWidget->ServerRPC_SetPlayerSlotUI(this);
 
     P_SCREEN(3, FColor::Orange, TEXT("CreateLobbyWidget : %s"), *GetNameSafe(LobbyWidget));
     

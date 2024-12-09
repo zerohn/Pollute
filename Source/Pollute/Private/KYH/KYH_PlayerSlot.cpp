@@ -5,49 +5,54 @@
 
 #include "CommonTextBlock.h"
 #include "Components/Image.h"
+#include "KYH/KYH_PolluteButtonBase.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
 
+void UKYH_PlayerSlot::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    Btn_Left->OnClicked().AddUObject(this, &UKYH_PlayerSlot::ChangeCharacterLeft);
+    Btn_Right->OnClicked().AddUObject(this, &UKYH_PlayerSlot::ChangeCharacterRight);
+}
+
 void UKYH_PlayerSlot::Init(FName InPlayerName, EPlayerType InPlayerType)
 {
+    CurrentPlayerType = InPlayerType;
     PlayerName->SetText(FText::FromName(InPlayerName));
 
     FSlateBrush Brush;
-    switch (InPlayerType)
+    Brush.SetResourceObject(PlayerThumbImage[(int32)InPlayerType]);
+    
+    Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(172, 128)));
+    Player_Thumbnail->SetBrush(Brush);
+}
+
+void UKYH_PlayerSlot::ChangeCharacterLeft_Implementation()
+{
+    CurrentPlayerType = (EPlayerType)((int32)CurrentPlayerType - 1);
+    if ((int32)CurrentPlayerType < 0)
     {
-    case EPlayerType::Eric:
-        {
-            Brush.SetResourceObject(PlayerThumbImage[0]);
-            break;
-        }
-    case EPlayerType::Manuel:
-        {
-            Brush.SetResourceObject(PlayerThumbImage[1]);
-            break;
-        }
-    case EPlayerType::Sophia:
-        {
-            Brush.SetResourceObject(PlayerThumbImage[2]);
-            break;
-        }
-    case EPlayerType::Carla:
-        {
-            Brush.SetResourceObject(PlayerThumbImage[3]);
-            break;
-        }
-    case EPlayerType::Nathan:
-        {
-            Brush.SetResourceObject(PlayerThumbImage[4]);
-            break;
-        }
-    case EPlayerType::Claudia:
-        {
-            Brush.SetResourceObject(PlayerThumbImage[5]);
-            break;
-        }
-    default:
-        break;
+        CurrentPlayerType = (EPlayerType)((int32)EPlayerType::Count - 1);
     }
-    Brush.SetImageSize(FVector2d(256,192));
+    UpdatePlayerType(CurrentPlayerType);
+}
+
+void UKYH_PlayerSlot::ChangeCharacterRight_Implementation()
+{
+    CurrentPlayerType = (EPlayerType)((int32)CurrentPlayerType + 1);
+    if ((int32)CurrentPlayerType >= (int32)EPlayerType::Count)
+    {
+        CurrentPlayerType = (EPlayerType)0;
+    }
+    UpdatePlayerType(CurrentPlayerType);
+}
+
+void UKYH_PlayerSlot::UpdatePlayerType_Implementation(EPlayerType InPlayerType)
+{
+    FSlateBrush Brush;
+    Brush.SetResourceObject(PlayerThumbImage[(int32)InPlayerType]);
+    Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(172, 128)));
     Player_Thumbnail->SetBrush(Brush);
 }

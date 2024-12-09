@@ -6,6 +6,7 @@
 #include "CommonUserWidget.h"
 #include "KYH_CommonUserLobby.generated.h"
 
+enum class EPlayerType : uint8;
 class UKYH_CommonUserChat;
 class UEditableText;
 class UCommonHierarchicalScrollBox;
@@ -36,7 +37,7 @@ public:
     UKYH_PolluteButtonBase* Btn_Start;
     UFUNCTION()
     void StartGame();
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(Replicated, meta = (BindWidget))
     UVerticalBox* VerticalBox;
     UFUNCTION(Server, Reliable)
     void ServerRPC_SetPlayerSlotUI(AGameStateBase* GameState);

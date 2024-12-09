@@ -10,6 +10,7 @@
 #include "Components/Image.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
+#include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
@@ -39,8 +40,8 @@ void UKYH_CommonUserLobby::NativeConstruct()
         Btn_Start->SetVisibility(ESlateVisibility::Hidden);
     }
     
-    FTimerHandle AddSlotHandle;
-    GetWorld()->GetTimerManager().SetTimer(AddSlotHandle, this, &UKYH_CommonUserLobby::Init, 0.1f, true);
+    // FTimerHandle AddSlotHandle;
+    // GetWorld()->GetTimerManager().SetTimer(AddSlotHandle, this, &UKYH_CommonUserLobby::Init, 0.1f, false);
 
 }
 
@@ -56,6 +57,7 @@ void UKYH_CommonUserLobby::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(UKYH_CommonUserLobby, Text_SessionName);
+    DOREPLIFETIME(UKYH_CommonUserLobby, VerticalBox);
 }
 
 void UKYH_CommonUserLobby::StartGame()
@@ -71,19 +73,17 @@ void UKYH_CommonUserLobby::ServerRPC_SetPlayerSlotUI_Implementation(AGameStateBa
 {
     if (!GameState) return;
     Text_SessionName->SetText(FText::FromName(Cast<UP_GameInstance>(GameState->GetGameInstance())->GetCurrentSessionName()));
-    
     ClientRPC_AddPlayerSlotUI(GameState);
 }
 
 void UKYH_CommonUserLobby::ClientRPC_AddPlayerSlotUI_Implementation(AGameStateBase* GameState)
 {
     VerticalBox->ClearChildren();
-    
+    P_SCREEN(5, FColor::Orange, TEXT("PlayerArray : %d"), GameState->PlayerArray.Num());
     for (int i = 0; i < GameState->PlayerArray.Num(); i++)
     {
         UKYH_PlayerSlot* PlayerSlot = CreateWidget<UKYH_PlayerSlot>(GetWorld(), PlayerSlotClass);
-        EPlayerType PlayerType = Cast<ALCU_PlayerCharacter>(GameState->PlayerArray[i]->GetPawn())->PlayerType;
-        PlayerSlot->Init(FName(GameState->PlayerArray[i]->GetPlayerName()), PlayerType);
+        PlayerSlot->Init(FName(GameState->PlayerArray[i]->GetPlayerName()), EPlayerType::Eric);
         VerticalBox->AddChild(PlayerSlot);
         UVerticalBoxSlot* CurrentSlot = Cast<UVerticalBoxSlot>(PlayerSlot->Slot);
         CurrentSlot->SetPadding(FMargin(0, 0, 0, 15));
