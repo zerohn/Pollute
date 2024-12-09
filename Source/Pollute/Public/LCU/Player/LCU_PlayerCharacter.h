@@ -75,7 +75,7 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
-	void PickUpDropDown();
+	void PickUpDropDown(AHHR_Item* Item);
 	void ShootTrace();
 
   // 죽으면 부르는 함수
@@ -83,10 +83,6 @@ public:
 
   // IA에 Bind될 함수
   void Attack();
-
-  // NSK G키 상호작용 처리 함수
-  void OnInteract();
-
 
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
@@ -144,6 +140,9 @@ private:
         // 제단 상호작용 키
         UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
         UInputAction* IA_G;
+
+        // NSK G키 상호작용 처리 함수
+        void OnInteract();
 
         // 현재 근처 제단
         UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")

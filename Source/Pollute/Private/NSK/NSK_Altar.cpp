@@ -3,8 +3,11 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
-#include <LCU/Player/LCU_PlayerCharacter.h>
+#include "LCU/Player/LCU_PlayerCharacter.h"
+#include "Engine//World.h"
+#include <HHR/HHR_Item.h>
 
+// 슬롯 초기화 및 배열 추가
 ANSK_Altar::ANSK_Altar()
 {
     // 제단 메시 초기화
@@ -95,6 +98,7 @@ void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* 
     }
 }
 
+// 상호작용 감지 함수
 void ANSK_Altar::OnInteract()
 {
     P_LOG(PolluteLog, Warning, TEXT("OnInteract 호출"));
@@ -110,6 +114,7 @@ void ANSK_Altar::OnInteract()
     }
 }
 
+// 플레이어가 제단에 아이템 추가 함수
 void ANSK_Altar::HandlePlayerInteraction(ALCU_PlayerCharacter* PlayerCharacter)
 {
     if (!PlayerCharacter || !PlayerCharacter->bHasItem)
@@ -128,6 +133,7 @@ void ANSK_Altar::HandlePlayerInteraction(ALCU_PlayerCharacter* PlayerCharacter)
     PlayerCharacter->bHasItem = false;       // 아이템을 들고 있지 않은 상태로 전환
 }
 
+// 슬롯 아이템 등록 및 액터 배치
 void ANSK_Altar::AddItemToSlot(const FItemData& ItemData)
 {
     for (int32 i = 0; i < SlotLocations.Num(); i++)
@@ -145,8 +151,7 @@ void ANSK_Altar::AddItemToSlot(const FItemData& ItemData)
             return;
         }
     }
-
-    P_LOG(PolluteLog, Warning, TEXT("슬롯이 가득 찼습니다. 더 이상 아이템을 등록할 수 없습니다."));
+        P_LOG(PolluteLog, Warning, TEXT("슬롯이 가득 찼습니다. 더 이상 아이템을 등록할 수 없습니다."));
 
     if (Slots.Num() == 4)
     {
@@ -154,6 +159,7 @@ void ANSK_Altar::AddItemToSlot(const FItemData& ItemData)
     }
 }
 
+// 슬롯 체크 함수
 void ANSK_Altar::CheckSlots()
 {
     if (Slots == CorrectItems) // 모든 재료가 정확히 맞았는지 확인
@@ -178,57 +184,115 @@ void ANSK_Altar::CheckSlots()
     }
 }
 
+// 슬롯 아이템 액터 생성 및 슬롯 배치
 void ANSK_Altar::PlaceItemInSlot(const FItemData& SlotItem, int32 SlotIndex)
 {
-    if (SlotLocations.IsValidIndex(SlotIndex))
+    if (!SlotLocations.IsValidIndex(SlotIndex))
     {
-        UStaticMeshComponent* SlotLocation = SlotLocations[SlotIndex];
-        if (!SlotLocation)
-        {
-            P_LOG(PolluteLog, Error, TEXT("슬롯 %d의 컴포넌트가 유효하지 않습니다."), SlotIndex);
-            return;
-        }
+        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
+        return;
+    }
 
-        // 기존 메시를 제거하고 새 메시 컴포넌트 추가
-        UStaticMeshComponent* ItemMeshComp = NewObject<UStaticMeshComponent>(this);
-        if (SlotItem.ItemMesh)
-        {
-            ItemMeshComp->SetStaticMesh(SlotItem.ItemMesh);
-            P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 메시 등록: %s"), SlotIndex, *SlotItem.ItemName.ToString());
-        }
-        else
-        {
-            P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 아이템 메시가 없습니다."), SlotIndex);
-            return;
-        }
+    UStaticMeshComponent* SlotLocation = SlotLocations[SlotIndex];
+    if (!SlotLocation)
+    {
+        P_LOG(PolluteLog, Error, TEXT("슬롯 %d의 컴포넌트가 유효하지 않습니다."), SlotIndex);
+        return;
+    }
 
-        // 메시 컴포넌트를 슬롯에 연결
-        ItemMeshComp->SetupAttachment(SlotLocation);
-        ItemMeshComp->SetRelativeLocation(FVector::ZeroVector); // 슬롯 중앙 배치를 위한
-        ItemMeshComp->RegisterComponent();
+    // 슬롯에 이미 아이템이 있는지 확인
+    if (SlotActorItems.IsValidIndex(SlotIndex) && SlotActorItems[SlotIndex])
+    {
+        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 이미 아이템이 있습니다. 아이템을 배치할 수 없습니다."), SlotIndex);
+        return;  // 아이템이 있으면 배치하지 않음
+    }
+
+    // 새로운 AHHR_Item 액터 생성
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+
+    AHHR_Item* NewItemActor = GetWorld()->SpawnActor<AHHR_Item>(AHHR_Item::StaticClass(), SlotLocation->GetComponentLocation(), SlotLocation->GetComponentRotation(), SpawnParams);
+
+    if (NewItemActor)
+    {
+        // 아이템 데이터 설정
+        NewItemActor->SetItemData(SlotItem);
+        NewItemActor->SetActorLocation(SlotLocation->GetComponentLocation());
+        NewItemActor->SetActorRotation(SlotLocation->GetComponentRotation());
+
+        if (!SlotActorItems.IsValidIndex(SlotIndex))
+        {
+            SlotActorItems.SetNum(SlotIndex + 1);  // 인덱스 확장
+        }
+        SlotActorItems[SlotIndex] = NewItemActor;
+
+        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 액터 생성 및 등록: %s"), SlotIndex, *SlotItem.ItemName.ToString());
+    }
+
+    /*// 기존 메시를 제거하고 새 메시 컴포넌트 추가
+    UStaticMeshComponent* ItemMeshComp = NewObject<UStaticMeshComponent>(this);
+    if (SlotItem.ItemMesh)
+    {
+        ItemMeshComp->SetStaticMesh(SlotItem.ItemMesh);
+        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 메시 등록: %s"), SlotIndex, *SlotItem.ItemName.ToString());
     }
     else
     {
-        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
+        P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 아이템 메시가 없습니다."), SlotIndex);
+        return;
     }
+
+    // 메시 컴포넌트를 슬롯에 연결
+    ItemMeshComp->SetupAttachment(SlotLocation);
+    ItemMeshComp->SetRelativeLocation(FVector::ZeroVector); // 슬롯 중앙 배치를 위한
+    ItemMeshComp->RegisterComponent();*/
 }
 
-void ANSK_Altar::RemoveItemFromSlot()
+// 슬롯 아이템 제거 함수
+AHHR_Item* ANSK_Altar::RemoveItemFromSlot(int32 SlotIndex)
 {
-    if (Slots.Num() > 0)
+    if (!SlotLocations.IsValidIndex(SlotIndex))
     {
-        // 마지막 아이템을 빼는 로직
-        Slots.RemoveAt(Slots.Num() - 1);
-        P_LOG(PolluteLog, Warning, TEXT("재단에서 아이템 제거"));
+        P_LOG(PolluteLog, Error, TEXT("잘못된 슬롯 인덱스: %d"), SlotIndex);
+        return nullptr;
     }
+
+    // 슬롯에 아이템이 존재하는지 확인
+    if (SlotActorItems.IsValidIndex(SlotIndex) && SlotActorItems[SlotIndex] != nullptr)
+    {
+        // 슬롯에서 액터 반환
+        AHHR_Item* RetrievedItem = SlotActorItems[SlotIndex];
+
+        // 아이템 액터를 월드에서 삭제
+        if (RetrievedItem)
+        {
+            RetrievedItem->Destroy();  // 아이템 액터 삭제
+        }
+
+        // 슬롯에서 해당 아이템 데이터 초기화
+        SlotItems[SlotIndex] = FItemData();  // 기본값으로 초기화
+        SlotActorItems[SlotIndex] = nullptr;
+
+        return RetrievedItem;
+
+        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에서 아이템 제거: %s"), SlotIndex, *RetrievedItem->ItemData.ItemName.ToString());
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d는 비어 있습니다."), SlotIndex);
+    }
+
+    return nullptr;
 }
 
+// 성공 UI 표시 (현재 UI X 로그로만)
 void ANSK_Altar::ShowSuccessMessage()
 {
     // 성공 UI 메시지 표시 (BlueprintAssignable 이벤트 호출 가능)
     P_LOG(PolluteLog, Warning, TEXT("성공 메시지를 UI로 띄웁니다."));
 }
 
+// 실패 UI 표시 (현재 UI X 로그로만)
 void ANSK_Altar::ShowFailureMessage()
 {
     // 실패 UI 메시지 표시 (BlueprintAssignable 이벤트 호출 가능)

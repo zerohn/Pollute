@@ -285,10 +285,10 @@ void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
 	}
 }
 
-void ALCU_PlayerCharacter::PickUpDropDown()
+void ALCU_PlayerCharacter::PickUpDropDown(AHHR_Item* Item)
 {
 	// 주울 수 있는 아이템이 없으면 나가야함
-	if(!FinalOverapItem) return;
+	if(!Item) return;
 	
 	// 현재 아이템이 없으니 픽업
 	if(!bHasItem)
@@ -300,7 +300,7 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 		}
 
 	    // HHR 수정 
-	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+	    ItemInHand = Item;
 	    if(ItemInHand)
 	    {
 	        ItemInHand->AttachToComponent(
@@ -451,12 +451,6 @@ void ALCU_PlayerCharacter::OnInteract()
 {
     if (NearbyAltar && ItemInHand)
     {
-        // 제단에 들고 있는 아이템 전달
-        //FVector SlotLocation = NearbyAltar->GetSlotLocation();  // 제단의 슬롯 위치 가져오기
-
-        // 아이템을 제단 슬롯 위치로 이동
-        //ItemInHand->SetActorLocation(SlotLocation);
-
         // 제단에 들고 있는 아이템 등록
         NearbyAltar->AddItemToSlot(ItemInHand->ItemData);
         P_LOG(PolluteLog, Warning, TEXT("아이템 %s를 제단에 등록"), *ItemInHand->ItemData.ItemName.ToString());
@@ -470,12 +464,25 @@ void ALCU_PlayerCharacter::OnInteract()
         ItemInHand = nullptr;
         bHasItem = false;
     }
-    else if (!ItemInHand)
+    else if (!ItemInHand && NearbyAltar)
     {
-        P_LOG(PolluteLog, Error, TEXT("현재 들고 있는 아이템이 없습니다!"));
+        AHHR_Item* ItemFromSlot = nullptr;
+
+        // 제단에서 아이템 픽업 ( 주어진 슬롯에서 아이템 가져옴 )
+        ItemFromSlot = Cast<AHHR_Item>(NearbyAltar->RemoveItemFromSlot(SlotIndex));
+        if (ItemFromSlot)
+        {
+            // 아이템 픽업 처리
+            PickUpDropDown(ItemFromSlot);
+            P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에서 아이템 픽업: %s"), SlotIndex, *ItemFromSlot->ItemData.ItemName.ToString());
+        }
+        else
+        {
+            P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 아이템이 없습니다."), SlotIndex);
+        }
     }
-    else if (!NearbyAltar)
+    else
     {
-        P_LOG(PolluteLog, Error, TEXT("주변에 제단이 없습니다!"));
+        P_LOG(PolluteLog, Error, TEXT("상호작용할 대상이 없습니다."));
     }
 }

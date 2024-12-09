@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include <HHR/HHR_ItemData.h>
+#include <HHR/HHR_Item.h>
 #include "NSK_DoorController.h"
 #include <Components/BoxComponent.h>
 
@@ -60,6 +61,10 @@ public:
     UPROPERTY()
     TArray<FItemData> SlotItems;
 
+    // 슬롯에 생성될 액터 아이템
+    UPROPERTY()
+    TArray<AHHR_Item*> SlotActorItems;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Altar")
     bool bIsPlayerNearby;  // 플레이어가 근처에 있는지 여부
 
@@ -77,15 +82,15 @@ public:
     void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+    // 슬롯 아이템 제거
+    AHHR_Item* RemoveItemFromSlot(int32 SlotIndex);
+
 private:
     // **슬롯 확인 함수 (정답 여부 판단)**
     void CheckSlots();
 
     // **슬롯 위치에 아이템 배치**
     void PlaceItemInSlot(const FItemData& ItemMesh, int32 SlotIndex);
-
-    // 슬롯 아이템 제거
-    void RemoveItemFromSlot();
 
     // **성공 메시지 출력**
     void ShowSuccessMessage();
