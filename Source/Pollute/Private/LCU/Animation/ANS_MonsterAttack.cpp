@@ -10,21 +10,20 @@
 void UANS_MonsterAttack::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                      float TotalDuration)
 {
-    Super::NotifyBegin(MeshComp, Animation, TotalDuration);
+    //Super::NotifyBegin(MeshComp, Animation, TotalDuration);
 
     MonChar = Cast<ALCU_MonsterCharacter>(MeshComp->GetOwner());
+    if(MonChar && MonChar->IsLocallyControlled())
+    {
+        MonChar->AttackStart = true;
+    }
 }
 
 void UANS_MonsterAttack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                     float FrameDeltaTime)
 {
-    Super::NotifyTick(MeshComp, Animation, FrameDeltaTime);
+    //Super::NotifyTick(MeshComp, Animation, FrameDeltaTime);
     
-    if (!MonChar) return;
-    if(MonChar->IsLocallyControlled())
-    {
-        MonChar->ServerRPC_OnNotifyAttack();
-    }
 }
 
 void UANS_MonsterAttack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -32,5 +31,8 @@ void UANS_MonsterAttack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequen
 {
     Super::NotifyEnd(MeshComp, Animation, EventReference);
     if(!MonChar) return;
+    if(!MonChar->IsLocallyControlled()) return;
+    MonChar->AttackStart = false;
+    P_LOG(PolluteLog, Warning, TEXT("123213"));
     MonChar->bCanAttack = true;
 }

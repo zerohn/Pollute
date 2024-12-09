@@ -19,7 +19,10 @@ public class Pollute : ModuleRules
 			"Niagara", 
 			"AudioCapture", 
 			"OnlineSubsystem", 
-			"OnlineSubsystemSteam"
+			"OnlineSubsystemSteam",
+            "SlateCore",
+            "Json",
+            "JsonUtilities",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

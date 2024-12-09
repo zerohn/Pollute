@@ -9,6 +9,17 @@
 /**
  * 
  */
+
+// WeaponType에 대한 Enum
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+    Knife,
+    TaserGun,
+};
+
+
+
 UCLASS()
 class POLLUTE_API AHHR_WeaponItem : public AHHR_Item
 {
@@ -16,11 +27,15 @@ class POLLUTE_API AHHR_WeaponItem : public AHHR_Item
 
 protected:
     bool bIsUsed = false;
+    EWeaponType WeaponType;
 
 // Getter Setter
 public:
     bool GetIsUsed() {return bIsUsed;}
     void SetIsUsed(bool value) {bIsUsed = value;}
+
+    EWeaponType GetWeaponType() {return WeaponType;}
+    void SetWeaponType(EWeaponType type) {WeaponType = type;}
     
 // 공격 함수
 public:

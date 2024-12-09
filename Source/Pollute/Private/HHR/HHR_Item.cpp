@@ -4,7 +4,9 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
+#include "HHR/HHR_ItemManager.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AHHR_Item::AHHR_Item()
@@ -32,6 +34,12 @@ AHHR_Item::AHHR_Item()
     ItemInteractWidgetComp->SetupAttachment(RootComponent);
     ItemInteractWidgetComp->SetRelativeLocation(FVector(0, 0, 100.0f));
     ItemInteractWidgetComp->SetDrawSize(FVector2d(50, 50));
+    ItemInteractWidgetComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    bReplicates = true;
+    //SetReplicateMove(true);
+    
+        
 }
 
 // Called when the game starts or when spawned
@@ -43,11 +51,28 @@ void AHHR_Item::BeginPlay()
     ItemInteractWidgetComp->SetVisibility(false);
 }
 
+void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AHHR_Item, DataIdx);
+    DOREPLIFETIME(AHHR_Item, ItemManager);
+}
+
 // Called every frame
 void AHHR_Item::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AHHR_Item::OnRep_ChangeIdx()
+{
+    // Data 넣어줌
+    if(ItemManager)
+    {
+        SetItemData(ItemManager->ItemDataMap[DataIdx]);
+    }
 }
 
 void AHHR_Item::SetItemData(const FItemData& data)
@@ -90,6 +115,8 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 	}
 
 }
+
+
 
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

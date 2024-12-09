@@ -54,7 +54,7 @@ private:
 	float EndCurseTime = 6000.f;
 
 	UPROPERTY()
-	float CurrentCurseTime = 1000.f;
+	float CurrentCurseTime = 20.f;
 
 	bool bStartCurseTime = false;
 	

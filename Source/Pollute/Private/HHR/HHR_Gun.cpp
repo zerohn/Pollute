@@ -4,7 +4,16 @@
 #include "HHR/HHR_Gun.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Engine/Engine.h"
+#include "LCU/Player/LCU_MonsterCharacter.h"
+
+AHHR_Gun::AHHR_Gun()
+{
+    // Weapon type 설정
+    WeaponType = EWeaponType::TaserGun;
+    
+}
 
 void AHHR_Gun::Attack()
 {
@@ -36,18 +45,20 @@ void AHHR_Gun::Attack()
     if (isHit)
     {
         // 충돌시 Damage 적용
-        // TODO : 몬스터 생성후 ApplyDamage() 로 수정
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, "Hit");
+        if (ALCU_MonsterCharacter* mon = Cast<ALCU_MonsterCharacter>(hitResult.GetActor()))
+        {
+            hitResult.GetActor()->TakeDamage(1.f, FDamageEvent(), GetInstigatorController(), this);
+        }
     }
 
-    if (isHit)
+    /*if (isHit)
     {
         DrawDebugLine(GetWorld(), start, end, FColor::Red, true, 0.25);
     }
     else
     {
         DrawDebugLine(GetWorld(), start, end, FColor::Blue, true, 0.25);
-    }
+    }*/
 
     bIsUsed = true;
     DestoryDelay();

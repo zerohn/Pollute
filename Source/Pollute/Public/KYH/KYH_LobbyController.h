@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "KYH_LobbyController.generated.h"
 
-class UKYH_CommonUserLobby;
+
 /**
  * 
  */
@@ -18,8 +18,5 @@ class POLLUTE_API AKYH_LobbyController : public APlayerController
 public:
 
     virtual void BeginPlay() override;
-
-    UPROPERTY(EditAnywhere, Category = "Session")
-    UKYH_CommonUserLobby* LobbyWidget;
     
 };

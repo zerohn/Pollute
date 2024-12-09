@@ -44,5 +44,9 @@ public:
 
 	// ItemDialog wbp Text 세팅
 	void SetItemDialogText(FText Text);
+
+    // item Image 변경
+    void ChangeItemImage(class UTexture2D* Texture);
+    void ChangeItemImageNull();
 	
 };
