@@ -163,6 +163,7 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_CarryCurse, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::CarryCurse);
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
+        EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
 	}
 }
 
@@ -358,6 +359,73 @@ void ALCU_PlayerCharacter::DropDown()
 
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
+/*
+    if (!RetrievedItem) // Null 수정
+    {
+        P_LOG(PolluteLog, Error, TEXT("픽업할 아이템이 없습니다."));
+        return;
+    }
+
+    if (!bHasItem) // 아이템이 없는 경우 픽업
+    {
+        USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
+        if (!SkeletalMeshComp)
+        {
+            P_LOG(PolluteLog, Error, TEXT("스켈레탈 메시가 없습니다."));
+            return;
+        }
+
+        // 아이템 손에 부착
+        ItemInHand = RetrievedItem;
+        ItemInHand->AttachToComponent(
+            SkeletalMeshComp,
+            FAttachmentTransformRules::SnapToTargetIncludingScale,
+            FName("PickUpSocket")
+        );
+
+        P_SCREEN(1.f, FColor::Black, TEXT("아이템 픽업 성공"));
+        bHasItem = true;
+
+        // 아이템 위치 및 회전 설정
+        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
+        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+        ItemInHand->SetOwner(this);
+
+        // 상태 초기화
+        RetrievedItem = nullptr;
+    }
+    else // 아이템이 있는 경우 드랍
+    {
+        FVector CharacterLocation = GetActorLocation();
+        FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
+        FRotator DropRotation = GetActorRotation();
+
+        // 아이템 부모-자식 관계 해제 및 위치 설정
+        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        ItemInHand->SetActorLocation(DropLocation);
+        ItemInHand->SetActorRotation(DropRotation);
+
+        P_SCREEN(1.f, FColor::Black, TEXT("아이템 드랍 완료"));
+
+        // 상태 초기화
+        ItemInHand = nullptr;
+        bHasItem = false;
+    }
+}
+
+{
+    //주울 수 있는 아이템이 없으면 나가야함
+    if (!FinalOverapItem) return;
+	
+	// 현재 아이템이 없으니 픽업
+	if(!bHasItem)
+	{		
+		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
+		if (!SkeletalMeshComp)
+		{
+			return;
+		}
+*/
 
 
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
@@ -528,6 +596,7 @@ void ALCU_PlayerCharacter::DetachItem()
 	    if(ItemInHand)
 	    {
 	        ItemInHand->AttachToComponent(
+
                 SkeletalMeshComp,
                 FAttachmentTransformRules::SnapToTargetIncludingScale,
                 FName("PickUpSocket")
@@ -543,10 +612,36 @@ void ALCU_PlayerCharacter::DetachItem()
 	// 아이템을 가지고 있으니 드랍다운
 	else
 	{
+
+		FVector CharacterLocation = GetActorLocation();
+		// 캐릭터 발 아래 위치
+		FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
+		// 아이템이 캐릭터 방향을 따라 회전하도록 설정
+		FRotator DropRotation = GetActorRotation(); 
+
+		// FinalOverlapItem을 월드에 분리
+		
+			// 아이템의 부모-자식 관계 해제
+		FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+		// 위치 및 회전 설정
+		FinalOverapItem->SetActorLocation(DropLocation);
+		FinalOverapItem->SetActorRotation(DropRotation);
+
+		// 드롭 이후 초기화
+		FinalOverapItem = nullptr;
+		bHasItem = false;
+
+	    // Drop 후에 핸드에 있는 아이템 null 초기화
+	    ItemInHand = nullptr;
+	}	
+}
+
 		DropDown();
 	}
   */
 }
+
 
 void ALCU_PlayerCharacter::ShootTrace()
 {
@@ -609,7 +704,6 @@ void ALCU_PlayerCharacter::ShootTrace()
 }
 
 
-
 void ALCU_PlayerCharacter::DieProcess()
 {
     ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(GetController());
@@ -658,6 +752,89 @@ void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
 
         }
 
+    }
+}
+
+
+
+// NSK //
+
+void ALCU_PlayerCharacter::SetNearbyAltar(ANSK_Altar* Altar, int32 SlotIndex)
+{
+    NearbyAltar = Altar;
+    if (SlotIndex == -1)
+    {
+        SelectedSlotIndex = -1; // 슬롯 인덱스를 무효 상태로 설정
+    }
+    else
+    {
+        SelectedSlotIndex = SlotIndex; // 유효한 슬롯 인덱스 설정
+    }
+}
+
+void ALCU_PlayerCharacter::ClearNearbyAltar()
+{
+    NearbyAltar = nullptr;
+    SelectedSlotIndex = INDEX_NONE;
+}
+
+void ALCU_PlayerCharacter::SetCurrentSlotIndex(int32 SlotIndex)
+{
+    SelectedSlotIndex = SlotIndex;
+    P_LOG(PolluteLog, Warning, TEXT("현재 슬롯 인덱스 설정: %d"), SelectedSlotIndex);
+}
+
+void ALCU_PlayerCharacter::ClearCurrentSlotIndex()
+{
+    SelectedSlotIndex = INDEX_NONE; // 유효하지 않은 값으로 초기화
+    P_LOG(PolluteLog, Warning, TEXT("현재 슬롯 인덱스 초기화"));
+}
+
+// NSK 캐릭터 제단 상호작용 로직
+void ALCU_PlayerCharacter::OnInteract()
+{
+    if (NearbyAltar && ItemInHand)
+    {
+        if (SelectedSlotIndex != INDEX_NONE) // 유효한 슬롯 인덱스 확인
+        {
+            // 제단에 들고 있는 아이템 등록
+            NearbyAltar->AddItemToSlot(ItemInHand->ItemData, SelectedSlotIndex);
+            P_LOG(PolluteLog, Warning, TEXT("아이템 %s를 제단에 등록"), *ItemInHand->ItemData.ItemName.ToString());
+
+            // 아이템 드랍 상태로 변경하고 손에서 놓기
+            ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+            // 아이템 삭제
+            ItemInHand->Destroy();
+
+            ItemInHand = nullptr;
+            bHasItem = false;
+        }
+        else
+        {
+            P_LOG(PolluteLog, Error, TEXT("유효하지 않은 슬롯 인덱스입니다."));
+        }
+    }
+    else if (!ItemInHand && NearbyAltar)
+    {
+        if (SelectedSlotIndex != INDEX_NONE) // 유효한 슬롯 인덱스 확인
+        {
+            // 현재 슬롯에서 아이템 제거
+            AHHR_Item* RetrievedItemFromSlot = NearbyAltar->RemoveItemFromSlot(SelectedSlotIndex);
+            if (RetrievedItemFromSlot)
+            {
+                PickUpDropDown();
+                P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에서 아이템 픽업"), SelectedSlotIndex);
+            }
+            else
+            {
+                P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 아이템이 없습니다."), SelectedSlotIndex);
+            }
+        }
+        else
+        {
+            P_LOG(PolluteLog, Error, TEXT("유효하지 않은 슬롯 인덱스입니다."));
+        }
     }
 }
 
