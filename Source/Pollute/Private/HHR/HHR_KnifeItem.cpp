@@ -4,8 +4,10 @@
 #include "HHR/HHR_KnifeItem.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "LCU/Player/LCU_MonsterCharacter.h"
 
 AHHR_KnifeItem::AHHR_KnifeItem()
 {
@@ -41,9 +43,11 @@ void AHHR_KnifeItem::Attack()
     
 	if (isHit)
 	{
-		// 충돌시 Damage 적용
-		// TODO : 몬스터 생성후 ApplyDamage() 로 수정
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, "Hit");
+	    // 충돌시 Damage 적용
+	    if (ALCU_MonsterCharacter* mon = Cast<ALCU_MonsterCharacter>(hitResult.GetActor()))
+	    {
+	        hitResult.GetActor()->TakeDamage(1.f, FDamageEvent(), GetInstigatorController(), this);
+	    }
 	}
 
 	// blade의 괴적 적용을 위한 LineTrace
@@ -72,8 +76,10 @@ void AHHR_KnifeItem::Attack()
     if (isHitBlade)
     {
         // 충돌시 Damage 적용
-        // TODO : 몬스터 생성후 ApplyDamage() 로 수정
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, "Hit");
+        if (ALCU_MonsterCharacter* mon = Cast<ALCU_MonsterCharacter>(hitResult.GetActor()))
+        {
+            hitResult.GetActor()->TakeDamage(1.f, FDamageEvent(), GetInstigatorController(), this);
+        }
     }
 
     
