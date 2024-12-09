@@ -144,6 +144,7 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	UpdateCameraTransform();
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
+    RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
 
 	if(bHasCurse && HasAuthority())
 	{
@@ -359,7 +360,6 @@ void ALCU_PlayerCharacter::DropDown()
 
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
-/*
     if (!RetrievedItem) // Null 수정
     {
         P_LOG(PolluteLog, Error, TEXT("픽업할 아이템이 없습니다."));
@@ -411,27 +411,23 @@ void ALCU_PlayerCharacter::PickUpDropDown()
         ItemInHand = nullptr;
         bHasItem = false;
     }
-}
 
-{
+
     //주울 수 있는 아이템이 없으면 나가야함
     if (!FinalOverapItem) return;
 	
 	// 현재 아이템이 없으니 픽업
-	if(!bHasItem)
-	{		
-		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-		if (!SkeletalMeshComp)
-		{
-			return;
-		}
-*/
+    if (!bHasItem)
+    {
+        USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
+        if (!SkeletalMeshComp)
+        {
+            return;
+        }
 
-
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
-    ServerRPC_PickUpDropDown();
-
-
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
+        ServerRPC_PickUpDropDown();
+    }
 }
 
 void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()

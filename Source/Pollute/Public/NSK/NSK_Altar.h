@@ -129,9 +129,9 @@ private:
     // **슬롯 위치에 아이템 배치**
     void PlaceItemInSlot(const FItemData& ItemMesh, int32 SlotIndex);
 
-    // **성공 메시지 출력**
-    void ShowSuccessMessage();
+    // **성공 UI 출력**
+    void ShowSuccessUI();
 
-    // **실패 메시지 출력**
-    void ShowFailureMessage();
+    // **실패 UI 출력**
+    void ShowFailureUI();
 };

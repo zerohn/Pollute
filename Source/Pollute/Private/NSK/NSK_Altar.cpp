@@ -6,6 +6,7 @@
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Engine//World.h"
 #include <HHR/HHR_Item.h>
+#include "EngineUtils.h"
 
 // 슬롯 초기화 및 배열 추가
 ANSK_Altar::ANSK_Altar()
@@ -87,6 +88,18 @@ void ANSK_Altar::BeginPlay()
     // 상호작용 트리거에 오버랩 이벤트 바인딩
     InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &ANSK_Altar::OnOverlapBegin);
     InteractionBox->OnComponentEndOverlap.AddDynamic(this, &ANSK_Altar::OnOverlapEnd);
+
+    // DoorController를 레벨에서 검색
+    for (TActorIterator<ANSK_DoorController> It(GetWorld(), ANSK_DoorController::StaticClass()); It; ++It)
+    {
+        DoorController = *It; // 반복자를 역참조하여 포인터를 가져옵니다.
+        break; // 첫 번째 DoorController를 가져옵니다.
+    }
+
+    if (!DoorController)
+    {
+        P_LOG(PolluteLog, Error, TEXT("문 컨트롤러를 찾을 수 없습니다!"));
+    }
 }
 
 void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -106,7 +119,7 @@ void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
             Player->SetNearbyAltar(this, SlotIndex);
             CurrentSlotIndex = SlotIndex; // 현재 슬롯 설정
 
-            P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료: %s, SlotIndex: %d"), *GetName(), SlotIndex);
+            //P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료: %s, SlotIndex: %d"), *GetName(), SlotIndex);
         
         }
     }
@@ -121,7 +134,7 @@ void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* 
         {
             bIsPlayerNearby = false;
             Player->SetNearbyAltar(nullptr, -1); // 슬롯 인덱스를 -1로 설정
-            P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 해제 완료"));
+            //P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 해제 완료"));
         }
     }
 }
@@ -166,7 +179,7 @@ void ANSK_Altar::OnSlotEndOverlap(UPrimitiveComponent* OverlappedComponent, AAct
                 P_LOG(PolluteLog, Warning, TEXT("Player stopped interacting with Slot %d"), SlotIndex);
 
                 // 슬롯 종료 시 처리 로직
-                Player->ClearCurrentSlotIndex(); // 가정된 함수
+                Player->ClearCurrentSlotIndex();
             }
         }
         else
@@ -222,49 +235,46 @@ void ANSK_Altar::AddItemToSlot(const FItemData& ItemData, int32 SlotID)
 {
     for (int32 i = 0; i < SlotLocations.Num(); i++)
     {
-        // 빈 슬롯 찾기
         if (!SlotItems[i].ItemMesh)
         {
-            // 슬롯에 아이템 등록
             SlotItems[i] = ItemData;
-
-            // 슬롯에 아이템 배치
             PlaceItemInSlot(ItemData, i);
 
             P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 등록: %s"), i, *ItemData.ItemName.ToString());
-            return;
+            break;
         }
     }
-        P_LOG(PolluteLog, Warning, TEXT("슬롯이 가득 찼습니다. 더 이상 아이템을 등록할 수 없습니다."));
 
-    if (Slots.Num() == 4)
+    if (SlotItems.Num() == 4)
     {
-        CheckSlots(); // 슬롯이 모두 차면 확인
+        CheckSlots(); // 슬롯이 가득 차면 확인
     }
 }
 
 // 슬롯 체크 함수
 void ANSK_Altar::CheckSlots()
 {
-    if (Slots == CorrectItems) // 모든 재료가 정확히 맞았는지 확인
-    {
-        ShowSuccessMessage();
+    P_LOG(PolluteLog, Warning, TEXT("CheckSlots 함수 호출"));
 
-        P_LOG(PolluteLog, Warning, TEXT("저주가 약해지면서 정문이 열립니다! 플레이어가 지나갈 때 탈출 처리 (로비 or 관전자 모드 선택 UI)"));
+    // 슬롯이 정확히 4개가 맞는지 확인
+    if (SlotItems.Num() == 4)
+    {
+        // 아이템 개수가 4개인 경우 문 열기
+        P_LOG(PolluteLog, Warning, TEXT("4개의 아이템이 등록되었습니다. 문이 열립니다."));
+
         if (DoorController)
         {
-            DoorController->OpenDoor(); // 정문 열기
+            DoorController->OpenDoors(); // 문 열기
         }
-
-        // TODO: 플레이어가 지나갈 때 탈출 처리 (로비 or 관전자 모드 선택 UI)
+        else
+        {
+            P_LOG(PolluteLog, Error, TEXT("DoorController가 nullptr입니다."));
+        }
     }
     else
     {
-        ShowFailureMessage();
-
-        P_LOG(PolluteLog, Warning, TEXT("저주가 강력해지면서 죽음이 가까워 집니다. TODO: 저주 패널티 구현"));
-
-        // TODO: 저주 패널티 구현
+        // 아이템 4개가 아닌 경우, 문을 열지 않음
+        P_LOG(PolluteLog, Warning, TEXT("슬롯이 가득 차지 않았습니다. 현재 슬롯에 아이템 개수: %d"), SlotItems.Num());
     }
 }
 
@@ -388,14 +398,14 @@ int32 ANSK_Altar::FindClosestSlot(const FVector& Location)
 }
 
 // 성공 UI 표시 (현재 UI X 로그로만)
-void ANSK_Altar::ShowSuccessMessage()
+void ANSK_Altar::ShowSuccessUI()
 {
     // 성공 UI 메시지 표시 (BlueprintAssignable 이벤트 호출 가능)
     P_LOG(PolluteLog, Warning, TEXT("성공 메시지를 UI로 띄웁니다."));
 }
 
 // 실패 UI 표시 (현재 UI X 로그로만)
-void ANSK_Altar::ShowFailureMessage()
+void ANSK_Altar::ShowFailureUI()
 {
     // 실패 UI 메시지 표시 (BlueprintAssignable 이벤트 호출 가능)
     P_LOG(PolluteLog, Warning, TEXT("실패 메시지를 UI로 띄웁니다."));

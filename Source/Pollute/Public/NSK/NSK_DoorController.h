@@ -6,6 +6,8 @@
 
 #include "NSK_DoorController.generated.h"
 
+class ANSK_DoorActor;
+
 UCLASS()
 class POLLUTE_API ANSK_DoorController : public AActor
 {
@@ -14,18 +16,24 @@ class POLLUTE_API ANSK_DoorController : public AActor
 public:	
 	ANSK_DoorController();
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
-    TArray<AStaticMeshActor*> DoorMeshes;
-
-    UFUNCTION(BlueprintCallable, Category = "Door")
-    void OpenDoor();
-
-    UFUNCTION(BlueprintCallable, Category = "Door")
-    void CloseDoor();
-
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-private:
-    bool bIsDoorOpen = false;
+public:
+    // 문 액터 레퍼런스
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    TSubclassOf<ANSK_DoorActor> LeftDoorClass; // BP_NSK_L_DoorActor
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    TSubclassOf<ANSK_DoorActor> RightDoorClass; // BP_NSK_R_DoorActor
+
+    UPROPERTY(BlueprintReadOnly, Category = "Door")
+    ANSK_DoorActor* LeftDoorInstance;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Door")
+    ANSK_DoorActor* RightDoorInstance;
+
+    // 문 열기 함수
+    UFUNCTION(BlueprintCallable, Category = "Door")
+    void OpenDoors();
 };
