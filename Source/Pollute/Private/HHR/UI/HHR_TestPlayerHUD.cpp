@@ -3,6 +3,9 @@
 
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 
+#include "Components/Image.h"
+#include "Engine/Texture2D.h"
+#include "HHR/HHR_ItemData.h"
 #include "HHR/UI/HHR_ItemDialog.h"
 
 
@@ -36,4 +39,29 @@ void UHHR_TestPlayerHUD::SetItemDialogText(FText Text)
 	{
 		ItemDialog->SetText(Text);
 	}
+}
+
+void UHHR_TestPlayerHUD::ChangeItemImageNull()
+{
+    FSlateBrush Brush;
+    Brush.SetResourceObject(nullptr);
+    ItemImage->SetBrush(Brush);
+
+    FLinearColor CurrentColor = ItemImage->ColorAndOpacity;
+    CurrentColor.A = 0.0f;
+    
+    ItemImage->SetColorAndOpacity(CurrentColor);
+}
+
+void UHHR_TestPlayerHUD::ChangeItemImage(class UTexture2D* Texture)
+{
+    // 아이템 있으면 img 데이터로 change + tint의 알파값 변경
+    FSlateBrush Brush;
+    Brush.SetResourceObject(Texture);
+    ItemImage->SetBrush(Brush);
+
+    FLinearColor CurrentColor = ItemImage->ColorAndOpacity;
+    CurrentColor.A = 1.0f;
+    
+    ItemImage->SetColorAndOpacity(CurrentColor);
 }

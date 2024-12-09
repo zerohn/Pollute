@@ -71,9 +71,10 @@ public:
 	
 	// Player가 줍는 상호작용 
 	virtual void Interact() override;
-	// UI 띄우는 함수
+
+
+    // UI
 	virtual void SetVisibilityUI(bool Visible) override;
-    
 
 protected:
 	// 충돌 처리 함수

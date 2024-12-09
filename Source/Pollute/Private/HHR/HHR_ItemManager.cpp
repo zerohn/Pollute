@@ -11,7 +11,9 @@
 #include "HHR/HHR_KnifeItem.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
+#include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
 
 AHHR_ItemManager::AHHR_ItemManager()
 {
@@ -37,6 +39,10 @@ void AHHR_ItemManager::BeginPlay()
     TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
     TestPlayerHUDIns->AddToViewport();
 
+    // character에서 임시로 hud 생성
+    ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    player->PlayerHUD = TestPlayerHUDIns;
+    
     //if(!HasAuthority()) return;
     //ServerRPC_GenerateItem();
     float loc = 0;

@@ -98,6 +98,11 @@ public:
     void DieProcess();
     // IA에 Bind될 함수
     void Attack();
+    // rpc attack
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_Attack();
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_Attack();
 
 
 private:
@@ -155,5 +160,10 @@ public:
     EPlayerType PlayerType = EPlayerType::Eric;
     UPROPERTY(EditDefaultsOnly)
     TArray<USkeletalMesh*> PlayerMeshType;
+
+// 임시 playerhud
+public:
+    class UHHR_TestPlayerHUD* PlayerHUD;
+
 };
 
