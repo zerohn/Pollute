@@ -20,7 +20,8 @@
 #include "LCU/Player/LCU_PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimInstance.h"
-
+#include "Engine/SkeletalMesh.h"
+#include "Rendering/RenderCommandPipes.h"
 
 
 class UEnhancedInputComponent;
@@ -50,12 +51,49 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 	// 오버랩 이벤트 바인딩
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ALCU_PlayerCharacter::OnBoxBeginOverlap);
 	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &ALCU_PlayerCharacter::OnBoxEndOverlap);
+    
 }
 
 // Called when the game starts or when spawned
 void ALCU_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+    
+    switch (PlayerType)
+    {
+    case EPlayerType::Eric:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[0]);
+            break;
+        }
+    case EPlayerType::Manuel:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[1]);
+        }
+        break;
+    case EPlayerType::Sophia:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[2]);
+            break;
+        }
+    case EPlayerType::Carla:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[3]);
+            break;
+        }
+    case EPlayerType::Nathan:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[4]);
+            break;
+        }
+    case EPlayerType::Claudia:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[5]);
+            break;
+        }
+    default:
+        break;
+    }
 
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
