@@ -21,6 +21,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	// Called every frame
@@ -28,6 +29,15 @@ public:
 
 /////////////////////////////////////////
 // Variables
+
+public:
+    UPROPERTY(ReplicatedUsing = OnRep_ChangeIdx)
+    int32 DataIdx;
+    UFUNCTION()
+    void OnRep_ChangeIdx();
+
+    UPROPERTY(Replicated)
+    class AHHR_ItemManager* ItemManager;
 	
 // Components
 protected:

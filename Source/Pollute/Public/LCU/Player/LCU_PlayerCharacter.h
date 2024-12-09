@@ -73,13 +73,21 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
+    
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_AttachItem();
+    void AttachItem();
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_DetachItem();
+    void DetachItem();
+    
+
+    
     void ShootTrace();
 
 	void PickUpDropDown();
     UFUNCTION(Server, Reliable)
-    void ServerRPC_PickUpDropDown(AActor* PickUpItem);
-    UFUNCTION(NetMulticast, Reliable)
-    void NetMulticast_PickUpDropDown(AActor* PickUpItem);
+    void ServerRPC_PickUpDropDown();
 
     // 죽으면 부르는 함수
     void DieProcess();
@@ -101,9 +109,9 @@ private:
 	// 최종 선택된 액터를 관리하는 변수
 	UPROPERTY()
 	ALCU_PlayerCharacter* FinalOverapPlayer;
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	AActor* FinalOverapItem;
-    UPROPERTY()
+    UPROPERTY(Replicated)
     class AHHR_Item* ItemInHand;
 	
 	// 성별 변수인데 성별따라 사용하는 애니메이션이 좀다를것
