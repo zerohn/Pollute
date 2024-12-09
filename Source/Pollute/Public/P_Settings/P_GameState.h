@@ -55,5 +55,4 @@ private:
 	TArray<TObjectPtr<ALCU_PlayerCharacter>> HumanPlayers;
 
 	FTimerHandle CurseSelectedTimer;
-	
 };

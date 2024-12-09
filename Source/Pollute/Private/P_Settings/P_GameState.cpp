@@ -10,6 +10,7 @@
 #include "LCU/InteractActors/LCU_Curse.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "P_Settings/P_GameInstance.h"
 
 AP_GameState::AP_GameState()
 {
@@ -54,7 +55,6 @@ TObjectPtr<ALCU_PlayerCharacter> AP_GameState::FindPlayer(ALCU_PlayerCharacter* 
 
 void AP_GameState::GetAllCharacters()
 {
-	if(!HasAuthority()) return;
 	if(!HumanPlayers.IsEmpty())
 	{
 		HumanPlayers.Empty();
@@ -69,6 +69,18 @@ void AP_GameState::GetAllCharacters()
 			HumanPlayers.AddUnique(PlayerCharacter);
 		}
 	}
+
+    if(HumanPlayers.IsEmpty() && HasAuthority())
+    {
+        // 게임 끝
+        UP_GameInstance* GI = Cast<UP_GameInstance>(GetGameInstance());
+        FString MapName = GI->GetCurrentSessionName().ToString(); // 이동하려는 맵 이름
+        if (!MapName.IsEmpty())
+        {
+            FString URL = FString::Printf(TEXT("%s?listen"), *MapName);
+            GetWorld()->ServerTravel(URL, true);
+        }
+    }
 }
 
 void AP_GameState::RemoveHumanPlayer(ALCU_PlayerCharacter* humanPlayer)

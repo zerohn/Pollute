@@ -20,7 +20,8 @@
 #include "LCU/Player/LCU_PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimInstance.h"
-
+#include "Engine/SkeletalMesh.h"
+#include "Rendering/RenderCommandPipes.h"
 
 
 class UEnhancedInputComponent;
@@ -50,12 +51,49 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 	// 오버랩 이벤트 바인딩
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ALCU_PlayerCharacter::OnBoxBeginOverlap);
 	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &ALCU_PlayerCharacter::OnBoxEndOverlap);
+    
 }
 
 // Called when the game starts or when spawned
 void ALCU_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+    
+    switch (PlayerType)
+    {
+    case EPlayerType::Eric:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[0]);
+            break;
+        }
+    case EPlayerType::Manuel:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[1]);
+        }
+        break;
+    case EPlayerType::Sophia:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[2]);
+            break;
+        }
+    case EPlayerType::Carla:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[3]);
+            break;
+        }
+    case EPlayerType::Nathan:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[4]);
+            break;
+        }
+    case EPlayerType::Claudia:
+        {
+            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[5]);
+            break;
+        }
+    default:
+        break;
+    }
 
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
@@ -140,6 +178,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 void ALCU_PlayerCharacter::Interact()
 {
 	HealthCount--;
+    P_SCREEN(3.f, FColor::Magenta, TEXT("%s"), *GetName());
     if(HealthCount <= 0)
     {
         HealthCount = 0;
@@ -290,8 +329,35 @@ void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
 	}
 }
 
+void ALCU_PlayerCharacter::DropDown()
+{
+    if(!FinalOverapItem) return;
+    FVector CharacterLocation = GetActorLocation();
+    // 캐릭터 발 아래 위치
+    FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
+    // 아이템이 캐릭터 방향을 따라 회전하도록 설정
+    FRotator DropRotation = GetActorRotation(); 
+
+    // FinalOverlapItem을 월드에 분리
+		
+    // 아이템의 부모-자식 관계 해제
+    FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+    // 위치 및 회전 설정
+    FinalOverapItem->SetActorLocation(DropLocation);
+    FinalOverapItem->SetActorRotation(DropRotation);
+
+    // 드롭 이후 초기화
+    FinalOverapItem = nullptr;
+    bHasItem = false;
+
+    // Drop 후에 핸드에 있는 아이템 null 초기화
+    ItemInHand = nullptr;
+}
+
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
+
 
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
     ServerRPC_PickUpDropDown();
@@ -441,6 +507,30 @@ void ALCU_PlayerCharacter::DetachItem()
 
     // Drop 후에 핸드에 있는 아이템 null 초기화
     ItemInHand = nullptr;
+    /*
+	    // HHR 수정 
+	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+	    if(ItemInHand)
+	    {
+	        ItemInHand->AttachToComponent(
+                SkeletalMeshComp,
+                FAttachmentTransformRules::SnapToTargetIncludingScale,
+                FName("PickUpSocket")
+            );
+	        bHasItem = true;
+	        // 각 아이템 마다 위치 수정
+	        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
+	        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+	        // Item의 Owner 설정
+	        ItemInHand->SetOwner(this);
+	    }
+	}
+	// 아이템을 가지고 있으니 드랍다운
+	else
+	{
+		DropDown();
+	}
+  */
 }
 
 void ALCU_PlayerCharacter::ShootTrace()
@@ -493,11 +583,13 @@ void ALCU_PlayerCharacter::ShootTrace()
 	{
 		AActor* HitActor = HitResult.GetActor();
 
-		/*ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
-		if(InteractInterface)
-		{
-			InteractInterface->Interact();
-		}*/
+
+		//ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
+		//if(InteractInterface)
+		//{
+		//	InteractInterface->Interact();
+		//}
+
 	}
 }
 

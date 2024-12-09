@@ -6,7 +6,10 @@
 #include "LCU/Interfaces/LCU_InteractInterface.h"
 #include "Pollute/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "Pollute/Public/LCU/LCU_Properties/LCU_Property.h"
+#include "P_Settings/PlayData.h"
 #include "LCU_PlayerCharacter.generated.h"
+
+enum class EPlayerType : uint8;
 
 UCLASS()
 class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , public ILCU_InteractInterface
@@ -29,6 +32,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -73,6 +77,7 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
+
     
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_AttachItem();
@@ -81,6 +86,11 @@ public:
     void NetMulticast_DetachItem();
     void DetachItem();
     
+
+    void DropDown();
+	void PickUpDropDown();
+	void ShootTrace();
+
 
     
     void ShootTrace();
@@ -145,5 +155,10 @@ private:
 public:
     // 필요 없음 
     bool bHasItem = false;
+
+    UPROPERTY(EditAnywhere)
+    EPlayerType PlayerType = EPlayerType::Eric;
+    UPROPERTY(EditDefaultsOnly)
+    TArray<USkeletalMesh*> PlayerMeshType;
 };
 

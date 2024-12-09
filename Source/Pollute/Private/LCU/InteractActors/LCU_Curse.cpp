@@ -74,7 +74,7 @@ void ALCU_Curse::Tick(float DeltaTime)
 			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
 			if(P_pc)
 			{
-				P_pc->ServerRPC_ChangeToMonster();
+				P_pc->ChangeToMonster();
 			}
 			
 			AP_GameState* P_GS =  Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));

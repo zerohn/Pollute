@@ -27,17 +27,28 @@ public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+    
 public:
+    // 공격 관련 함수
     void Attack();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_OnSuccessHit(FHitResult HitResult, bool bHit);
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_OnSuccessHit(FHitResult HitResult, bool bHit);
     UFUNCTION(Server, Reliable)
     void ServerRPC_Attack();
     UFUNCTION(NetMulticast, Reliable)
-    void Multicast_Attack();
+    void Multicast_Attack();    
+    UFUNCTION()
+    void OnNotifyAttack();
+
+    // 공격 받기
+    void DieProcess();
+    void ApplyStun();
+    void ClearStun();
     
-    UFUNCTION(Server, Reliable)
-    void ServerRPC_OnNotifyAttack();
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_OnNotifyAttack();
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input)
     class UInputAction* IA_Attack;
@@ -47,8 +58,19 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
     class UAnimMontage* AttackMontage;
-    
 
-    UPROPERTY(Replicated)
+    
+    FTimerHandle StunTimerHandle;
+    UPROPERTY(EditAnywhere)
+    float StunTime = 5.f;
+    UPROPERTY()
+    bool bIsStunned = false;
+    
+    UPROPERTY()
     bool bCanAttack = true;
+
+    UPROPERTY()
+    bool AttackStart = false;
+
+  
 };

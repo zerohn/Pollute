@@ -17,6 +17,8 @@ void UCommonActivatableSessionList::NativeConstruct()
     GI->OnAddSessionDelegates.BindUObject(this, &UCommonActivatableSessionList::OnAddSession);
     GI->OnFindCompleteDelegates.BindUObject(this, &UCommonActivatableSessionList::OnFindComplete);
 
+    Btn_Find->OnClicked().AddUObject(this, &UCommonActivatableSessionList::FindSessions);
+
 }
 
 void UCommonActivatableSessionList::NativeOnActivated()
