@@ -187,8 +187,6 @@ private:
         FItemData GetHeldItem() const;
 
 public:
-    // 필요 없음 
-    bool bHasItem = false;
 
     UPROPERTY(EditAnywhere)
     EPlayerType PlayerType = EPlayerType::Eric;
@@ -198,8 +196,6 @@ public:
 // 임시 playerhud
 public:
     class UHHR_TestPlayerHUD* PlayerHUD;
-
-};
 
         // 픽업 대상 아이템
         class AHHR_Item* RetrievedItem;
