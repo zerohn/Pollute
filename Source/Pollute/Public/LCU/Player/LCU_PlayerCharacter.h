@@ -77,15 +77,32 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
+
+    
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_AttachItem();
+    void AttachItem();
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_DetachItem();
+    void DetachItem();
+    
+
     void DropDown();
 	void PickUpDropDown();
 	void ShootTrace();
 
-  // 죽으면 부르는 함수
-  void DieProcess();
 
-  // IA에 Bind될 함수
-  void Attack();
+    
+    void ShootTrace();
+
+	void PickUpDropDown();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_PickUpDropDown();
+
+    // 죽으면 부르는 함수
+    void DieProcess();
+    // IA에 Bind될 함수
+    void Attack();
 
 
 private:
@@ -104,7 +121,7 @@ private:
 	ALCU_PlayerCharacter* FinalOverapPlayer;
 	UPROPERTY()
 	AActor* FinalOverapItem;
-    UPROPERTY()
+    UPROPERTY(Replicated)
     class AHHR_Item* ItemInHand;
 	
 	// 성별 변수인데 성별따라 사용하는 애니메이션이 좀다를것
@@ -118,7 +135,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
 
-    // HHR
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
     
@@ -137,6 +153,7 @@ private:
 	bool bHasCurse = false;
 
 public:
+    // 필요 없음 
     bool bHasItem = false;
 
     UPROPERTY(EditAnywhere)
