@@ -14,10 +14,15 @@ class POLLUTE_API AHHR_Gun : public AHHR_WeaponItem
 {
 	GENERATED_BODY()
 
+public:
+    AHHR_Gun();
+
 protected:
     UPROPERTY(EditAnywhere, Category = "Setting")
     float Range = 1000.f;
 
+
+    
 
 public:
     void Attack() override;

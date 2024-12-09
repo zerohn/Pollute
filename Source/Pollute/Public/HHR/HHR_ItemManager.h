@@ -20,13 +20,22 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+private:
+    /*UPROPERTY(Replicated)
+    class AHHR_Item* GeneratedItem;*/
+    /*UPROPERTY(Replicated)
+    TArray<class AHHR_Item*> GeneratedItems;
+    UPROPERTY(Replicated)
+    TArray<int32> ItemsDataIdx;*/
+    
 
-protected:
+public:
 	// 아이템 데이터 저장
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
 	TMap<int32, FItemData> ItemDataMap;
-
+protected:
 	// 생성할 아이템 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
 	TSubclassOf<class AHHR_Item> ItemClass;
@@ -45,6 +54,14 @@ public:
 
 	// Item ID로 검색 (안전 검색, 걍 검색)
 	FItemData& GetItemDataByID(int32 ItemID);
+
+    // item data 넣어주는 것을 multicast
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_GenerateItem();
+
+    UFUNCTION(NetMulticast, reliable)
+    void NetMulticast_SetData(class AHHR_Item* Item, int32 idx);
+    
 
 
 // 임시 Player HUD

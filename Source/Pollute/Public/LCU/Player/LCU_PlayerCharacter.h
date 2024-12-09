@@ -6,7 +6,10 @@
 #include "LCU/Interfaces/LCU_InteractInterface.h"
 #include "Pollute/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "Pollute/Public/LCU/LCU_Properties/LCU_Property.h"
+#include "P_Settings/PlayData.h"
 #include "LCU_PlayerCharacter.generated.h"
+
+enum class EPlayerType : uint8;
 
 UCLASS()
 class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , public ILCU_InteractInterface
@@ -29,6 +32,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -73,14 +77,27 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
+
+    
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_AttachItem();
+    void AttachItem();
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_DetachItem();
+    void DetachItem();
+    
+
+    void DropDown();
 	void PickUpDropDown();
 	void ShootTrace();
+    
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_PickUpDropDown();
 
-  // 죽으면 부르는 함수
-  void DieProcess();
-
-  // IA에 Bind될 함수
-  void Attack();
+    // 죽으면 부르는 함수
+    void DieProcess();
+    // IA에 Bind될 함수
+    void Attack();
 
 
 private:
@@ -99,7 +116,7 @@ private:
 	ALCU_PlayerCharacter* FinalOverapPlayer;
 	UPROPERTY()
 	AActor* FinalOverapItem;
-    UPROPERTY()
+    UPROPERTY(Replicated)
     class AHHR_Item* ItemInHand;
 	
 	// 성별 변수인데 성별따라 사용하는 애니메이션이 좀다를것
@@ -113,7 +130,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	UInputAction* IA_PickUpDropDown;
 
-    // HHR
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
     
@@ -132,6 +148,12 @@ private:
 	bool bHasCurse = false;
 
 public:
+    // 필요 없음 
     bool bHasItem = false;
+
+    UPROPERTY(EditAnywhere)
+    EPlayerType PlayerType = EPlayerType::Eric;
+    UPROPERTY(EditDefaultsOnly)
+    TArray<USkeletalMesh*> PlayerMeshType;
 };
 

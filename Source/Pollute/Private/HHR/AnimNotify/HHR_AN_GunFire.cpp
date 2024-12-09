@@ -9,7 +9,7 @@
 
 void UHHR_AN_GunFire::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-    Super::Notify(MeshComp, Animation);
+    //Super::Notify(MeshComp, Animation);
 
     //
     ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(MeshComp->GetOwner());

@@ -25,9 +25,11 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ChangeToSpector();
 
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_ChangeToMonster();
+	UFUNCTION()
+	void ChangeToMonster();
 
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_ItemUIOff();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
