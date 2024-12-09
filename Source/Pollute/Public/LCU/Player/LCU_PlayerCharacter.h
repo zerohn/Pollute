@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -16,11 +14,9 @@ class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , publi
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ALCU_PlayerCharacter();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -75,7 +71,7 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
-	void PickUpDropDown(AHHR_Item* Item);
+	void PickUpDropDown();
 	void ShootTrace();
 
   // 죽으면 부르는 함수
@@ -142,14 +138,24 @@ private:
         UInputAction* IA_G;
 
         // NSK G키 상호작용 처리 함수
+        UFUNCTION()
         void OnInteract();
 
         // 현재 근처 제단
         UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
         ANSK_Altar* NearbyAltar;
+        
+        int32 SelectedSlotIndex;
+
+        // 슬롯 인덱스를 설정하는 함수
+        void SetCurrentSlotIndex(int32 SlotIndex);
+
+        // 현재 슬롯 인덱스를 초기화하는 함수
+        void ClearCurrentSlotIndex();
 
         // 근처 제단 설정 함수
-        void SetNearbyAltar(ANSK_Altar* Altar);
+        void SetNearbyAltar(ANSK_Altar* Altar, int32 SlotIndex);
+        void ClearNearbyAltar();
 
         // 현재 플레이어가 들고 있는 아이템 데이터
         UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
@@ -157,4 +163,7 @@ private:
 
         // 플레이어가 들고 있는 아이템 반환 함수
         FItemData GetHeldItem() const;
+
+        // 픽업 대상 아이템
+        class AHHR_Item* RetrievedItem;
 };

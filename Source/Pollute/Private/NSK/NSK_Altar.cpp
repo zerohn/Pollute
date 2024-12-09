@@ -54,10 +54,29 @@ ANSK_Altar::ANSK_Altar()
         // 슬롯 아이템 배열 초기화
         SlotItems.Init(FItemData(), SlotLocations.Num());
 
+        // 슬롯별 충돌 박스 생성 및 설정
+        FString SlotBoxName = FString::Printf(TEXT("SlotBox%d"), i + 1);
+        UBoxComponent* SlotBox = CreateDefaultSubobject<UBoxComponent>(*SlotBoxName);
+        SlotBox->SetupAttachment(Slot);
+        SlotBox->SetBoxExtent(FVector(25.0f, 25.0f, 25.0f)); // 슬롯 주변 박스 크기 설정
+        SlotBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); // 플레이어와만 상호작용
+        SlotBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+        // 슬롯 충돌 이벤트 추가
+        SlotBox->OnComponentBeginOverlap.AddDynamic(this, &ANSK_Altar::OnSlotBeginOverlap);
+        SlotBox->OnComponentEndOverlap.AddDynamic(this, &ANSK_Altar::OnSlotEndOverlap);
+
+        // 슬롯 충돌 박스를 맵에 추가
+        SlotCollisionMap.Add(SlotBox, i);
+
+        // 슬롯 충돌 박스를 배열에 추가
+        SlotCollisionBoxes.Add(SlotBox);
+
         // 로그 출력
         P_LOG(PolluteLog, Warning, TEXT("Slot %d initialized at: %s"), i + 1, *SlotLocation.ToString());
     }
 
+    CurrentSlotIndex = -1;
     bIsPlayerNearby = false;
 }
 
@@ -78,8 +97,17 @@ void ANSK_Altar::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
         if (!bIsPlayerNearby) // 중복 방지
         {
             bIsPlayerNearby = true;
-            Player->SetNearbyAltar(this);
-            P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료: %s"), *GetName());
+
+            // 슬롯 선택 로직 추가
+            FVector OverlapLocation = SweepResult.ImpactPoint;
+            int32 SlotIndex = FindClosestSlot(OverlapLocation);
+
+            // 플레이어와 제단 연결
+            Player->SetNearbyAltar(this, SlotIndex);
+            CurrentSlotIndex = SlotIndex; // 현재 슬롯 설정
+
+            P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 설정 완료: %s, SlotIndex: %d"), *GetName(), SlotIndex);
+        
         }
     }
 }
@@ -92,8 +120,58 @@ void ANSK_Altar::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* 
         if (bIsPlayerNearby) // 중복 방지
         {
             bIsPlayerNearby = false;
-            Player->SetNearbyAltar(nullptr);
+            Player->SetNearbyAltar(nullptr, -1); // 슬롯 인덱스를 -1로 설정
             P_LOG(PolluteLog, Warning, TEXT("NearbyAltar 해제 완료"));
+        }
+    }
+}
+
+void ANSK_Altar::OnSlotBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    if (ALCU_PlayerCharacter* Player = Cast<ALCU_PlayerCharacter>(OtherActor))
+    {
+        // OverlappedComponent를 UBoxComponent*로 캐스팅
+        if (UBoxComponent* BoxComponent = Cast<UBoxComponent>(OverlappedComponent))
+        {
+            // 슬롯 맵에서 해당 BoxComponent에 해당하는 SlotIndex를 찾음
+            if (SlotCollisionMap.Contains(BoxComponent))
+            {
+                int32 SlotIndex = *SlotCollisionMap.Find(BoxComponent);
+                P_LOG(PolluteLog, Warning, TEXT("Player is interacting with Slot %d"), SlotIndex);
+
+                // 플레이어에게 슬롯 정보를 전달
+                Player->SetCurrentSlotIndex(SlotIndex); // 가정된 함수
+            }
+        }
+        else
+        {
+            P_LOG(PolluteLog, Error, TEXT("Overlapped component is not of type UBoxComponent"));
+        }
+    }
+}
+
+void ANSK_Altar::OnSlotEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    if (ALCU_PlayerCharacter* Player = Cast<ALCU_PlayerCharacter>(OtherActor))
+    {
+        // OverlappedComponent를 UBoxComponent*로 캐스팅
+        if (UBoxComponent* BoxComponent = Cast<UBoxComponent>(OverlappedComponent))
+        {
+            // 슬롯 맵에서 해당 BoxComponent에 해당하는 SlotIndex를 찾음
+            if (SlotCollisionMap.Contains(BoxComponent))
+            {
+                int32 SlotIndex = *SlotCollisionMap.Find(BoxComponent);
+                P_LOG(PolluteLog, Warning, TEXT("Player stopped interacting with Slot %d"), SlotIndex);
+
+                // 슬롯 종료 시 처리 로직
+                Player->ClearCurrentSlotIndex(); // 가정된 함수
+            }
+        }
+        else
+        {
+            P_LOG(PolluteLog, Error, TEXT("Overlapped component is not of type UBoxComponent"));
         }
     }
 }
@@ -106,7 +184,7 @@ void ANSK_Altar::OnInteract()
     if (PlayerCharacter)
     {
         P_LOG(PolluteLog, Warning, TEXT("플레이어 캐릭터 감지됨"));
-        HandlePlayerInteraction(PlayerCharacter);
+        HandlePlayerInteraction(PlayerCharacter, CurrentSlotIndex);
     }
     else
     {
@@ -115,7 +193,7 @@ void ANSK_Altar::OnInteract()
 }
 
 // 플레이어가 제단에 아이템 추가 함수
-void ANSK_Altar::HandlePlayerInteraction(ALCU_PlayerCharacter* PlayerCharacter)
+void ANSK_Altar::HandlePlayerInteraction(ALCU_PlayerCharacter* PlayerCharacter, int32 SlotIndex)
 {
     if (!PlayerCharacter || !PlayerCharacter->bHasItem)
     {
@@ -123,10 +201,16 @@ void ANSK_Altar::HandlePlayerInteraction(ALCU_PlayerCharacter* PlayerCharacter)
         return; // 플레이어가 아이템이 없으면 무시
     }
 
+    if (!SlotLocations.IsValidIndex(SlotIndex))
+    {
+        P_LOG(PolluteLog, Error, TEXT("유효하지 않은 슬롯 인덱스: %d"), SlotIndex);
+        return; // 유효하지 않은 슬롯이면 무시
+    }
+
     P_LOG(PolluteLog, Warning, TEXT("플레이어가 아이템을 들고 있음"));
     FItemData HeldItem = PlayerCharacter->HeldItem; // 플레이어의 아이템 가져오기
-    AddItemToSlot(HeldItem); // 제단에 아이템 추가
-    PlayerCharacter->PickUpDropDown(); // 플레이어 아이템 초기화
+    AddItemToSlot(HeldItem, SlotIndex);            // 제단에 아이템 추가
+    PlayerCharacter->PickUpDropDown();             // 플레이어 아이템 초기화
 
     // 플레이어의 아이템 상태 초기화
     PlayerCharacter->HeldItem = FItemData(); // 데이터 초기화
@@ -134,7 +218,7 @@ void ANSK_Altar::HandlePlayerInteraction(ALCU_PlayerCharacter* PlayerCharacter)
 }
 
 // 슬롯 아이템 등록 및 액터 배치
-void ANSK_Altar::AddItemToSlot(const FItemData& ItemData)
+void ANSK_Altar::AddItemToSlot(const FItemData& ItemData, int32 SlotID)
 {
     for (int32 i = 0; i < SlotLocations.Num(); i++)
     {
@@ -273,9 +357,9 @@ AHHR_Item* ANSK_Altar::RemoveItemFromSlot(int32 SlotIndex)
         SlotItems[SlotIndex] = FItemData();  // 기본값으로 초기화
         SlotActorItems[SlotIndex] = nullptr;
 
-        return RetrievedItem;
-
         P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에서 아이템 제거: %s"), SlotIndex, *RetrievedItem->ItemData.ItemName.ToString());
+
+        return RetrievedItem;
     }
     else
     {
@@ -283,6 +367,24 @@ AHHR_Item* ANSK_Altar::RemoveItemFromSlot(int32 SlotIndex)
     }
 
     return nullptr;
+}
+
+int32 ANSK_Altar::FindClosestSlot(const FVector& Location)
+{
+    int32 ClosestIndex = -1;
+    float MinDistance = FLT_MAX;
+
+    for (int32 i = 0; i < SlotLocations.Num(); ++i)
+    {
+        float Distance = FVector::Dist(SlotLocations[i]->GetComponentLocation(), Location);
+        if (Distance < MinDistance)
+        {
+            MinDistance = Distance;
+            ClosestIndex = i;
+        }
+    }
+
+    return ClosestIndex;
 }
 
 // 성공 UI 표시 (현재 UI X 로그로만)
