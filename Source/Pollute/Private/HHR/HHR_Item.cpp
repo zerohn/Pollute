@@ -37,6 +37,7 @@ AHHR_Item::AHHR_Item()
     ItemInteractWidgetComp->SetupAttachment(RootComponent);
     ItemInteractWidgetComp->SetRelativeLocation(FVector(0, 0, 100.0f));
     ItemInteractWidgetComp->SetDrawSize(FVector2d(50, 50));
+    ItemInteractWidgetComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     bReplicates = true;
     //SetReplicateMove(true);
@@ -117,6 +118,8 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 	}
 
 }
+
+
 
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

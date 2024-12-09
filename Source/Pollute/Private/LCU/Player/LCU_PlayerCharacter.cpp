@@ -21,6 +21,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/SkeletalMesh.h"
+#include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "Rendering/RenderCommandPipes.h"
 
 
@@ -393,6 +394,7 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 
 void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 {
+    // multi에서 할 일을 최대한 줄여야할 듯 
     ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
     AttachItem();
 }
@@ -433,6 +435,13 @@ void ALCU_PlayerCharacter::AttachItem()
         ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
         // Item의 Owner 설정
         ItemInHand->SetOwner(this);
+        
+        // UI 변경
+        if(PlayerHUD)
+        {
+            PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
+        }
+        
     }
 }
 
@@ -471,6 +480,12 @@ void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
 
     // Drop 후에 핸드에 있는 아이템 null 초기화
     ItemInHand = nullptr;
+
+    // UI 변경
+    if(PlayerHUD)
+    {
+        PlayerHUD->ChangeItemImageNull();
+    }
 }
 
 void ALCU_PlayerCharacter::DetachItem()
@@ -606,10 +621,14 @@ void ALCU_PlayerCharacter::DieProcess()
 
 void ALCU_PlayerCharacter::Attack()
 {
-    if (!IsLocallyControlled())
+    if(IsLocallyControlled() && ItemInHand)
     {
-        return;
+        ServerRPC_Attack();
     }
+}
+
+void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
+{
     
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, (TEXT("%s :Attack input"), *this->GetName()));
 
@@ -640,5 +659,10 @@ void ALCU_PlayerCharacter::Attack()
         }
 
     }
+}
+
+void ALCU_PlayerCharacter::ServerRPC_Attack_Implementation()
+{
+    NetMulticast_Attack();
 }
 
