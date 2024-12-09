@@ -15,6 +15,8 @@ void UKYH_PlayerSlot::NativeConstruct()
 
     Btn_Left->OnClicked().AddUObject(this, &UKYH_PlayerSlot::ChangeCharacterLeft);
     Btn_Right->OnClicked().AddUObject(this, &UKYH_PlayerSlot::ChangeCharacterRight);
+    Btn_Left->SetVisibility(ESlateVisibility::Hidden);
+    Btn_Right->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UKYH_PlayerSlot::Init(FName InPlayerName, EPlayerType InPlayerType)
@@ -25,8 +27,22 @@ void UKYH_PlayerSlot::Init(FName InPlayerName, EPlayerType InPlayerType)
     FSlateBrush Brush;
     Brush.SetResourceObject(PlayerThumbImage[(int32)InPlayerType]);
     
-    Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(172, 128)));
+    Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(144, 106)));
     Player_Thumbnail->SetBrush(Brush);
+}
+
+void UKYH_PlayerSlot::SetButtonVisibility(bool bIsVisible)
+{
+    if (bIsVisible)
+    {
+        Btn_Left->SetVisibility(ESlateVisibility::Visible);
+        Btn_Right->SetVisibility(ESlateVisibility::Hidden);
+    }
+    else
+    {
+        Btn_Left->SetVisibility(ESlateVisibility::Hidden);
+        Btn_Right->SetVisibility(ESlateVisibility::Hidden);
+    }
 }
 
 void UKYH_PlayerSlot::ChangeCharacterLeft_Implementation()
@@ -59,6 +75,6 @@ void UKYH_PlayerSlot::UpdatePlayerType_Implementation(EPlayerType InPlayerType)
 {
     FSlateBrush Brush;
     Brush.SetResourceObject(PlayerThumbImage[(int32)InPlayerType]);
-    Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(172, 128)));
+    Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(144, 106)));
     Player_Thumbnail->SetBrush(Brush);
 }
