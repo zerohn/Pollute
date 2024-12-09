@@ -17,6 +17,8 @@ void AP_LobbyGameState::BeginPlay()
     LobbyWidget->ServerRPC_SetPlayerSlotUI(this);
 
     P_SCREEN(3, FColor::Orange, TEXT("CreateLobbyWidget : %s"), *GetNameSafe(LobbyWidget));
+
     
     GetWorld()->GetFirstPlayerController()->SetInputMode(FInputModeUIOnly());
+    GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(true);
 }

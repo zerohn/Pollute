@@ -90,12 +90,7 @@ public:
     void DropDown();
 	void PickUpDropDown();
 	void ShootTrace();
-
-
     
-    void ShootTrace();
-
-	void PickUpDropDown();
     UFUNCTION(Server, Reliable)
     void ServerRPC_PickUpDropDown();
 

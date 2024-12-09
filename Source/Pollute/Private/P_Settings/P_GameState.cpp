@@ -24,10 +24,13 @@ void AP_GameState::SelectCursePlayer()
 void AP_GameState::BeginPlay()
 {
 	Super::BeginPlay();
-	
+    
 	Curse = ALCU_Curse::GetInstance(GetWorld()); 
 	
 	SelectCursePlayer();
+    
+    GetWorld()->GetFirstPlayerController()->SetInputMode(FInputModeGameOnly());
+    GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(false);
 }
 
 void AP_GameState::Tick(float DeltaSeconds)
@@ -74,10 +77,10 @@ void AP_GameState::GetAllCharacters()
     {
         // 게임 끝
         UP_GameInstance* GI = Cast<UP_GameInstance>(GetGameInstance());
-        FString MapName = GI->GetCurrentSessionName().ToString(); // 이동하려는 맵 이름
+        FString MapName = GI->GetLobbyLevelURL(); // 이동하려는 맵 이름
         if (!MapName.IsEmpty())
         {
-            FString URL = FString::Printf(TEXT("%s?listen"), *MapName);
+            FString URL = MapName + "?Listen";
             GetWorld()->ServerTravel(URL, true);
         }
     }
