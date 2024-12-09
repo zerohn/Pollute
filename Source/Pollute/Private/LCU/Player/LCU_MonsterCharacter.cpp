@@ -1,11 +1,18 @@
 #include "LCU/Player/LCU_MonsterCharacter.h"
 
 #include "EnhancedInputComponent.h"
+#include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SlateWrapperTypes.h"
 #include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "HHR/HHR_ItemManager.h"
+#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LCU/Interfaces/LCU_InteractInterface.h"
+#include "LCU/Player/LCU_PlayerController.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -21,7 +28,6 @@ ALCU_MonsterCharacter::ALCU_MonsterCharacter()
 void ALCU_MonsterCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    
 }
 
 // Called every frame
@@ -50,8 +56,16 @@ void ALCU_MonsterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 void ALCU_MonsterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
 
-    //DOREPLIFETIME(ALCU_MonsterCharacter, bCanAttack);
+float ALCU_MonsterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+    class AController* EventInstigator, AActor* DamageCauser)
+{
+    float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+    
+    DieProcess();
+    
+    return damage;
 }
 
 void ALCU_MonsterCharacter::Attack()
@@ -132,6 +146,32 @@ void ALCU_MonsterCharacter::OnNotifyAttack()
     ServerRPC_OnSuccessHit(HitResult, bHit);
 }
 
+void ALCU_MonsterCharacter::DieProcess()
+{
+    ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(GetController());
+    if(pc)
+    {
+        pc->ServerRPC_ChangeToSpector();
+    }
+}
+
+void ALCU_MonsterCharacter::ApplyStun()
+{
+    if(bIsStunned) return;
+
+    bIsStunned = true;
+
+    GetCharacterMovement()->DisableMovement();
+
+    GetWorld()->GetTimerManager().SetTimer(StunTimerHandle, this, &ALCU_MonsterCharacter::ClearStun, StunTime);
+}
+
+void ALCU_MonsterCharacter::ClearStun()
+{
+    bIsStunned = false;
+    GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+}
+
 void ALCU_MonsterCharacter::ServerRPC_Attack_Implementation()
 {
     Multicast_Attack();
@@ -139,6 +179,6 @@ void ALCU_MonsterCharacter::ServerRPC_Attack_Implementation()
 
 void ALCU_MonsterCharacter::Multicast_Attack_Implementation()
 {
-    if(!AttackMontage) return;;
+    if(!AttackMontage) return;
     PlayAnimMontage(AttackMontage);
 }

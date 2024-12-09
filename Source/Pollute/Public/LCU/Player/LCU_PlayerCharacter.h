@@ -29,6 +29,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -73,6 +74,7 @@ public:
 	void ServerRPC_CarryCurse();
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_CarryCurse();
+    void DropDown();
 	void PickUpDropDown();
 	void ShootTrace();
 

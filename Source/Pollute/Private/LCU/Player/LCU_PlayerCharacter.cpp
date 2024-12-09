@@ -285,6 +285,32 @@ void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
 	}
 }
 
+void ALCU_PlayerCharacter::DropDown()
+{
+    if(!FinalOverapItem) return;
+    FVector CharacterLocation = GetActorLocation();
+    // 캐릭터 발 아래 위치
+    FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
+    // 아이템이 캐릭터 방향을 따라 회전하도록 설정
+    FRotator DropRotation = GetActorRotation(); 
+
+    // FinalOverlapItem을 월드에 분리
+		
+    // 아이템의 부모-자식 관계 해제
+    FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+    // 위치 및 회전 설정
+    FinalOverapItem->SetActorLocation(DropLocation);
+    FinalOverapItem->SetActorRotation(DropRotation);
+
+    // 드롭 이후 초기화
+    FinalOverapItem = nullptr;
+    bHasItem = false;
+
+    // Drop 후에 핸드에 있는 아이템 null 초기화
+    ItemInHand = nullptr;
+}
+
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
 	// 주울 수 있는 아이템이 없으면 나가야함
@@ -304,11 +330,10 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 	    if(ItemInHand)
 	    {
 	        ItemInHand->AttachToComponent(
-                SkeletalMeshComp,                      
-                FAttachmentTransformRules::SnapToTargetIncludingScale, 
-                FName("PickUpSocket")                   
+                SkeletalMeshComp,
+                FAttachmentTransformRules::SnapToTargetIncludingScale,
+                FName("PickUpSocket")
             );
-	        P_SCREEN(1.f, FColor::Black, TEXT("TEST"));
 	        bHasItem = true;
 	        // 각 아이템 마다 위치 수정
 	        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
@@ -316,34 +341,12 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 	        // Item의 Owner 설정
 	        ItemInHand->SetOwner(this);
 	    }
-		
 	}
 	// 아이템을 가지고 있으니 드랍다운
 	else
 	{
-		FVector CharacterLocation = GetActorLocation();
-		// 캐릭터 발 아래 위치
-		FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
-		// 아이템이 캐릭터 방향을 따라 회전하도록 설정
-		FRotator DropRotation = GetActorRotation(); 
-
-		// FinalOverlapItem을 월드에 분리
-		
-			// 아이템의 부모-자식 관계 해제
-		FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
-		// 위치 및 회전 설정
-		FinalOverapItem->SetActorLocation(DropLocation);
-		FinalOverapItem->SetActorRotation(DropRotation);
-
-		// 드롭 이후 초기화
-		FinalOverapItem = nullptr;
-		bHasItem = false;
-
-	    // Drop 후에 핸드에 있는 아이템 null 초기화
-	    ItemInHand = nullptr;
-	}	
-
+		DropDown();
+	}
 }
 
 void ALCU_PlayerCharacter::ShootTrace()

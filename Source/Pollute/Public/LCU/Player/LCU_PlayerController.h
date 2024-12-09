@@ -28,6 +28,8 @@ public:
 	UFUNCTION()
 	void ChangeToMonster();
 
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_ItemUIOff();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
