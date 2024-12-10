@@ -222,4 +222,5 @@ public:
 
     // 픽업 대상 아이템
     class AHHR_Item* RetrievedItem;
+
 };
