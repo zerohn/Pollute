@@ -102,7 +102,21 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_Attack();
 
+    // 저주 관련 TEST 위젯
+    UFUNCTION()
+    void HasCurseWidget(bool bShow);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_HasCurseWidget(bool bShow);
+
 private:
+
+    //  LCU
+    // 임시 저주 확인하는 위젯
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    TSubclassOf<class ULCU_TestWidget> LCU_TestWidgetFactory;
+
+    ULCU_TestWidget* LCU_TestWidget;
+    
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* BoxComponent;
@@ -147,6 +161,7 @@ private:
     UPROPERTY(Replicated)
     int32 HealthCount = 4;
 
+    UPROPERTY(Replicated)
 	bool bHasCurse = false;
 
 
@@ -187,9 +202,6 @@ private:
         FItemData GetHeldItem() const;
 
 public:
-    // 필요 없음 
-    bool bHasItem = false;
-
     UPROPERTY(EditAnywhere)
     EPlayerType PlayerType = EPlayerType::Eric;
     UPROPERTY(EditDefaultsOnly)
@@ -199,8 +211,6 @@ public:
 public:
     class UHHR_TestPlayerHUD* PlayerHUD;
 
-};
-
-        // 픽업 대상 아이템
-        class AHHR_Item* RetrievedItem;
+    // 픽업 대상 아이템
+    class AHHR_Item* RetrievedItem;
 };

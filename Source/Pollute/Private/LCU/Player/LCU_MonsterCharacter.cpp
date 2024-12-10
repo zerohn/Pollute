@@ -141,7 +141,7 @@ void ALCU_MonsterCharacter::OnNotifyAttack()
         ObjectTypes,
         false,
         IgnoredActors,
-        EDrawDebugTrace::ForDuration, // 디버그용 선
+        EDrawDebugTrace::None, // 디버그용 선
         HitResult,
         true,
         FLinearColor::Red,

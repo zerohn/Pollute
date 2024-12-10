@@ -36,6 +36,21 @@ void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
 {
 	// 현재 Possess 하고 있는 폰 가져오기
 	APawn* player = GetPawn();
+    ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(player);
+    if(PlayerCharacter && HasAuthority())
+    {
+        PlayerCharacter->NetMulticast_DetachItem();
+    }
+    
+    if(PlayerCharacter->GetHasCurse())
+    {
+        AP_GameState* GS = Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
+        if (GS)
+        {
+            GS->RestartCurse();
+        }
+    }
+    
     ClientRPC_ItemUIOff();
 	UnPossess();
 
@@ -61,9 +76,9 @@ void ALCU_PlayerController::ChangeToMonster()
     // 현재 Possess 하고 있는 폰 가져오기
     APawn* player = GetPawn();
     ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(player);
-    if(PlayerCharacter)
+    if(PlayerCharacter && HasAuthority())
     {
-        PlayerCharacter->DropDown();
+        PlayerCharacter->NetMulticast_DetachItem();
     }
     ClientRPC_ItemUIOff();
     UnPossess();
@@ -76,7 +91,7 @@ void ALCU_PlayerController::ChangeToMonster()
     Possess(MonSter);
 
     player->Destroy();
-
+    
     AP_GameState* GS =Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
     if (GS)
     {
