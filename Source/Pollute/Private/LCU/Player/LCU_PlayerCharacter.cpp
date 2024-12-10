@@ -59,42 +59,6 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 void ALCU_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-    
-    switch (PlayerType)
-    {
-    case EPlayerType::Eric:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[0]);
-            break;
-        }
-    case EPlayerType::Manuel:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[1]);
-        }
-        break;
-    case EPlayerType::Sophia:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[2]);
-            break;
-        }
-    case EPlayerType::Carla:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[3]);
-            break;
-        }
-    case EPlayerType::Nathan:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[4]);
-            break;
-        }
-    case EPlayerType::Claudia:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[5]);
-            break;
-        }
-    default:
-        break;
-    }
 
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
@@ -776,6 +740,11 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
 {
     NearbyAltar = nullptr;
     SelectedSlotIndex = INDEX_NONE;
+}
+
+void ALCU_PlayerCharacter::UpdatePlayerMesh()
+{
+    GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[(int32)PlayerType]);
 }
 
 void ALCU_PlayerCharacter::SetCurrentSlotIndex(int32 SlotIndex)

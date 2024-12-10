@@ -28,23 +28,24 @@ class POLLUTE_API UKYH_CommonUserLobby : public UCommonUserWidget
 public:
 
     virtual void NativeConstruct() override;
-    void Init();
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
     // 세션 로비 UI
-    UPROPERTY(Replicated, meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget))
     UCommonTextBlock* Text_SessionName;
     UPROPERTY(meta = (BindWidget))
     UKYH_PolluteButtonBase* Btn_Start;
     UFUNCTION()
     void StartGame();
-    UPROPERTY(Replicated, meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget))
     UVerticalBox* VerticalBox;
-    UFUNCTION(Server, Reliable)
-    void ServerRPC_SetPlayerSlotUI(AGameStateBase* GameState);
-    UFUNCTION(NetMulticast, Reliable)
-    void ClientRPC_AddPlayerSlotUI(AGameStateBase* GameState);
+    UFUNCTION()
+    void InitLobbyUI(const FText& SessionName, const TArray<FName>& PlayerNames);
+    UFUNCTION()
+    void AddPlayerSlotUI(const TArray<FName>& PlayerNames);
     UPROPERTY(EditDefaultsOnly, Category = "Session")
     TSubclassOf<UKYH_PlayerSlot> PlayerSlotClass;
+    UPROPERTY()
+    TArray<UKYH_PlayerSlot*> PlayerSlots;
 
     // 채팅창
     UPROPERTY(meta = (BindWidget))
