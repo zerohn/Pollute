@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_MonsterCharacter.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "NSK/NSK_SpawnManager.h"
 #include "P_Settings/P_GameState.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
@@ -107,6 +108,11 @@ void ALCU_PlayerController::ClientRPC_ItemUIOff_Implementation()
         AHHR_ItemManager* ItemManager = Cast<AHHR_ItemManager>(IM);
         if(ItemManager)
         {
+            //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetPawn());
+            //if (player)
+            //{
+            //    player->PlayerHUD->SetVisibility(ESlateVisibility::Hidden);
+            //}
             ItemManager->TestPlayerHUDIns->SetVisibility(ESlateVisibility::Hidden);
             //ItemManager->TestPlayerHUDIns->SetItemDialogVisibility(false);
             //ItemManager->TestPlayerHUDIns->SetItemDialogText(FText());

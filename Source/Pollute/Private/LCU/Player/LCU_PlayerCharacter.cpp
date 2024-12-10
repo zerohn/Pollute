@@ -453,11 +453,9 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 
 
     //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
+    //ServerRPC_PickUpDropDown();
+    
     ServerRPC_PickUpDropDown();
-
-
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
-        ServerRPC_PickUpDropDown();
 }
 
 void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
@@ -483,7 +481,6 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
     }
     
 }
-
 
 
 void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
@@ -581,7 +578,7 @@ void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
 
 void ALCU_PlayerCharacter::DetachItem()
 {
-
+    if (!ItemInHand) return;
     // Item의 Interactive 허용
     if(IsLocallyControlled())
     {

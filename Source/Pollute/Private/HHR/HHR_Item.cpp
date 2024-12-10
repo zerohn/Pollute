@@ -3,11 +3,13 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/Character.h"
 #include "HHR/HHR_ItemManager.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "NSK/NSK_SpawnManager.h"
 
 // Sets default values
 AHHR_Item::AHHR_Item()
@@ -74,6 +76,10 @@ void AHHR_Item::OnRep_ChangeIdx()
     {
         SetItemData(ItemManager->ItemDataMap[DataIdx]);
     }
+    /*if(SpawnManager)
+    {
+        SetItemData(*(SpawnManager->SpawnedItems[DataIdx]));
+    }*/
 }
 
 void AHHR_Item::SetItemData(const FItemData& data)

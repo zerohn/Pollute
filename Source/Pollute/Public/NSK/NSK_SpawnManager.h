@@ -29,7 +29,28 @@ public:
 
 	void SpawnAltarHint(); // 힌트 생성
 
+// 임시 수정 부분
+public:
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_SetData(class AHHR_Item* Item, int32 idx);
+    UPROPERTY()
+    class UHHR_TestPlayerHUD* TestPlayerHUDIns;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+    TSubclassOf<class UHHR_TestPlayerHUD> PlayerHUDClass;
 
+
+protected:
+    // 생성할 아이템 클래스
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+    TSubclassOf<class AHHR_Item> ItemClass;
+    // 무기
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+    TSubclassOf<class AHHR_KnifeItem> KnifeItemClass;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+    TSubclassOf<class AHHR_Gun> GunItemClass;
+public:
+    TArray<FItemData*> SpawnedItems; // 스폰된 아이템 저장
+    
 private:
 	// 아이템
     UPROPERTY(EditAnywhere, Category = "Spawn Manager")
@@ -39,7 +60,8 @@ private:
 
 	TArray<FItemData*> SelectedAltarItems; // 제단 아이템으로 선택된 아이템의 포인터 배열
 
-    TArray<FItemData*> SpawnedItems; // 스폰된 아이템 저장
+
+
 
 	// 힌트
 	UDataTable* SpawnHintDataTable; // 힌트 데이터 테이블
