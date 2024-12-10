@@ -20,6 +20,7 @@
 #include "LCU/Player/LCU_PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimInstance.h"
+#include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "Rendering/RenderCommandPipes.h"
@@ -428,7 +429,7 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 */
 
 
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
+    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
     ServerRPC_PickUpDropDown();
 
 
@@ -439,12 +440,12 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
     
-    P_LOG(PolluteLog, Warning, TEXT("PickUp"))
+    //P_LOG(PolluteLog, Warning, TEXT("PickUp"))
     // 현재 아이템이 없으니 픽업
     if(!ItemInHand)
     {
 
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PickUpDropDown executed on Server"));
+        //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PickUpDropDown executed on Server"));
         
         NetMulticast_AttachItem();
 
@@ -470,16 +471,12 @@ void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 
 void ALCU_PlayerCharacter::AttachItem()
 {
-    if(ItemInHand)
+    // Item의 Interactive 허용
+    if(IsLocallyControlled())
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, (TEXT("A %s Item 있음"), *this->GetName()));
+        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(false);
     }
-    else
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, (TEXT("A %s Item 없음"), *this->GetName()));
-        return;
-    }
-    
+
     USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
     if (!SkeletalMeshComp)
     {
@@ -489,8 +486,7 @@ void ALCU_PlayerCharacter::AttachItem()
     // HHR 수정 
     if(ItemInHand)
     {
-        //P_LOG(PolluteLog, Warning, TEXT("Item In Hand!"))
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Picked up item!!"));
+        //P_LOG(PolluteLog, Warning, TEXT("Item In Hand!"))s
         // TODO : Attach를 Multicast로 싸줘야 함 
         ItemInHand->AttachToComponent(
             SkeletalMeshComp,                      
@@ -515,8 +511,8 @@ void ALCU_PlayerCharacter::AttachItem()
 
 void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
 {
-    //DetachItem(Item);
-    if(ItemInHand)
+    DetachItem();
+    /*if(ItemInHand)
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, (TEXT("%s Item 있음"), *this->GetName()));
     }
@@ -553,19 +549,16 @@ void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
     if(PlayerHUD)
     {
         PlayerHUD->ChangeItemImageNull();
-    }
+    }*/
 }
 
 void ALCU_PlayerCharacter::DetachItem()
 {
-    if(ItemInHand)
+
+    // Item의 Interactive 허용
+    if(IsLocallyControlled())
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, (TEXT("%s Item 있음"), *this->GetName()));
-    }
-    else
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, (TEXT("%s Item 없음"), *this->GetName()));
-        return;
+        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(true);
     }
     
     FVector CharacterLocation = GetActorLocation();
@@ -590,6 +583,13 @@ void ALCU_PlayerCharacter::DetachItem()
 
     // Drop 후에 핸드에 있는 아이템 null 초기화
     ItemInHand = nullptr;
+
+    // UI 변경 
+    if(PlayerHUD)
+    {
+        PlayerHUD->ChangeItemImageNull();
+    }
+    
     /*
 	    // HHR 수정 
 	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
@@ -721,10 +721,20 @@ void ALCU_PlayerCharacter::Attack()
     }
 }
 
+void ALCU_PlayerCharacter::InitItem()
+{
+    // hud 변경
+    if(PlayerHUD)
+    {
+        PlayerHUD->ChangeItemImageNull();
+    }
+    ItemInHand = nullptr;
+}
+
 void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
 {
     
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, (TEXT("%s :Attack input"), *this->GetName()));
+    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, (TEXT("%s :Attack input"), *this->GetName()));
 
     // Item 구하는 코드는 나중에 처리님이 들고 있는 아이템 추가하면 없애도 될듯
     AHHR_WeaponItem* weapon = Cast<AHHR_WeaponItem>(ItemInHand);

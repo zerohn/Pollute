@@ -66,7 +66,7 @@ public:
     // ## 아이템 Get
     class AHHR_Item* GetItem() {return ItemInHand;}
     // 아이템 초기화 함수
-    void InitItem() {ItemInHand = nullptr;}
+    
     
 	// Get, Set 끝
 
@@ -101,6 +101,8 @@ public:
     void ServerRPC_Attack();
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_Attack();
+
+    void InitItem();
 
 private:
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
@@ -188,7 +190,7 @@ private:
 
 public:
     // 필요 없음 
-    bool bHasItem = false;
+    //bool bHasItem = false;
 
     UPROPERTY(EditAnywhere)
     EPlayerType PlayerType = EPlayerType::Eric;
@@ -199,8 +201,6 @@ public:
 public:
     class UHHR_TestPlayerHUD* PlayerHUD;
 
-};
-
-        // 픽업 대상 아이템
-        class AHHR_Item* RetrievedItem;
+    // 픽업 대상 아이템
+    class AHHR_Item* RetrievedItem;
 };

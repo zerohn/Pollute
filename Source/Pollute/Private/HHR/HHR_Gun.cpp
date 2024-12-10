@@ -61,6 +61,6 @@ void AHHR_Gun::Attack()
     }*/
 
     bIsUsed = true;
-    DestoryDelay();
+    //DestoryDelay();
     
 }

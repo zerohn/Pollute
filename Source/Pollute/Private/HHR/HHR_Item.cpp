@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "HHR/HHR_ItemManager.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -34,7 +35,7 @@ AHHR_Item::AHHR_Item()
     ItemInteractWidgetComp->SetupAttachment(RootComponent);
     ItemInteractWidgetComp->SetRelativeLocation(FVector(0, 0, 100.0f));
     ItemInteractWidgetComp->SetDrawSize(FVector2d(50, 50));
-    ItemInteractWidgetComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ItemInteractWidgetComp->SetCollisionProfileName(TEXT("NoCollision"));
 
     bReplicates = true;
     //SetReplicateMove(true);
@@ -121,8 +122,13 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    // local player에만 보여야함
+    APawn* playerpawn = Cast<APawn>(OtherActor);
+    if(playerpawn && playerpawn->IsLocallyControlled())
+    {
+        ItemInteractWidgetComp->SetVisibility(true);
+    }
     
-    ItemInteractWidgetComp->SetVisibility(true);
     
 	// UI 처리 따로 함수로 빼서 Player Character에서 호출 
 	/*if(Cast<ACharacter>(OtherActor))
@@ -150,7 +156,13 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 
-    ItemInteractWidgetComp->SetVisibility(false);
+    // local player에만 보여야함
+    APawn* playerpawn = Cast<APawn>(OtherActor);
+    if(playerpawn && playerpawn->IsLocallyControlled())
+    {
+        ItemInteractWidgetComp->SetVisibility(false);
+    }
+    
     
 	// TODO : 필요 없음 ㅇㅅㅇ
 	// 테스트용
