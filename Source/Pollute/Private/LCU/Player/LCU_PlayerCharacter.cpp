@@ -103,6 +103,7 @@ void ALCU_PlayerCharacter::BeginPlay()
         break;
     }
 
+
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
 
@@ -823,6 +824,11 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
 {
     NearbyAltar = nullptr;
     SelectedSlotIndex = INDEX_NONE;
+}
+
+void ALCU_PlayerCharacter::UpdatePlayerMesh()
+{
+    GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[(int32)PlayerType]);
 }
 
 void ALCU_PlayerCharacter::SetCurrentSlotIndex(int32 SlotIndex)
