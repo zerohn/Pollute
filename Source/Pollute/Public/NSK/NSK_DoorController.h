@@ -35,5 +35,5 @@ public:
 
     // 문 열기 함수
     UFUNCTION(BlueprintCallable, Category = "Door")
-    void OpenDoors();
+    void OpenDoor();
 };

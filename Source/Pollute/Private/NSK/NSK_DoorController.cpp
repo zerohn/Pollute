@@ -12,9 +12,6 @@ void ANSK_DoorController::BeginPlay()
 {
 	Super::BeginPlay();
 
-    // 테스트 실행
-    OpenDoors();
-
     // 레벨에 배치된 두 문 액터를 찾기
     for (TActorIterator<ANSK_DoorActor> It(GetWorld()); It; ++It)
     {
@@ -36,7 +33,7 @@ void ANSK_DoorController::BeginPlay()
     }
 }
 
-void ANSK_DoorController::OpenDoors()
+void ANSK_DoorController::OpenDoor()
 {
     if (!LeftDoorInstance || !RightDoorInstance)
     {
@@ -46,6 +43,6 @@ void ANSK_DoorController::OpenDoors()
         return;
     }
 
-    if (LeftDoorInstance) LeftDoorInstance->OpenDoors();
-    if (RightDoorInstance) RightDoorInstance->OpenDoors();
+    if (LeftDoorInstance) LeftDoorInstance->OpenDoor();
+    if (RightDoorInstance) RightDoorInstance->OpenDoor();
 }

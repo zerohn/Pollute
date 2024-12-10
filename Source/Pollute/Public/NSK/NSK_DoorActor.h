@@ -38,7 +38,10 @@ public:
 
     // 문 열기 및 닫기
     UFUNCTION(BlueprintCallable, Category = "Door")
-    void OpenDoors();
+    void OpenDoor();
+
+    // 문 열리고 있을때 처리
+    bool bIsOpening;
 
 private:
 

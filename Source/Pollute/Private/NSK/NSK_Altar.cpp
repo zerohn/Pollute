@@ -264,7 +264,7 @@ void ANSK_Altar::CheckSlots()
 
         if (DoorController)
         {
-            DoorController->OpenDoors(); // 문 열기
+            DoorController->OpenDoor(); // 문 열기
         }
         else
         {
@@ -322,24 +322,6 @@ void ANSK_Altar::PlaceItemInSlot(const FItemData& SlotItem, int32 SlotIndex)
 
         P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 액터 생성 및 등록: %s"), SlotIndex, *SlotItem.ItemName.ToString());
     }
-
-    /*// 기존 메시를 제거하고 새 메시 컴포넌트 추가
-    UStaticMeshComponent* ItemMeshComp = NewObject<UStaticMeshComponent>(this);
-    if (SlotItem.ItemMesh)
-    {
-        ItemMeshComp->SetStaticMesh(SlotItem.ItemMesh);
-        P_LOG(PolluteLog, Warning, TEXT("슬롯 %d에 아이템 메시 등록: %s"), SlotIndex, *SlotItem.ItemName.ToString());
-    }
-    else
-    {
-        P_LOG(PolluteLog, Error, TEXT("슬롯 %d에 아이템 메시가 없습니다."), SlotIndex);
-        return;
-    }
-
-    // 메시 컴포넌트를 슬롯에 연결
-    ItemMeshComp->SetupAttachment(SlotLocation);
-    ItemMeshComp->SetRelativeLocation(FVector::ZeroVector); // 슬롯 중앙 배치를 위한
-    ItemMeshComp->RegisterComponent();*/
 }
 
 // 슬롯 아이템 제거 함수

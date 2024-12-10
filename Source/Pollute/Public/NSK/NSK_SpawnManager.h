@@ -46,8 +46,6 @@ private:
 
 	TArray<ANSK_AltarHintPoint*> AllHintPoints; // 맵에 배치된 모든 힌트 포인트 저장
 
-	TArray<FAltarHintData*> AltarHintData;  // 데이터 테이블에서 가져온 힌트 데이터
-
     // 필터링
     TArray<FItemData*> FilterCombineItems(UDataTable* DataTable); // 필터링 함수
 };
