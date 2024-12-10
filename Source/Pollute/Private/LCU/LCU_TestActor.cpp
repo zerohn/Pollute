@@ -17,11 +17,6 @@ ALCU_TestActor::ALCU_TestActor()
 void ALCU_TestActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	P_SCREEN(5.f, FColor::Black, TEXT("ddd"));
-
-	P_LOG(PolluteLog, Log, TEXT("asdasd"));
-
 }
 
 // Called every frame

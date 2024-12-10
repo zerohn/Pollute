@@ -66,7 +66,7 @@ public:
     // ## 아이템 Get
     class AHHR_Item* GetItem() {return ItemInHand;}
     // 아이템 초기화 함수
-    void InitItem() {ItemInHand = nullptr;}
+    
     
 	// Get, Set 끝
 
@@ -102,7 +102,25 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_Attack();
 
+
+    void InitItem();
+
+    // 저주 관련 TEST 위젯
+    UFUNCTION()
+    void HasCurseWidget(bool bShow);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_HasCurseWidget(bool bShow);
+
+
 private:
+
+    //  LCU
+    // 임시 저주 확인하는 위젯
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    TSubclassOf<class ULCU_TestWidget> LCU_TestWidgetFactory;
+
+    ULCU_TestWidget* LCU_TestWidget;
+    
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* BoxComponent;
@@ -147,55 +165,62 @@ private:
     UPROPERTY(Replicated)
     int32 HealthCount = 4;
 
+    UPROPERTY(Replicated)
 	bool bHasCurse = false;
 
 
     // NSK
     public:
 
-        bool bHasItem = false;
+    bool bHasItem = false;
 
-        // 제단 상호작용 키
-        UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-        UInputAction* IA_G;
+    // 제단 상호작용 키
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* IA_G;
 
-        // NSK G키 상호작용 처리 함수
-        UFUNCTION()
-        void OnInteract();
+    // NSK G키 상호작용 처리 함수
+    UFUNCTION()
+    void OnInteract();
 
-        // 현재 근처 제단
-        UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
-        ANSK_Altar* NearbyAltar;
-        
-        int32 SelectedSlotIndex;
+    // 현재 근처 제단
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+    ANSK_Altar* NearbyAltar;
+    
+    int32 SelectedSlotIndex;
 
-        // 슬롯 인덱스를 설정하는 함수
-        void SetCurrentSlotIndex(int32 SlotIndex);
+    // 슬롯 인덱스를 설정하는 함수
+    void SetCurrentSlotIndex(int32 SlotIndex);
 
-        // 현재 슬롯 인덱스를 초기화하는 함수
-        void ClearCurrentSlotIndex();
+    // 현재 슬롯 인덱스를 초기화하는 함수
+    void ClearCurrentSlotIndex();
 
-        // 근처 제단 설정 함수
-        void SetNearbyAltar(ANSK_Altar* Altar, int32 SlotIndex);
-        void ClearNearbyAltar();
+    // 근처 제단 설정 함수
+    void SetNearbyAltar(ANSK_Altar* Altar, int32 SlotIndex);
+    void ClearNearbyAltar();
 
-        // 현재 플레이어가 들고 있는 아이템 데이터
-        UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
-        FItemData HeldItem;
+    // 현재 플레이어가 들고 있는 아이템 데이터
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
+    FItemData HeldItem;
 
-        // 플레이어가 들고 있는 아이템 반환 함수
-        FItemData GetHeldItem() const;
+    // 플레이어가 들고 있는 아이템 반환 함수
+    FItemData GetHeldItem() const;
 
 public:
+
+    // KYH
     UPROPERTY(EditAnywhere)
     EPlayerType PlayerType = EPlayerType::Eric;
     UPROPERTY(EditDefaultsOnly)
     TArray<USkeletalMesh*> PlayerMeshType;
+    
+    void SetPlayerType(EPlayerType InPlayerType) { PlayerType = InPlayerType; }
+    void UpdatePlayerMesh();
 
 // 임시 playerhud
 public:
     class UHHR_TestPlayerHUD* PlayerHUD;
 
-        // 픽업 대상 아이템
-        class AHHR_Item* RetrievedItem;
+    // 픽업 대상 아이템
+    class AHHR_Item* RetrievedItem;
+
 };

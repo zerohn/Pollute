@@ -12,7 +12,6 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
-#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "KYH/KYH_CommonUserChat.h"
 #include "KYH/KYH_PolluteButtonBase.h"
@@ -20,7 +19,6 @@
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "P_Settings/P_GameInstance.h"
-#include "P_Settings/P_LobbyGameState.h"
 #include "P_Settings/P_PlayerState.h"
 
 void UKYH_CommonUserLobby::NativeConstruct()
@@ -45,19 +43,11 @@ void UKYH_CommonUserLobby::NativeConstruct()
 
 }
 
-void UKYH_CommonUserLobby::Init()
-{
-    AGameStateBase* GameState = GetWorld()->GetGameState();
-    
-    ServerRPC_SetPlayerSlotUI(GameState);
-}
-
 void UKYH_CommonUserLobby::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(UKYH_CommonUserLobby, Text_SessionName);
-    DOREPLIFETIME(UKYH_CommonUserLobby, VerticalBox);
+    //DOREPLIFETIME(UKYH_CommonUserLobby, Text_SessionName);
 }
 
 void UKYH_CommonUserLobby::StartGame()
@@ -69,22 +59,22 @@ void UKYH_CommonUserLobby::StartGame()
     GetWorld()->ServerTravel(GI->GetMainGameLevelURL() + "?Listen", true);
 }
 
-void UKYH_CommonUserLobby::ServerRPC_SetPlayerSlotUI_Implementation(AGameStateBase* GameState)
+void UKYH_CommonUserLobby::InitLobbyUI(const FText& SessionName, const TArray<FName>& PlayerNames)
 {
-    if (!GameState) return;
-    Text_SessionName->SetText(FText::FromName(Cast<UP_GameInstance>(GameState->GetGameInstance())->GetCurrentSessionName()));
-    ClientRPC_AddPlayerSlotUI(GameState);
+    Text_SessionName->SetText(SessionName);
+    AddPlayerSlotUI(PlayerNames);
 }
 
-void UKYH_CommonUserLobby::ClientRPC_AddPlayerSlotUI_Implementation(AGameStateBase* GameState)
+void UKYH_CommonUserLobby::AddPlayerSlotUI(const TArray<FName>& PlayerNames)
 {
     VerticalBox->ClearChildren();
-    P_SCREEN(5, FColor::Orange, TEXT("PlayerArray : %d"), GameState->PlayerArray.Num());
-    for (int i = 0; i < GameState->PlayerArray.Num(); i++)
+    PlayerSlots.Empty();
+    for (FName PlayerName : PlayerNames)
     {
         UKYH_PlayerSlot* PlayerSlot = CreateWidget<UKYH_PlayerSlot>(GetWorld(), PlayerSlotClass);
-        PlayerSlot->Init(FName(GameState->PlayerArray[i]->GetPlayerName()), EPlayerType::Eric);
+        PlayerSlot->Init(PlayerName, EPlayerType::Eric);
         VerticalBox->AddChild(PlayerSlot);
+        PlayerSlots.Add(PlayerSlot);
         UVerticalBoxSlot* CurrentSlot = Cast<UVerticalBoxSlot>(PlayerSlot->Slot);
         CurrentSlot->SetPadding(FMargin(0, 0, 0, 15));
     }

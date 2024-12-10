@@ -45,7 +45,7 @@ void UKYH_PlayerSlot::SetButtonVisibility(bool bIsVisible)
     }
 }
 
-void UKYH_PlayerSlot::ChangeCharacterLeft_Implementation()
+void UKYH_PlayerSlot::ChangeCharacterLeft()
 {
     if ((int32)CurrentPlayerType - 1 < 0)
     {
@@ -58,7 +58,7 @@ void UKYH_PlayerSlot::ChangeCharacterLeft_Implementation()
     UpdatePlayerType(CurrentPlayerType);
 }
 
-void UKYH_PlayerSlot::ChangeCharacterRight_Implementation()
+void UKYH_PlayerSlot::ChangeCharacterRight()
 {
     if ((int32)CurrentPlayerType + 1 >= (int32)EPlayerType::Count)
     {
@@ -71,7 +71,7 @@ void UKYH_PlayerSlot::ChangeCharacterRight_Implementation()
     UpdatePlayerType(CurrentPlayerType);
 }
 
-void UKYH_PlayerSlot::UpdatePlayerType_Implementation(EPlayerType InPlayerType)
+void UKYH_PlayerSlot::UpdatePlayerType(EPlayerType InPlayerType)
 {
     FSlateBrush Brush;
     Brush.SetResourceObject(PlayerThumbImage[(int32)InPlayerType]);
