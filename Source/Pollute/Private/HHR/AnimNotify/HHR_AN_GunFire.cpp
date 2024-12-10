@@ -20,5 +20,6 @@ void UHHR_AN_GunFire::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
         {
             gun->Attack();
         }
+        gun->DestoryDelay(player);
     }
 }

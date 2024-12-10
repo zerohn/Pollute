@@ -53,7 +53,7 @@ void UHHR_ANS_KnifeAttack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequ
         AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(player->GetItem());
         if(knife)
         {
-            knife->DestoryDelay();
+            knife->DestoryDelay(player);
         }
         else
         {

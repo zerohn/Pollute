@@ -66,7 +66,7 @@ public:
     // ## 아이템 Get
     class AHHR_Item* GetItem() {return ItemInHand;}
     // 아이템 초기화 함수
-    void InitItem() {ItemInHand = nullptr;}
+    
     
 	// Get, Set 끝
 
@@ -102,11 +102,15 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_Attack();
 
+
+    void InitItem();
+
     // 저주 관련 TEST 위젯
     UFUNCTION()
     void HasCurseWidget(bool bShow);
     UFUNCTION(Client, Reliable)
     void ClientRPC_HasCurseWidget(bool bShow);
+
 
 private:
 

@@ -65,8 +65,12 @@ public:
     
 /////////////////////////////////////////////
 // Functions
+// set, get
 public:
-	// Item Data Set
+    UWidgetComponent* GetItemInteractWidgetComponent() { return ItemInteractWidgetComp; }
+public:
+    
+	// Item Data Sets
 	void SetItemData(const FItemData& data);
 	
 	// Player가 줍는 상호작용 
