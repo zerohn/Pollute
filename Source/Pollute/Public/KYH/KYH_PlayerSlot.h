@@ -6,8 +6,8 @@
 #include "CommonUserWidget.h"
 #include "KYH_PlayerSlot.generated.h"
 
-class UKYH_PolluteButtonBase;
 enum class EPlayerType : uint8;
+class UKYH_PolluteButtonBase;
 class UCommonTextBlock;
 class UImage;
 
@@ -44,11 +44,11 @@ public:
 
     UFUNCTION()
     void SetButtonVisibility(bool bIsVisible);
-    UFUNCTION(Server, Reliable)
+    UFUNCTION()
     void ChangeCharacterLeft();
-    UFUNCTION(Server, Reliable)
+    UFUNCTION()
     void ChangeCharacterRight();
-    UFUNCTION(NetMulticast, Reliable)
+    UFUNCTION()
     void UpdatePlayerType(EPlayerType InPlayerType);
     
 };

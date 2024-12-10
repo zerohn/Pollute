@@ -93,13 +93,6 @@ void AP_GameState::RemoveHumanPlayer(ALCU_PlayerCharacter* humanPlayer)
 	if(!HumanPlayers.Contains(humanPlayer)) return;
 
 	HumanPlayers.Remove(humanPlayer);
-
-	// 지우고 나서 다시 확인 했을 때 더 이상 사람이 없다면 게임 끝
-	if(HumanPlayers.IsEmpty())
-	{
-		// TODO 게임 끝
-		
-	}
 }
 
 void AP_GameState::SelectPlayer()
@@ -128,9 +121,8 @@ void AP_GameState::SelectPlayer()
 }
 
 // 저주를 다시 시작 ( 저주를 가진 사람이 죽거나 탈출 했을 때 호출 )
-void AP_GameState::RestartCurse_Implementation(ALCU_PlayerCharacter* selectedPlayer)
+void AP_GameState::RestartCurse()
 {
-	RemoveHumanPlayer(selectedPlayer);
 	ALCU_Curse::GetInstance(GetWorld())->InitCurseTime();
 	SelectPlayer();
 }

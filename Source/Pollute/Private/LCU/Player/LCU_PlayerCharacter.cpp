@@ -13,7 +13,6 @@
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
-#include "HHR/HHR_KnifeItem.h"
 #include "HHR/HHR_WeaponItem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LCU/InteractActors/LCU_Curse.h"
@@ -23,10 +22,9 @@
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
-#include "Rendering/RenderCommandPipes.h"
+#include "LCU/Player/LCU_TestWidget.h"
 
 
-class UEnhancedInputComponent;
 // Sets default values
 ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 	: Super()
@@ -60,6 +58,16 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 void ALCU_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+    if(LCU_TestWidgetFactory && IsLocallyControlled())
+    {
+        LCU_TestWidget = CreateWidget<ULCU_TestWidget>(GetWorld()->GetFirstPlayerController(),LCU_TestWidgetFactory);
+        if(LCU_TestWidget)
+        {
+            LCU_TestWidget->AddToViewport();
+            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
     
     switch (PlayerType)
     {
@@ -96,6 +104,7 @@ void ALCU_PlayerCharacter::BeginPlay()
     default:
         break;
     }
+
 
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
@@ -175,6 +184,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
     //DOREPLIFETIME(ALCU_PlayerCharacter, FinalOverapItem);
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
+    DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     
 }
 
@@ -307,14 +317,27 @@ void ALCU_PlayerCharacter::CarryCurse()
 	// 현재 눈 앞에 줄 수 있는 플레이어도 없으니 나가세요.
 	if(!FinalOverapPlayer) return;
 
-	
+    //HasCurseWidget(false);
 	ServerRPC_CarryCurse();
 }
 
 
 void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
 {
-	NetMulticast_CarryCurse();
+	// NetMulticast_CarryCurse();
+    // 저주를 옮겨요
+    FinalOverapPlayer->SetHasCurse(true);
+    FinalOverapPlayer->ClientRPC_HasCurseWidget(true);
+    bHasCurse = false;
+    ClientRPC_HasCurseWidget(false);
+    ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
+
+    // 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
+    FinalOverapPlayer = nullptr;
+    if(!OverlappingPlayers.IsEmpty())
+    {
+        OverlappingPlayers.Empty();
+    }
 }
 
 void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
@@ -334,7 +357,7 @@ void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
 
 void ALCU_PlayerCharacter::DropDown()
 {
-    if(!FinalOverapItem) return;
+    if(!ItemInHand) return;
     FVector CharacterLocation = GetActorLocation();
     // 캐릭터 발 아래 위치
     FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
@@ -522,6 +545,8 @@ void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
         return;
     }
     
+
+    if(!ItemInHand) return;
     FVector CharacterLocation = GetActorLocation();
     // 캐릭터 발 아래 위치
     FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
@@ -532,11 +557,11 @@ void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
 		
     // 아이템의 부모-자식 관계 해제
     // TODO : Detach를 Multicast로 싸줘야 함 
-    FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
     // 위치 및 회전 설정
-    FinalOverapItem->SetActorLocation(DropLocation);
-    FinalOverapItem->SetActorRotation(DropRotation);
+    ItemInHand->SetActorLocation(DropLocation);
+    ItemInHand->SetActorRotation(DropRotation);
 
     // 드롭 이후 초기화
     FinalOverapItem = nullptr;
@@ -707,8 +732,9 @@ void ALCU_PlayerCharacter::ShootTrace()
 void ALCU_PlayerCharacter::DieProcess()
 {
     ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(GetController());
-    if(pc)
+    if(pc && IsLocallyControlled())
     {
+        HasCurseWidget(false);
         pc->ServerRPC_ChangeToSpector();
     }
 }
@@ -721,6 +747,7 @@ void ALCU_PlayerCharacter::Attack()
     }
 }
 
+
 void ALCU_PlayerCharacter::InitItem()
 {
     // hud 변경
@@ -731,11 +758,47 @@ void ALCU_PlayerCharacter::InitItem()
     ItemInHand = nullptr;
 }
 
+void ALCU_PlayerCharacter::HasCurseWidget(bool bShow)
+{
+    if(!IsLocallyControlled()) return;
+
+
+    if(bShow)
+    {
+        if(LCU_TestWidget)
+        {
+            LCU_TestWidget->SetVisibility(ESlateVisibility::Visible);
+        }
+    }
+    else
+    {
+        if(LCU_TestWidget)
+        {
+            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+}
+
+void ALCU_PlayerCharacter::ClientRPC_HasCurseWidget_Implementation(bool bShow)
+{
+    if(bShow)
+    {
+        if(LCU_TestWidget)
+        {
+            LCU_TestWidget->SetVisibility(ESlateVisibility::Visible);
+        }
+    }
+    else
+    {
+        if(LCU_TestWidget)
+        {
+            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+}
+
 void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
 {
-    
-    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, (TEXT("%s :Attack input"), *this->GetName()));
-
     // Item 구하는 코드는 나중에 처리님이 들고 있는 아이템 추가하면 없애도 될듯
     AHHR_WeaponItem* weapon = Cast<AHHR_WeaponItem>(ItemInHand);
 	
@@ -786,6 +849,11 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
 {
     NearbyAltar = nullptr;
     SelectedSlotIndex = INDEX_NONE;
+}
+
+void ALCU_PlayerCharacter::UpdatePlayerMesh()
+{
+    GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[(int32)PlayerType]);
 }
 
 void ALCU_PlayerCharacter::SetCurrentSlotIndex(int32 SlotIndex)
