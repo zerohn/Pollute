@@ -74,6 +74,7 @@ void ALCU_Curse::Tick(float DeltaTime)
 			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
 			if(P_pc)
 			{
+			    OwnerCharacter->ClientRPC_HasCurseWidget(false);
 				P_pc->ChangeToMonster();
 			}
 			
@@ -112,6 +113,7 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 
 	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
+    OwnerCharacter->ClientRPC_HasCurseWidget(true);
 		
 	// 저주 시작
 	bStartCurseTime = true;
