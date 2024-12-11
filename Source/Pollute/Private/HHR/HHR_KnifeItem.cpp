@@ -85,7 +85,7 @@ void AHHR_KnifeItem::Attack()
     
 	
 	// DrawLineDebug
-	if (isHit)
+	/*if (isHit)
 	{
 		DrawDebugLine(GetWorld(), start, end, FColor::Red, true, 0.25);
 	}
@@ -102,7 +102,7 @@ void AHHR_KnifeItem::Attack()
     else
     {
         DrawDebugLine(GetWorld(), startBlade, endBlade, FColor::Blue, true, 0.25);
-    }
+    }*/
 
     // prevEndPos 업뎃
     PrevEndPos = endBlade;
