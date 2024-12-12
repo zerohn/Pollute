@@ -6,7 +6,7 @@
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/Character.h"
 #include "HHR/HHR_ItemManager.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "NSK/NSK_SpawnManager.h"
@@ -82,6 +82,7 @@ void AHHR_Item::OnRep_ChangeIdx()
     }*/
 }
 
+// ItemSpawnManager에서 넣어주는 게 나을듯 
 void AHHR_Item::SetItemData(const FItemData& data)
 {
 	if(ItemData.ItemID == -1)
@@ -93,6 +94,7 @@ void AHHR_Item::SetItemData(const FItemData& data)
 	}
 }
 
+// 안쓰임 
 void AHHR_Item::Interact()
 {
 	// 추후 사용
@@ -106,6 +108,7 @@ void AHHR_Item::Interact()
 	// => ?? InteractInterface에 SetvisibilityUI()를 만들어주는 게 맞는지 의문?
 }
 
+// 안쓰임 
 void AHHR_Item::SetVisibilityUI(bool Visible)
 {
 	if(!PlayerHUD) return;

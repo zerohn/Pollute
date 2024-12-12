@@ -21,7 +21,7 @@
 #include "Animation/AnimInstance.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMesh.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "LCU/Player/LCU_TestWidget.h"
 
 

@@ -9,11 +9,10 @@
 #include "Blueprint/UserWidget.h"
 #include "HHR/HHR_Gun.h"
 #include "HHR/HHR_KnifeItem.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "Kismet/GameplayStatics.h"
 
 
 
@@ -38,7 +37,7 @@ void AHHR_ItemManager::BeginPlay()
 
 	
     // Combine Item만 임시 생성
-    TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
+    TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
     TestPlayerHUDIns->AddToViewport();
 
     // character에서 임시로 hud 생성
@@ -48,6 +47,7 @@ void AHHR_ItemManager::BeginPlay()
     //if(!HasAuthority()) return;
     //ServerRPC_GenerateItem();
     FVector pivot = GetActorLocation();
+    pivot.Z += 50.f;
     float loc = 150;
     if(HasAuthority())
     {

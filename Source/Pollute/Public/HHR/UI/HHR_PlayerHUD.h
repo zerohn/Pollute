@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "HHR_TestPlayerHUD.generated.h"
+#include "HHR_PlayerHUD.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class POLLUTE_API UHHR_TestPlayerHUD : public UUserWidget
+class POLLUTE_API UHHR_PlayerHUD : public UUserWidget
 {
 	GENERATED_BODY()
 

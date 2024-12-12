@@ -5,7 +5,7 @@
 
 #include "HHR/HHR_Gun.h"
 #include "HHR/HHR_KnifeItem.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
@@ -34,7 +34,7 @@ void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 
 
     //--
     // Combine Item만 임시 생성
-    TestPlayerHUDIns = CreateWidget<UHHR_TestPlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
+    TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
     TestPlayerHUDIns->AddToViewport();
     // character에서 임시로 hud 생성
     ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -138,7 +138,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
                 // AHHR_Item 클래스의 인스턴스 생성
                 AHHR_Item* SpawnedItem = GetWorld()->SpawnActor<AHHR_Item>(ItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
                 SpawnedItem->PlayerHUD = TestPlayerHUDIns;
-                NetMulticast_SetData(SpawnedItem, i);
+                NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
                 if (SpawnedItem)
                 {
                     // 아이템 데이터 초기화
@@ -154,7 +154,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
                     // AHHR_Item 클래스의 인스턴스 생성
                     AHHR_KnifeItem* SpawnedItem = GetWorld()->SpawnActor<AHHR_KnifeItem>(KnifeItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
                     SpawnedItem->PlayerHUD = TestPlayerHUDIns;
-                    NetMulticast_SetData(SpawnedItem, i);
+                    NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
                     if (SpawnedItem)
                     {
                         // 아이템 데이터 초기화
@@ -168,7 +168,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
                     // AHHR_Item 클래스의 인스턴스 생성
                     AHHR_Gun* SpawnedItem = GetWorld()->SpawnActor<AHHR_Gun>(GunItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
                     SpawnedItem->PlayerHUD = TestPlayerHUDIns;
-                    NetMulticast_SetData(SpawnedItem, i);
+                    NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
                     if (SpawnedItem)
                     {
                         // 아이템 데이터 초기화
