@@ -48,7 +48,11 @@ protected:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
 	float MouseSensitivity = 0.2f;
-	
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+    bool bTurnRight = false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+    bool bTurnLeft = false;
 
 public:
 	ATP_ThirdPersonCharacter();
@@ -57,7 +61,7 @@ public:
 protected:
 
 	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
+	virtual void Move(const FInputActionValue& Value);
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
@@ -69,6 +73,8 @@ protected:
 	
 	// To add mapping context
 	virtual void BeginPlay();
+
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
     
 

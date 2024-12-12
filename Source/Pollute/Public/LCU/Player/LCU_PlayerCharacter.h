@@ -31,6 +31,9 @@ public:
 
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+    // 움직임 관련 함수들
+    virtual void Move(const FInputActionValue& Value) override;
+    void RunShiftToggle();
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -144,14 +147,17 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	EGender Gender;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
 	UInputAction* IA_CarryCurse;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
 	UInputAction* IA_PickUpDropDown;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_RunToggle;
     
     // Montage
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
@@ -167,6 +173,13 @@ private:
 
     UPROPERTY(Replicated)
 	bool bHasCurse = false;
+
+    UPROPERTY(EditAnywhere)
+    float WalkSpeed = 400.f;
+    UPROPERTY(EditAnywhere)
+    float RunSpeed = 700.f;
+    UPROPERTY(EditAnywhere)
+    bool bIsRunning = false;
 
 
     // NSK

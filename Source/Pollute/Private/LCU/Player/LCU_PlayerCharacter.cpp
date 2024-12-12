@@ -21,6 +21,7 @@
 #include "Animation/AnimInstance.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "LCU/Player/LCU_TestWidget.h"
 
@@ -155,12 +156,6 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
     RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
-
-	if(bHasCurse && HasAuthority())
-	{
-		//P_LOG(PolluteLog, Log, TEXT("%s"), *GetName());
-	}
-
 }
 
 // Called to bind functionality to input
@@ -175,6 +170,7 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
         EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
 	}
 }
 
@@ -183,16 +179,62 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
-    //DOREPLIFETIME(ALCU_PlayerCharacter, FinalOverapItem);
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     
 }
 
+void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
+{
+    // input is a Vector2D
+    FVector2D MovementVector = Value.Get<FVector2D>();
+    
+    if (Controller != nullptr)
+    {
+        // 현재 속도를 WalkSpeed로 초기화
+        float NewSpeed = WalkSpeed;
+        
+        // 입력 방향 벡터 가져오기
+        const float MoveForwardValue = MovementVector.Y;
+        const float MoveRightValue = MovementVector.X;
+
+        // 달리기 조건 확인
+        if (MoveForwardValue > 0 && MoveRightValue <= 0.3f && MoveRightValue >= -0.3f && bIsRunning)
+        {
+            NewSpeed = RunSpeed;
+        }
+
+        // MaxWalkSpeed 업데이트
+        GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
+        
+        // 방향 벡터 계산
+        const FRotator Rotation = Controller->GetControlRotation();
+        const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+        const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+        const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+        // 입력 벡터를 기반으로 이동 적용
+        AddMovementInput(ForwardDirection, MoveForwardValue);
+        AddMovementInput(RightDirection, MoveRightValue);
+    }
+}
+
+void ALCU_PlayerCharacter::RunShiftToggle()
+{
+    if(bIsRunning)
+    {
+        bIsRunning = false;
+    }
+    else
+    {
+        bIsRunning = true;
+    }
+}
+
 void ALCU_PlayerCharacter::Interact()
 {
 	HealthCount--;
-    P_SCREEN(3.f, FColor::Magenta, TEXT("%s"), *GetName());
     if(HealthCount <= 0)
     {
         HealthCount = 0;

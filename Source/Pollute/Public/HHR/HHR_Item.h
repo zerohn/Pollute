@@ -75,12 +75,10 @@ public:
 	// Item Data Sets
 	void SetItemData(const FItemData& data);
 	
-	// Player가 줍는 상호작용 
-	virtual void Interact() override;
-
-
     // UI
 	virtual void SetVisibilityUI(bool Visible) override;
+
+    virtual void Interact() override;;
 
 protected:
 	// 충돌 처리 함수
