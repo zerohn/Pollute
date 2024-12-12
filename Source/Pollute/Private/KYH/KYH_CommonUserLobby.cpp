@@ -14,10 +14,10 @@
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "KYH/KYH_CommonUserChat.h"
+#include "KYH/KYH_LobbyController.h"
 #include "KYH/KYH_PolluteButtonBase.h"
 #include "KYH/KYH_PlayerSlot.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
-#include "Net/UnrealNetwork.h"
 #include "P_Settings/P_GameInstance.h"
 #include "P_Settings/P_PlayerState.h"
 
@@ -59,25 +59,21 @@ void UKYH_CommonUserLobby::StartGame()
     GetWorld()->ServerTravel(GI->GetMainGameLevelURL() + "?Listen", true);
 }
 
-void UKYH_CommonUserLobby::InitLobbyUI(const FText& SessionName, const TArray<FName>& PlayerNames)
+void UKYH_CommonUserLobby::InitLobbyUI(const FText& SessionName)
 {
     Text_SessionName->SetText(SessionName);
-    AddPlayerSlotUI(PlayerNames);
-}
-
-void UKYH_CommonUserLobby::AddPlayerSlotUI(const TArray<FName>& PlayerNames)
-{
     VerticalBox->ClearChildren();
     PlayerSlots.Empty();
-    for (FName PlayerName : PlayerNames)
-    {
-        UKYH_PlayerSlot* PlayerSlot = CreateWidget<UKYH_PlayerSlot>(GetWorld(), PlayerSlotClass);
-        PlayerSlot->Init(PlayerName, EPlayerType::Eric);
-        VerticalBox->AddChild(PlayerSlot);
-        PlayerSlots.Add(PlayerSlot);
-        UVerticalBoxSlot* CurrentSlot = Cast<UVerticalBoxSlot>(PlayerSlot->Slot);
-        CurrentSlot->SetPadding(FMargin(0, 0, 0, 15));
-    }
+}
+
+void UKYH_CommonUserLobby::AddPlayerSlotUI(const FName PlayerName, const EPlayerType PlayerType)
+{
+    UKYH_PlayerSlot* PlayerSlot = CreateWidget<UKYH_PlayerSlot>(GetWorld(), PlayerSlotClass);
+    PlayerSlot->Init(PlayerName, PlayerType);
+    VerticalBox->AddChild(PlayerSlot);
+    PlayerSlots.Add(PlayerSlot);
+    UVerticalBoxSlot* CurrentSlot = Cast<UVerticalBoxSlot>(PlayerSlot->Slot);
+    CurrentSlot->SetPadding(FMargin(0, 0, 0, 15));
 }
 
 void UKYH_CommonUserLobby::OnEditableTextCommittedEvent(const FText& Text, ETextCommit::Type CommitMethod)
@@ -86,7 +82,7 @@ void UKYH_CommonUserLobby::OnEditableTextCommittedEvent(const FText& Text, EText
     {
         // 서버에 Chat Item 추가 함수 호출
         AP_PlayerState* PS = Cast<AP_PlayerState>(GetWorld()->GetFirstPlayerController()->GetPlayerState<AP_PlayerState>());
-        PS->ServerRPC_SendChat(Text.ToString());
+        Cast<AKYH_LobbyController>(PS->GetPlayerController())->ServerRPC_SendChat(Text.ToString());
         
         // 채팅 입력 내용 초기화
         Edit_ChatBox->SetText(FText());
