@@ -21,13 +21,17 @@ public:
 
     bool bSpawnPortIsUsed = false;
 
+    // 이렇게 하면 링크 오류남 블프에서 Run or Server 설정 관련
+    //UFUNCTION(Server, Reliable, WithValidation)
+    //void RandomSpawnPortPoint(UObject* WorldContextObject);
+
     UFUNCTION(BlueprintCallable, Category = "Port")
     void RandomSpawnPortPoint(UObject* WorldContextObject);
 
     UFUNCTION(BlueprintCallable, Category = "Port")
     void HideSpawnPortMesh();
 
-    UFUNCTION(NetMulticast, Reliable)
+    UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
     void Multicast_SpawnPortSelected(ANSK_SpawnPortPoint* SelectedSpawnPoint);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Port")

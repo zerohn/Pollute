@@ -6,6 +6,8 @@ ANSK_SpawnPortPoint::ANSK_SpawnPortPoint()
     SpawnPortMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SpawnPortMesh"));
     RootComponent = SpawnPortMesh;
 
+    // 복제 가능한 상태인지
+    bReplicates = true; // 추가
 }
 
 void ANSK_SpawnPortPoint::BeginPlay()
@@ -16,7 +18,7 @@ void ANSK_SpawnPortPoint::BeginPlay()
     if (HasAuthority())
     {
         RandomSpawnPortPoint(this);
-        Multicast_SpawnPortSelected_Implementation(this);
+        Multicast_SpawnPortSelected_Implementation(this); // 추가
     }
 }
 
