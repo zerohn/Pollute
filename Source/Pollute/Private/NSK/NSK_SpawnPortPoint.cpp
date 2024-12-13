@@ -1,13 +1,28 @@
 #include "NSK/NSK_SpawnPortPoint.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/BoxComponent.h"
+#include <LCU/Player/LCU_PlayerCharacter.h>
+#include <LCU/Player/LCU_PlayerController.h>
 
 ANSK_SpawnPortPoint::ANSK_SpawnPortPoint()
 {
     SpawnPortMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SpawnPortMesh"));
     RootComponent = SpawnPortMesh;
 
-    // 복제 가능한 상태인지
-    bReplicates = true; // 추가
+    // 콜리전 박스 초기화
+    OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
+    OverlapBox->SetupAttachment(RootComponent);
+    OverlapBox->SetBoxExtent(FVector(50.f, 50.f, 50.f));
+    OverlapBox->SetCollisionProfileName(TEXT("Trigger"));
+
+    // 오버랩 이벤트 바인딩
+    OverlapBox->OnComponentBeginOverlap.AddDynamic(this, &ANSK_SpawnPortPoint::OnOverlapBegin);
+
+    // 이 객체를 네트워크에서 복제하도록 설정
+    // 로컬 테스트에서 정상 작동해도 멀티 환경에서 필요할 수 있음
+    bReplicates = true;
+
+    bHasOverlapped = false;
 }
 
 void ANSK_SpawnPortPoint::BeginPlay()
@@ -15,11 +30,11 @@ void ANSK_SpawnPortPoint::BeginPlay()
     Super::BeginPlay();
 
     // 시작 시 실행 테스트
-    if (HasAuthority())
+    /*if (HasAuthority())
     {
         RandomSpawnPortPoint(this);
-        Multicast_SpawnPortSelected_Implementation(this); // 추가
-    }
+        Multicast_SpawnPortSelected_Implementation(this);
+    }*/
 }
 
 void ANSK_SpawnPortPoint::RandomSpawnPortPoint(UObject* WorldContextObject)
@@ -83,6 +98,46 @@ void ANSK_SpawnPortPoint::Multicast_SpawnPortSelected_Implementation(ANSK_SpawnP
         if (SelectedSpawnPoint->SpawnPortMesh)
         {
             SelectedSpawnPoint->SpawnPortMesh->SetVisibility(true);
+        }
+    }
+}
+
+void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    if (bHasOverlapped)
+    {
+        return;
+    }
+
+    if (!OtherActor && OtherActor == this)
+    {
+        return;
+    }
+
+    // OtherActor가 플레이어 캐릭터인지 확인
+    ACharacter* OverlapCharacter = Cast<ALCU_PlayerCharacter>(OtherActor);
+    if (OverlapCharacter)
+    {
+        P_LOG(PolluteLog, Warning, TEXT(" 탈출자 : %s"), *OverlapCharacter->GetName());
+
+        // 서버에서만 처리
+        if (HasAuthority())
+        {
+            bHasOverlapped = true;
+
+            P_LOG(PolluteLog, Warning, TEXT("탈출!!"));
+        }
+
+        if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(OverlapCharacter->GetController()))
+        {
+            P_LOG(PolluteLog, Warning, TEXT("플레이어 컨트롤러 : %s"), *PlayerController->GetName());
+
+            if (PlayerController->IsLocalController())
+            {
+                PlayerController->ServerRPC_ChangeToSpector();
+            }
+
+            // 모두 스펙터 모드 시 -> 게임 로비로 이동
         }
     }
 }
