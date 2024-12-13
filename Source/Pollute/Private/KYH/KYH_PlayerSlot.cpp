@@ -36,7 +36,7 @@ void UKYH_PlayerSlot::SetButtonVisibility(bool bIsVisible)
     if (bIsVisible)
     {
         Btn_Left->SetVisibility(ESlateVisibility::Visible);
-        Btn_Right->SetVisibility(ESlateVisibility::Hidden);
+        Btn_Right->SetVisibility(ESlateVisibility::Visible);
     }
     else
     {

@@ -20,41 +20,43 @@ void AKYH_LobbyController::BeginPlay()
     
     CurrentPlayerType = EPlayerType::Eric;
     
-    SetInputMode(FInputModeUIOnly());
-    SetShowMouseCursor(true);
+    if (IsLocalController())
+    {
+        SetInputMode(FInputModeUIOnly());
+        SetShowMouseCursor(true);
+        LobbyWidget = CreateWidget<UKYH_CommonUserLobby>(GetWorld(), LobbyWidgetClass);
+        LobbyWidget->AddToViewport();
+        FTimerHandle DelayHandle;
+        GetWorldTimerManager().SetTimer(DelayHandle, this, &AKYH_LobbyController::InitLobbyWidget, 0.1f, false);
+    }
     
-    LobbyWidget = CreateWidget<UKYH_CommonUserLobby>(GetWorld(), LobbyWidgetClass);
-    LobbyWidget->AddToViewport();
-    
-    FTimerHandle DelayHandle;
-    GetWorldTimerManager().SetTimer(DelayHandle, this, &AKYH_LobbyController::InitLobbyWidget, 0.1f, false);
 }
 
 void AKYH_LobbyController::InitLobbyWidget_Implementation()
 {
     TArray<APlayerState*> PStateArray = GetWorld()->GetGameState()->PlayerArray;
-    TArray<TPair<int32, int32>> PlayerTypeArray;
+    TArray<FPlayerLobbyInfo> PlayerInfoArray;
     for (APlayerState* PState : PStateArray)
     {
-        PlayerTypeArray.Add(TPair<int32, int8>(PState->GetPlayerId(), (int32)Cast<AKYH_LobbyController>(PState->GetPlayerController())->CurrentPlayerType));
+        PlayerInfoArray.Add(FPlayerLobbyInfo(PState->GetPlayerId(), Cast<AKYH_LobbyController>(PState->GetPlayerController())->CurrentPlayerType));
     }
     for (APlayerState* PState : PStateArray)
     {
-        Cast<AKYH_LobbyController>(PState->GetPlayerController())->UpdatePlayerSlot(PlayerTypeArray);
+        Cast<AKYH_LobbyController>(PState->GetPlayerController())->UpdatePlayerSlot(PlayerInfoArray);
     }
 }
 
-void AKYH_LobbyController::UpdatePlayerSlot_Implementation(TArray<TPair<int32, int32>> PlayerTypeMap)
+void AKYH_LobbyController::UpdatePlayerSlot_Implementation(const TArray<FPlayerLobbyInfo>& PlayerInfoArray)
 {
     LobbyWidget->InitLobbyUI(FText::FromName(GetGameInstance<UP_GameInstance>()->GetCurrentSessionName()));
     
-    for (TPair<int32, int8> PlayerType : PlayerTypeMap)
+    for (FPlayerLobbyInfo PlayerInfo : PlayerInfoArray)
     {
         for (APlayerState* PState : GetWorld()->GetGameState()->PlayerArray)
         {
-            if (PState->GetPlayerId() == PlayerType.Key)
+            if (PState->GetPlayerId() == PlayerInfo.PlayerId)
             {
-                LobbyWidget->AddPlayerSlotUI(FName(PState->GetPlayerName()), (EPlayerType)PlayerType.Value);
+                LobbyWidget->AddPlayerSlotUI(FName(PState->GetPlayerName()), PlayerInfo.PlayerType);
                 break;
             }
         }
@@ -63,11 +65,14 @@ void AKYH_LobbyController::UpdatePlayerSlot_Implementation(TArray<TPair<int32, i
 
 void AKYH_LobbyController::ServerRPC_SendChat_Implementation(const FString& Message)
 {
-    FString Chat = GetPlayerState<AP_PlayerState>()->GetPlayerName() + Message;
-    NetMulticastRPC_UpdateChat(Chat);
+    FString Chat = GetPlayerState<AP_PlayerState>()->GetPlayerName() + TEXT(" : ") + Message;
+    for (APlayerState* PS : GetWorld()->GetGameState()->PlayerArray)
+    {
+        Cast<AKYH_LobbyController>(PS->GetPlayerController())->ClientRPC_UpdateChat(Chat);
+    }
 }
 
-void AKYH_LobbyController::NetMulticastRPC_UpdateChat_Implementation(const FString& Message)
+void AKYH_LobbyController::ClientRPC_UpdateChat_Implementation(const FString& Message)
 {
     LobbyWidget->AddChat(Message);
 }

@@ -9,6 +9,17 @@
 enum class EPlayerType : uint8;
 class UKYH_CommonUserLobby;
 
+USTRUCT(BlueprintType)
+struct FPlayerLobbyInfo
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 PlayerId;
+    UPROPERTY(BlueprintReadWrite)
+    EPlayerType PlayerType;
+};
+
 /**
  * 
  */
@@ -37,10 +48,10 @@ public:
     UFUNCTION(Server, Reliable)
     void InitLobbyWidget();
     UFUNCTION(Client, Reliable)
-    void UpdatePlayerSlot(TArray<TPair<int32, int32>> PlayerTypeMap);
+    void UpdatePlayerSlot(const TArray<FPlayerLobbyInfo>& PlayerInfoArray);
 
     UFUNCTION(Server, Reliable)
     void ServerRPC_SendChat(const FString& Message);
-    UFUNCTION(NetMulticast, Reliable)
-    void NetMulticastRPC_UpdateChat(const FString& Message);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_UpdateChat(const FString& Message);
 };
