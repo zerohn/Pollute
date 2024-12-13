@@ -4,7 +4,7 @@
 #include <HHR/HHR_Item.h>
 
 #include "HHR/HHR_Gun.h"
-#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_Knife.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
@@ -152,7 +152,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
                 if(SelectedItem->ItemName.ToString() == FString("Sword"))
                 {
                     // AHHR_Item 클래스의 인스턴스 생성
-                    AHHR_KnifeItem* SpawnedItem = GetWorld()->SpawnActor<AHHR_KnifeItem>(KnifeItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
+                    AHHR_Knife* SpawnedItem = GetWorld()->SpawnActor<AHHR_Knife>(KnifeItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
                     SpawnedItem->PlayerHUD = TestPlayerHUDIns;
                     NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
                     if (SpawnedItem)

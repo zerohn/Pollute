@@ -6,6 +6,9 @@
 
 // uimanager로 옮기면 제거 
 #include "Blueprint/UserWidget.h"
+#include "HHR/HHR_Gun.h"
+#include "HHR/HHR_ItemSpawnPoint.h"
+#include "HHR/HHR_Knife.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
@@ -25,13 +28,18 @@ void AHHR_ItemSpawnManager::BeginPlay()
 
 
     // Combine Item만 임시 생성
-    TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
-    TestPlayerHUDIns->AddToViewport();
-    // character에서 임시로 hud 생성
-    ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    player->PlayerHUD = TestPlayerHUDIns;
+    //TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
+    //TestPlayerHUDIns->AddToViewport();
+    //// character에서 임시로 hud 생성
+    //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    //player->PlayerHUD = TestPlayerHUDIns;
 
 
+    if(!HasAuthority())
+    {
+        return;
+    }
+        
     // 아이템 spawn point 찾아오기
     FindSpawnPoints();
     // 게임 시작시 아이템 랜덤 생성, 아이템 힌트 생성
@@ -53,25 +61,14 @@ void AHHR_ItemSpawnManager::LoadItemData(UDataTable* ItemDataTable)
 
         for(FItemData* ItemData : AllItems)
         {
-            // 아이템 타입에 따라 다른 
-            if(ItemData->ItemType == EItemType::CombineItem)
-            {
-                CombineItemDataMap.Add(ItemData->ItemID, *ItemData);
-            }
-            else if(ItemData->ItemType == EItemType::WeaponItem)
-            {
-                WeaponItemDataMap.Add(ItemData->ItemID, *ItemData);
-            }
-            else if(ItemData->ItemType == EItemType::EscapeItem)
-            {
-                EscapeItemDataMap.Add(ItemData->ItemID, *ItemData);
-            }
+            ItemDataMap.Add(ItemData->ItemID, *ItemData);
         }
     }
 }
 
 void AHHR_ItemSpawnManager::LoadItemData()
 {
+    
     // 직접 로드해서 가져오기
     UDataTable* ItemDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/HHR/Item/Data/ItemDataTable.ItemDataTable'"));
 	
@@ -89,44 +86,71 @@ void AHHR_ItemSpawnManager::LoadItemData()
 	
     for(FItemData* ItemData : AllItems)
     {
-        if(ItemData->ItemType == EItemType::CombineItem)
-        {
-            CombineItemDataMap.Add(ItemData->ItemID, *ItemData);
-        }
-        else if(ItemData->ItemType == EItemType::WeaponItem)
-        {
-            WeaponItemDataMap.Add(ItemData->ItemID, *ItemData);
-        }
-        else if(ItemData->ItemType == EItemType::EscapeItem)
-        {
-            EscapeItemDataMap.Add(ItemData->ItemID, *ItemData);
-        }
+        ItemDataMap.Add(ItemData->ItemID, *ItemData);
     }
 }
 
 FItemData& AHHR_ItemSpawnManager::GetItemDataByID(int32 ItemID)
 {
     // id로 검색
-    if(CombineItemDataMap.Contains(ItemID))
+    if(ItemDataMap.Contains(ItemID))
     {
-        return CombineItemDataMap[ItemID];
+        return ItemDataMap[ItemID];
     }
-    else return CombineItemDataMap[0];
+    else return ItemDataMap[0];
 }
 
 void AHHR_ItemSpawnManager::SpawnRandomItem()
 {
 
     // 2. spawnpoint 들 중에 n 개( 8 + 4 + 3 : 15 개 선택 / spawnpoint : 25개)
-    // spawnpoint만 설정해주면 됨
-    // combine(8), Weapon(2 + 2), Escape(1 + 2) 각각 생성
+    
+    // 랜덤 위치 뽑아줌 
     TArray<int32> RandomSpawnPointIdx;
     ShuffleIdx(RandomSpawnPointIdx);
 
+    int32 spawnPointIdx = 0;
+    int32 altarCnt = 0;
+    // 아이템 생성 
+    for(const TPair<int32, FItemData> &itemPair : ItemDataMap)
+    {
+        if(spawnPointIdx >= SpawnPoints.Num()) break;
+        
+        AHHR_Item* item = nullptr;
+        if(itemPair.Value.ItemType == EItemType::CombineItem)
+        {
+            // 조합 아이템 생성
+            item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
+        }
+        else if(itemPair.Value.ItemType == EItemType::WeaponItem)
+        {
+            // 무기 아이템 생성
+            if(itemPair.Value.ItemName.ToString().Contains("Knife"))
+            {
+                item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
+            }
+            else if(itemPair.Value.ItemName.ToString().Contains("Gun"))
+            {
+                item = GetWorld()->SpawnActor<AHHR_Gun>(GunClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
+            }
+            
+        }
+        else if(itemPair.Value.ItemType == EItemType::EscapeItem)
+        {
+            // 탈출 아이템 생성
+            // TODO : 탈출 아이템 클래스로 생성
+            item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
+        }
 
-    // 3. 제단 아이템 랜덤 선택, 세팅 -> 어차피 spawn아이템 선택도 랜덤이니까 걍 처음 4개를 제단으로 지정해도 될듯
-    
+        // TODO : 데이터 세팅 동기화
+        // TODO : 저주 세팅 동기화 필요
+        ++spawnPointIdx;
+        if(item)
+        {
+            item->SetItemData(itemPair.Value);
+        }
 
+    }
 
     // TODO: 4. 힌트 아이템 생성
     
@@ -156,7 +180,11 @@ void AHHR_ItemSpawnManager::ShuffleIdx(TArray<int32> &OutRandomIdx)
         OutRandomIdx.Swap(i, SwapIdx);
     }
 
-    // shuffle로 섞인 것들 중에 spawnitem 만큼만 만들어주기 
-    // TODO : 
+    // shuffle로 섞인 것들 중에 spawnitem 만큼만 만들어주기
+    if(OutRandomIdx.Num() >= MaxSpawnItem)
+    {
+        OutRandomIdx.SetNum(MaxSpawnItem);
+    }
+    
 }
 

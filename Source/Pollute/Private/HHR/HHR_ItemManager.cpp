@@ -8,7 +8,7 @@
 #include "HHR/HHR_Item.h"
 #include "Blueprint/UserWidget.h"
 #include "HHR/HHR_Gun.h"
-#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_Knife.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
@@ -74,7 +74,7 @@ void AHHR_ItemManager::BeginPlay()
                     if(Pair.Value.ItemName.ToString() == FString("Knife"))
                     {
                         pivot.Y += loc;
-                        item = GetWorld()->SpawnActor<AHHR_KnifeItem>(KnifeItemClass, pivot, GetActorRotation());
+                        item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeItemClass, pivot, GetActorRotation());
                         item->SetItemData(Pair.Value);
                         item->PlayerHUD = TestPlayerHUDIns;
                         NetMulticast_SetData(item, Pair.Key);
@@ -166,7 +166,7 @@ void AHHR_ItemManager::ServerRPC_GenerateItem_Implementation()
             {
                 if(Pair.Value.ItemName.ToString() == FString("Sword"))
                 {
-                    item = GetWorld()->SpawnActor<AHHR_KnifeItem>(KnifeItemClass, FVector(0, loc, 50), GetActorRotation());
+                    item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeItemClass, FVector(0, loc, 50), GetActorRotation());
                     item->SetItemData(Pair.Value);
                     item->PlayerHUD = TestPlayerHUDIns;
                     NetMulticast_SetData(item, Pair.Key);

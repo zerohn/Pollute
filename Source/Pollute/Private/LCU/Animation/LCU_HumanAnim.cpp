@@ -4,7 +4,7 @@
 #include "LCU/Animation/LCU_HumanAnim.h"
 
 #include "HHR/HHR_Gun.h"
-#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_Knife.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
 
@@ -43,7 +43,7 @@ void ULCU_HumanAnim::NativeUpdateAnimation(float DeltaTime)
 	    if(item)
 	    {
 	        AHHR_Gun* gun = Cast<AHHR_Gun>(item);
-	        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(item);
+	        AHHR_Knife* knife = Cast<AHHR_Knife>(item);
 	        if(gun)
 	        {
 	            bIsGunInHand = true;

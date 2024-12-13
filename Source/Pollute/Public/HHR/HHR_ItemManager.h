@@ -41,7 +41,7 @@ protected:
 	TSubclassOf<class AHHR_Item> ItemClass;
 	// 무기
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
-	TSubclassOf<class AHHR_KnifeItem> KnifeItemClass;
+	TSubclassOf<class AHHR_Knife> KnifeItemClass;
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
     TSubclassOf<class AHHR_Gun> GunItemClass;
 	

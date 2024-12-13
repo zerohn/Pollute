@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_Knife.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Engine/DamageEvents.h"
@@ -9,12 +9,12 @@
 #include "Engine/World.h"
 #include "LCU/Player/LCU_MonsterCharacter.h"
 
-AHHR_KnifeItem::AHHR_KnifeItem()
+AHHR_Knife::AHHR_Knife()
 {
     WeaponType = EWeaponType::Knife;
 }
 
-void AHHR_KnifeItem::Attack()
+void AHHR_Knife::Attack()
 {
 	// Notify를 통해서 호출됨
 	// 매 틱마다 호출됨
@@ -110,7 +110,7 @@ void AHHR_KnifeItem::Attack()
 	
 }
 
-void AHHR_KnifeItem::SetPrevPos()
+void AHHR_Knife::SetPrevPos()
 {
     PrevEndPos =ItemMehsComp->GetSocketLocation("BladeEnd");
 }
