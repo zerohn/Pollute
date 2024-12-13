@@ -102,4 +102,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
 	class UHHR_PlayerHUD* PlayerHUD;
 
+
+
+    
 };

@@ -32,7 +32,7 @@ public:
 
 
 protected:
-    // 생성할 아이템들 클래스
+    // # 생성할 아이템들 클래스 #
     UPROPERTY(EditDefaultsOnly, Category="Items")
     TSubclassOf<class AHHR_Item> ItemBaseClass;
     UPROPERTY(EditDefaultsOnly, Category="Items")
@@ -41,20 +41,22 @@ protected:
     TSubclassOf<class AHHR_Gun> GunClass;
 
 private:
-    // Data table의 데이터 저장
     // 아이템 데이터 저장
-    // Weapon, Escape, Combine 따로 저장 
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
     TMap<int32, FItemData> ItemDataMap;
+    // 생성된 아이템 저장
+    UPROPERTY()
+    TArray<class AHHR_Item*> ItemArray;
 
     // Spawn point 저장
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
     TArray<class AHHR_ItemSpawnPoint*> SpawnPoints;
     // 랜던 Spawn point index
     //TArray<int32> RandomSpawnPointIdx;
+    
 
-private: 
-    // Setting 변수들
+private:
+    // # Setting 변수들 #
     // 제단 아이템 최대 개수
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
     int32 MaxAltarItem = 4;
@@ -63,26 +65,26 @@ private:
     int32 MaxCombineItem = 8;
     // Spawn 되는 무기 아이템 수
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
-    int32 MaxWeaponItem = 2;
+    int32 MaxKinfe = 2;
+    UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
+    int32 MaxGun = 2;
     // Spawn 되는 탈출 아이템 수
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
-    int32 MaxEscapeItem = 2;
+    int32 MaxParachute = 2;
     // 스폰되는 아이템 수 
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
-    int32 MaxSpawnItem = 15;
+    int32 MaxSpawnItem = MaxCombineItem + MaxKinfe + MaxGun + MaxParachute + 1;
     
 
 // ###### Functions #######
 public:
-    // 데이터 관련 함수들
+    // # 데이터 관련 함수들 #
     // Data load
     void LoadItemData(UDataTable* ItemDataTable);
     void LoadItemData();
-    
     // Id를 통한 데이터 검색 (안전 검색, 걍 검색)
     FItemData& GetItemDataByID(int32 ItemID);
     
-    // key 값의 데이터를 아이템에 넣어줌
 
 private:
     // Spawn Item Random 생성
@@ -92,7 +94,11 @@ private:
     void FindSpawnPoints();
 
     // shuffle로 인덱스 랜덤 뽑기
-    void ShuffleIdx(TArray<int32> &OutRandomIdx);
+    void ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum, int32 RandomNum);
+
+    // Data 세팅 Multicast
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMuulticast_SetData(class AHHR_Item* Item, int32 idx);
     
 
 

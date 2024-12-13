@@ -56,9 +56,6 @@ public:
 	FItemData& GetItemDataByID(int32 ItemID);
 
     // item data 넣어주는 것을 multicast
-    UFUNCTION(Server, Reliable)
-    void ServerRPC_GenerateItem();
-
     UFUNCTION(NetMulticast, reliable)
     void NetMulticast_SetData(class AHHR_Item* Item, int32 idx);
     

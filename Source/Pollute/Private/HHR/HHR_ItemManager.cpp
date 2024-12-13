@@ -145,49 +145,7 @@ void AHHR_ItemManager::BeginPlay()
 	
 }
 
-void AHHR_ItemManager::ServerRPC_GenerateItem_Implementation()
-{
-    float loc = 0;
-    for(const TPair<int32, FItemData>& Pair : ItemDataMap)
-    {
-        AHHR_Item* item = nullptr;
-        // Combine Item만 생성
-        if(HasAuthority())
-        {
-            if(Pair.Value.ItemType == EItemType::CombineItem)
-            {
-                // 생성만 적용 되는 듯 
-                item = GetWorld()->SpawnActor<AHHR_Item>(ItemClass, FVector(0, loc, 50), GetActorRotation());
-                item->SetItemData(Pair.Value);
-                item->PlayerHUD = TestPlayerHUDIns;
-                NetMulticast_SetData(item, Pair.Key);
-            }
-            else if(Pair.Value.ItemType == EItemType::WeaponItem)
-            {
-                if(Pair.Value.ItemName.ToString() == FString("Sword"))
-                {
-                    item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeItemClass, FVector(0, loc, 50), GetActorRotation());
-                    item->SetItemData(Pair.Value);
-                    item->PlayerHUD = TestPlayerHUDIns;
-                    NetMulticast_SetData(item, Pair.Key);
-                }
-                else
-                {
-                    item = GetWorld()->SpawnActor<AHHR_Gun>(GunItemClass, FVector(0, loc, 50), GetActorRotation());
-                    item->SetItemData(Pair.Value);
-                    item->PlayerHUD = TestPlayerHUDIns;
-                    NetMulticast_SetData(item, Pair.Key);
-                }
 
-            }
-        }
-
-
-        loc += 150;
-        //NetMulticast_SetData(item, Pair.Value);
-
-    }
-}
 
 
 void AHHR_ItemManager::LoadItemData(UDataTable* ItemDataTable)
