@@ -25,6 +25,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float GroundSpeed;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+    float P_Vertical;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+    float P_Horizontal;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
 	EGender Gender;

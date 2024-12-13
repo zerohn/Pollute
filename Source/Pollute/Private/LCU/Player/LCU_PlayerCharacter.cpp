@@ -181,6 +181,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
+    DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
     
 }
 
@@ -190,22 +191,15 @@ void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
     FVector2D MovementVector = Value.Get<FVector2D>();
     
     if (Controller != nullptr)
-    {
-        // 현재 속도를 WalkSpeed로 초기화
-        float NewSpeed = WalkSpeed;
-        
+    {        
         // 입력 방향 벡터 가져오기
         const float MoveForwardValue = MovementVector.Y;
         const float MoveRightValue = MovementVector.X;
 
-        // 달리기 조건 확인
-        if (MoveForwardValue > 0 && MoveRightValue <= 0.3f && MoveRightValue >= -0.3f && bIsRunning)
+        if(IsLocallyControlled())
         {
-            NewSpeed = RunSpeed;
+            ServerRPC_UpdateSpeed(MoveForwardValue, MoveRightValue);
         }
-
-        // MaxWalkSpeed 업데이트
-        GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
         
         // 방향 벡터 계산
         const FRotator Rotation = Controller->GetControlRotation();
@@ -222,14 +216,39 @@ void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
 
 void ALCU_PlayerCharacter::RunShiftToggle()
 {
-    if(bIsRunning)
+   if(IsLocallyControlled())
+   {
+       FString aa = bIsRunning ? "true" : "false";
+       P_SCREEN(1.f, FColor::Black, TEXT("%s"), *aa);
+       ServerRPC_SetRunning(!bIsRunning);
+   }
+}
+
+void ALCU_PlayerCharacter::ServerRPC_SetRunning_Implementation(bool run)
+{
+    bIsRunning = run;
+}
+
+void ALCU_PlayerCharacter::ServerRPC_UpdateSpeed_Implementation(float MoveForwardValue, float MoveRightValue)
+{    
+    // 현재 속도를 WalkSpeed로 초기화
+    float NewSpeed = WalkSpeed;
+    
+    // 달리기 조건 확인
+    if (MoveForwardValue > 0 && MoveRightValue <= 0.3f && MoveRightValue >= -0.3f  && bIsRunning)
     {
-        bIsRunning = false;
+        NewSpeed = RunSpeed;
     }
-    else
-    {
-        bIsRunning = true;
-    }
+    
+    // MaxWalkSpeed 업데이트
+    GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
+
+    NetMulticast_UpdateSpeed(NewSpeed);
+}
+
+void ALCU_PlayerCharacter::NetMulticast_UpdateSpeed_Implementation(float NewSpeed)
+{
+    GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
 }
 
 void ALCU_PlayerCharacter::Interact()

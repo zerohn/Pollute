@@ -65,8 +65,6 @@ void ATP_ThirdPersonCharacter::GetLifetimeReplicatedProps(TArray<class FLifetime
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(ATP_ThirdPersonCharacter, bTurnRight);
-    DOREPLIFETIME(ATP_ThirdPersonCharacter, bTurnLeft);
 }
 
 
@@ -132,29 +130,6 @@ void ATP_ThirdPersonCharacter::Look(const FInputActionValue& Value)
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-    if(GetVelocity().Length() < 0.3f)
-    {
-        if(LookAxisVector.X > 0.3f)
-        {
-            bTurnRight = true;
-        }
-        else if(LookAxisVector.X < -0.3f)
-        {
-            bTurnLeft = true;
-        }
-        else
-        {
-            bTurnLeft = false;
-            bTurnRight = false;
-        }
-    }
-    else
-    {
-        bTurnLeft = false;
-        bTurnRight = false;
-    }
-    
-	
 	float DeltaTime = GetWorld()->GetDeltaSeconds();
 	if (Controller != nullptr)
 	{

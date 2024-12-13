@@ -49,10 +49,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
 	float MouseSensitivity = 0.2f;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
-    bool bTurnRight = false;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
-    bool bTurnLeft = false;
 
 public:
 	ATP_ThirdPersonCharacter();

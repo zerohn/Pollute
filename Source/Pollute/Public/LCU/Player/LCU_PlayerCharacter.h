@@ -34,6 +34,12 @@ public:
     // 움직임 관련 함수들
     virtual void Move(const FInputActionValue& Value) override;
     void RunShiftToggle();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetRunning(bool run);
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_UpdateSpeed(float MoveForwardValue, float MoveRightValue);
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_UpdateSpeed(float NewSpeed);
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -178,7 +184,7 @@ private:
     float WalkSpeed = 400.f;
     UPROPERTY(EditAnywhere)
     float RunSpeed = 700.f;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Replicated)
     bool bIsRunning = false;
 
 
