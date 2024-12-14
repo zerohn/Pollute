@@ -101,6 +101,7 @@ void AHHR_Item::SetItemData(const FItemData& data)
 	}
 }
 
+
 // 안쓰임 
 void AHHR_Item::Interact()
 {
@@ -116,6 +117,7 @@ void AHHR_Item::Interact()
 }
 
 // 안쓰임 
+
 void AHHR_Item::SetVisibilityUI(bool Visible)
 {
 	if(!PlayerHUD) return;
@@ -132,8 +134,6 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 	}
 
 }
-
-
 
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

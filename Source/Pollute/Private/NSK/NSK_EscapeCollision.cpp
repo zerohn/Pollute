@@ -39,10 +39,7 @@ void ANSK_EscapeCollision::OnOverlapBegin(UPrimitiveComponent* OverlappedCompone
                 PlayerController->ServerRPC_ChangeToSpector();
             }
 
-            P_LOG(PolluteLog, Warning, TEXT(""));
-
-            // TODO : 시퀀서 실행
-            // TODO : UI 표시
+            // 모두 스펙터 모드 시 -> 게임 로비로 이동
         }
     }
 }

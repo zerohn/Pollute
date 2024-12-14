@@ -31,6 +31,15 @@ public:
 
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+    // 움직임 관련 함수들
+    virtual void Move(const FInputActionValue& Value) override;
+    void RunShiftToggle();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetRunning(bool run);
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_UpdateSpeed(float MoveForwardValue, float MoveRightValue);
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_UpdateSpeed(float NewSpeed);
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -114,7 +123,7 @@ public:
 
 private:
 
-    //  LCU
+    //  이철의
     // 임시 저주 확인하는 위젯
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
     TSubclassOf<class ULCU_TestWidget> LCU_TestWidgetFactory;
@@ -144,20 +153,25 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	EGender Gender;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
 	UInputAction* IA_CarryCurse;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
 	UInputAction* IA_PickUpDropDown;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_RunToggle;
     
     // Montage
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
     class UAnimMontage* KnifeAttackMontage;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
     class UAnimMontage* GunAttackMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
+    UAnimMontage* HitMontage;
 
 	UPROPERTY()
 	FTimerHandle TraceHandle;
@@ -165,8 +179,26 @@ private:
     UPROPERTY(Replicated)
     int32 HealthCount = 4;
 
+    UPROPERTY()
+    float CarryCurseCool = 20.f;
+    UPROPERTY()
+    float MaxCurseCool = 20.f;
+    UPROPERTY()
+    bool StartCurseCool = false;
     UPROPERTY(Replicated)
 	bool bHasCurse = false;
+    
+    UPROPERTY(EditAnywhere)
+    float WalkSpeed = 400.f;
+    UPROPERTY(EditAnywhere)
+    float RunSpeed = 700.f;
+    UPROPERTY(EditAnywhere, Replicated)
+    bool bIsRunning = false;
+    
+public:
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bInjuredBody = false;
 
 
     // NSK
