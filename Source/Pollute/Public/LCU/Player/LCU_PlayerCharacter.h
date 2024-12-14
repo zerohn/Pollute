@@ -123,7 +123,7 @@ public:
 
 private:
 
-    //  LCU
+    //  이철의
     // 임시 저주 확인하는 위젯
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
     TSubclassOf<class ULCU_TestWidget> LCU_TestWidgetFactory;
@@ -170,6 +170,8 @@ private:
     class UAnimMontage* KnifeAttackMontage;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
     class UAnimMontage* GunAttackMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
+    UAnimMontage* HitMontage;
 
 	UPROPERTY()
 	FTimerHandle TraceHandle;
@@ -177,15 +179,26 @@ private:
     UPROPERTY(Replicated)
     int32 HealthCount = 4;
 
+    UPROPERTY()
+    float CarryCurseCool = 20.f;
+    UPROPERTY()
+    float MaxCurseCool = 20.f;
+    UPROPERTY()
+    bool StartCurseCool = false;
     UPROPERTY(Replicated)
 	bool bHasCurse = false;
-
+    
     UPROPERTY(EditAnywhere)
     float WalkSpeed = 400.f;
     UPROPERTY(EditAnywhere)
     float RunSpeed = 700.f;
     UPROPERTY(EditAnywhere, Replicated)
     bool bIsRunning = false;
+    
+public:
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bInjuredBody = false;
 
 
     // NSK

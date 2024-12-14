@@ -156,6 +156,19 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
     RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
+
+    if(StartCurseCool)
+    {
+        if(IsLocallyControlled())
+        {
+            CarryCurseCool -= DeltaTime;
+            if(CarryCurseCool <= 0)
+            {
+                StartCurseCool = false;
+                CarryCurseCool = MaxCurseCool;
+            }
+        }
+    }
 }
 
 // Called to bind functionality to input
@@ -253,7 +266,21 @@ void ALCU_PlayerCharacter::NetMulticast_UpdateSpeed_Implementation(float NewSpee
 
 void ALCU_PlayerCharacter::Interact()
 {
+    UAnimInstance* animInstance= GetMesh()->GetAnimInstance();
+    if(animInstance && animInstance->IsAnyMontagePlaying())
+    {
+        animInstance->StopAllMontages(0.f);
+    }
+    animInstance->Montage_Play(HitMontage);
+    
 	HealthCount--;
+    if(HealthCount == 2)
+    {
+        bInjuredBody = true;
+        WalkSpeed = 300.f;
+        RunSpeed = 600.f;
+        P_SCREEN(5.f, FColor::Black, TEXT("SpeedChange %f , %f"), WalkSpeed, RunSpeed);
+    }
     if(HealthCount <= 0)
     {
         HealthCount = 0;
@@ -376,10 +403,13 @@ void ALCU_PlayerCharacter::CarryCurse()
 	// 저주가 없으면 줄 것도 없으니 나가세요
 	if(!bHasCurse) return;
 
+    // 아직 저주 넘기기 쿨타임 상태면 나가세여
+    if(StartCurseCool) return;
+    StartCurseCool = true;
+
 	// 현재 눈 앞에 줄 수 있는 플레이어도 없으니 나가세요.
 	if(!FinalOverapPlayer) return;
 
-    //HasCurseWidget(false);
 	ServerRPC_CarryCurse();
 }
 
@@ -888,10 +918,7 @@ void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
     }
 }
 
-
-
 // NSK //
-
 void ALCU_PlayerCharacter::SetNearbyAltar(ANSK_Altar* Altar, int32 SlotIndex)
 {
     NearbyAltar = Altar;
