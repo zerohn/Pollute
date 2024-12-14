@@ -21,6 +21,7 @@
 #include "Animation/AnimInstance.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "LCU/Player/LCU_TestWidget.h"
 
@@ -156,11 +157,18 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
     RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
 
-	if(bHasCurse && HasAuthority())
-	{
-		//P_LOG(PolluteLog, Log, TEXT("%s"), *GetName());
-	}
-
+    if(StartCurseCool)
+    {
+        if(IsLocallyControlled())
+        {
+            CarryCurseCool -= DeltaTime;
+            if(CarryCurseCool <= 0)
+            {
+                StartCurseCool = false;
+                CarryCurseCool = MaxCurseCool;
+            }
+        }
+    }
 }
 
 // Called to bind functionality to input
@@ -175,6 +183,7 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
         EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
 	}
 }
 
@@ -183,16 +192,95 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
-    //DOREPLIFETIME(ALCU_PlayerCharacter, FinalOverapItem);
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
+    DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
     
+}
+
+void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
+{
+    // input is a Vector2D
+    FVector2D MovementVector = Value.Get<FVector2D>();
+    
+    if (Controller != nullptr)
+    {        
+        // 입력 방향 벡터 가져오기
+        const float MoveForwardValue = MovementVector.Y;
+        const float MoveRightValue = MovementVector.X;
+
+        if(IsLocallyControlled())
+        {
+            ServerRPC_UpdateSpeed(MoveForwardValue, MoveRightValue);
+        }
+        
+        // 방향 벡터 계산
+        const FRotator Rotation = Controller->GetControlRotation();
+        const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+        const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+        const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+        // 입력 벡터를 기반으로 이동 적용
+        AddMovementInput(ForwardDirection, MoveForwardValue);
+        AddMovementInput(RightDirection, MoveRightValue);
+    }
+}
+
+void ALCU_PlayerCharacter::RunShiftToggle()
+{
+   if(IsLocallyControlled())
+   {
+       FString aa = bIsRunning ? "true" : "false";
+       P_SCREEN(1.f, FColor::Black, TEXT("%s"), *aa);
+       ServerRPC_SetRunning(!bIsRunning);
+   }
+}
+
+void ALCU_PlayerCharacter::ServerRPC_SetRunning_Implementation(bool run)
+{
+    bIsRunning = run;
+}
+
+void ALCU_PlayerCharacter::ServerRPC_UpdateSpeed_Implementation(float MoveForwardValue, float MoveRightValue)
+{    
+    // 현재 속도를 WalkSpeed로 초기화
+    float NewSpeed = WalkSpeed;
+    
+    // 달리기 조건 확인
+    if (MoveForwardValue > 0 && MoveRightValue <= 0.3f && MoveRightValue >= -0.3f  && bIsRunning)
+    {
+        NewSpeed = RunSpeed;
+    }
+    
+    // MaxWalkSpeed 업데이트
+    GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
+
+    NetMulticast_UpdateSpeed(NewSpeed);
+}
+
+void ALCU_PlayerCharacter::NetMulticast_UpdateSpeed_Implementation(float NewSpeed)
+{
+    GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
 }
 
 void ALCU_PlayerCharacter::Interact()
 {
+    UAnimInstance* animInstance= GetMesh()->GetAnimInstance();
+    if(animInstance && animInstance->IsAnyMontagePlaying())
+    {
+        animInstance->StopAllMontages(0.f);
+    }
+    animInstance->Montage_Play(HitMontage);
+    
 	HealthCount--;
-    P_SCREEN(3.f, FColor::Magenta, TEXT("%s"), *GetName());
+    if(HealthCount == 2)
+    {
+        bInjuredBody = true;
+        WalkSpeed = 300.f;
+        RunSpeed = 600.f;
+        P_SCREEN(5.f, FColor::Black, TEXT("SpeedChange %f , %f"), WalkSpeed, RunSpeed);
+    }
     if(HealthCount <= 0)
     {
         HealthCount = 0;
@@ -315,10 +403,13 @@ void ALCU_PlayerCharacter::CarryCurse()
 	// 저주가 없으면 줄 것도 없으니 나가세요
 	if(!bHasCurse) return;
 
+    // 아직 저주 넘기기 쿨타임 상태면 나가세여
+    if(StartCurseCool) return;
+    StartCurseCool = true;
+
 	// 현재 눈 앞에 줄 수 있는 플레이어도 없으니 나가세요.
 	if(!FinalOverapPlayer) return;
 
-    //HasCurseWidget(false);
 	ServerRPC_CarryCurse();
 }
 
@@ -827,10 +918,7 @@ void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
     }
 }
 
-
-
 // NSK //
-
 void ALCU_PlayerCharacter::SetNearbyAltar(ANSK_Altar* Altar, int32 SlotIndex)
 {
     NearbyAltar = Altar;

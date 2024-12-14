@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -60,6 +61,11 @@ void ATP_ThirdPersonCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ATP_ThirdPersonCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+}
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -123,7 +129,7 @@ void ATP_ThirdPersonCharacter::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
-	
+
 	float DeltaTime = GetWorld()->GetDeltaSeconds();
 	if (Controller != nullptr)
 	{
