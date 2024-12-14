@@ -37,7 +37,7 @@ public:
     UPROPERTY(Replicated)
     class AHHR_ItemManager* ItemManager;
     UPROPERTY(Replicated)
-    class ANSK_SpawnManager* SpawnManager;
+    class AHHR_ItemSpawnManager* ItemSpawnManager;
 	
 // Components
 protected:

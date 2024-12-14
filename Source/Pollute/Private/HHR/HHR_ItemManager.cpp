@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Fill osut your copyright notice in the Description page of Project Settings.
 
 
 #include "HHR/HHR_ItemManager.h"

@@ -293,7 +293,7 @@ void ANSK_SpawnManager::SpawnAltarHint()
 
 void ANSK_SpawnManager::NetMulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
 {
-    Item->SpawnManager = this;
+    //Item->ItemSpawnManager = this;
     Item->PlayerHUD = TestPlayerHUDIns;
     Item->DataIdx = idx;
 }

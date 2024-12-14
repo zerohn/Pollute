@@ -40,10 +40,11 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category="Items")
     TSubclassOf<class AHHR_Gun> GunClass;
 
-private:
+public:
     // 아이템 데이터 저장
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
     TMap<int32, FItemData> ItemDataMap;
+private:
     // 생성된 아이템 저장
     UPROPERTY()
     TArray<class AHHR_Item*> ItemArray;

@@ -6,6 +6,7 @@
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/Character.h"
 #include "HHR/HHR_ItemManager.h"
+#include "HHR/HHR_ItemSpawnManager.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
@@ -60,6 +61,8 @@ void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutL
 
     DOREPLIFETIME(AHHR_Item, DataIdx);
     DOREPLIFETIME(AHHR_Item, ItemManager);
+    // REplicated 무조건 해줘야 함 
+    DOREPLIFETIME(AHHR_Item, ItemSpawnManager);
 }
 
 // Called every frame
@@ -75,6 +78,10 @@ void AHHR_Item::OnRep_ChangeIdx()
     if(ItemManager)
     {
         SetItemData(ItemManager->ItemDataMap[DataIdx]);
+    }
+    if(ItemSpawnManager)
+    {
+        SetItemData(ItemSpawnManager->ItemDataMap[DataIdx]);
     }
     /*if(SpawnManager)
     {

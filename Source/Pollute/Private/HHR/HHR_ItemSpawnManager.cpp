@@ -127,7 +127,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             ++spawnPointIdx;
             ItemArray.Add(item);
             // TODO : 데이터 세팅 동기화
-            //item->SetItemData(itemPair.Value);
+            item->SetItemData(itemPair.Value);
             NetMuulticast_SetData(item, itemPair.Key);
         }
         else if(itemPair.Value.ItemType == EItemType::WeaponItem)
@@ -140,7 +140,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                     item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                     ++spawnPointIdx;
                     ItemArray.Add(item);
-                    //item->SetItemData(itemPair.Value);
+                    item->SetItemData(itemPair.Value);
                     NetMuulticast_SetData(item, itemPair.Key);
                 }
             }
@@ -151,7 +151,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                     item = GetWorld()->SpawnActor<AHHR_Gun>(GunClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                     ++spawnPointIdx;
                     ItemArray.Add(item);
-                    //item->SetItemData(itemPair.Value);
+                    item->SetItemData(itemPair.Value);
                     NetMuulticast_SetData(item, itemPair.Key);
                 }
             }
@@ -164,7 +164,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
             ++spawnPointIdx;
             ItemArray.Add(item);
-            //item->SetItemData(itemPair.Value);
+            item->SetItemData(itemPair.Value);
             NetMuulticast_SetData(item, itemPair.Key);
         }
 
@@ -229,6 +229,11 @@ void AHHR_ItemSpawnManager::ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum
 
 void AHHR_ItemSpawnManager::NetMuulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
 {
-    Item->SetItemData(ItemDataMap[idx]);
+    //Item->SetItemData(ItemDataMap[idx]);
+    
+    Item->ItemSpawnManager = this;
+    Item->PlayerHUD = TestPlayerHUDIns;
+    Item->DataIdx = idx;
+    
 }
 
