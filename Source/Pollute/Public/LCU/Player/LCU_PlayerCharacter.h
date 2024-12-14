@@ -250,7 +250,7 @@ public:
 
 // 임시 playerhud
 public:
-    class UHHR_TestPlayerHUD* PlayerHUD;
+    class UHHR_PlayerHUD* PlayerHUD;
 
     // 픽업 대상 아이템
     class AHHR_Item* RetrievedItem;

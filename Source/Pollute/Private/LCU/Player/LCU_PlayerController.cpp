@@ -7,7 +7,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/SpectatorPawn.h"
 #include "HHR/HHR_ItemManager.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_MonsterCharacter.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"

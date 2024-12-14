@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
@@ -9,7 +9,7 @@
 #include "HHR/UI/HHR_ItemDialog.h"
 
 
-void UHHR_TestPlayerHUD::NativeConstruct()
+void UHHR_PlayerHUD::NativeConstruct()
 {
 	Super::NativeConstruct();
 
@@ -20,7 +20,7 @@ void UHHR_TestPlayerHUD::NativeConstruct()
 
 }
 
-void UHHR_TestPlayerHUD::SetItemDialogVisibility(bool Visible)
+void UHHR_PlayerHUD::SetItemDialogVisibility(bool Visible)
 {
 
 	if(!ItemDialog)
@@ -33,7 +33,7 @@ void UHHR_TestPlayerHUD::SetItemDialogVisibility(bool Visible)
 	
 }
 
-void UHHR_TestPlayerHUD::SetItemDialogText(FText Text)
+void UHHR_PlayerHUD::SetItemDialogText(FText Text)
 {
 	if(ItemDialog)
 	{
@@ -41,7 +41,7 @@ void UHHR_TestPlayerHUD::SetItemDialogText(FText Text)
 	}
 }
 
-void UHHR_TestPlayerHUD::ChangeItemImageNull()
+void UHHR_PlayerHUD::ChangeItemImageNull()
 {
     FSlateBrush Brush;
     Brush.SetResourceObject(nullptr);
@@ -53,7 +53,7 @@ void UHHR_TestPlayerHUD::ChangeItemImageNull()
     ItemImage->SetColorAndOpacity(CurrentColor);
 }
 
-void UHHR_TestPlayerHUD::ChangeItemImage(class UTexture2D* Texture)
+void UHHR_PlayerHUD::ChangeItemImage(class UTexture2D* Texture)
 {
     // 아이템 있으면 img 데이터로 change + tint의 알파값 변경
     FSlateBrush Brush;

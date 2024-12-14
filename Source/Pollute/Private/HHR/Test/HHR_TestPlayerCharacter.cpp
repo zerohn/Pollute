@@ -14,7 +14,7 @@
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
-#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_Knife.h"
 #include "HHR/HHR_WeaponItem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
@@ -356,7 +356,7 @@ void AHHR_TestPlayerCharacter::Attack()
 	// Item 종류(칼, 총)에 따라 다른 Montage 실행
 	if(weapon)
 	{
-		AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(weapon);
+		AHHR_Knife* knife = Cast<AHHR_Knife>(weapon);
 		UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
 		if(animInstance)
 		{

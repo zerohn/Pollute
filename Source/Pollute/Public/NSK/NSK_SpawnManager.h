@@ -34,9 +34,9 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_SetData(class AHHR_Item* Item, int32 idx);
     UPROPERTY()
-    class UHHR_TestPlayerHUD* TestPlayerHUDIns;
+    class UHHR_PlayerHUD* TestPlayerHUDIns;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
-    TSubclassOf<class UHHR_TestPlayerHUD> PlayerHUDClass;
+    TSubclassOf<class UHHR_PlayerHUD> PlayerHUDClass;
 
 
 protected:
@@ -45,7 +45,7 @@ protected:
     TSubclassOf<class AHHR_Item> ItemClass;
     // 무기
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
-    TSubclassOf<class AHHR_KnifeItem> KnifeItemClass;
+    TSubclassOf<class AHHR_Knife> KnifeItemClass;
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
     TSubclassOf<class AHHR_Gun> GunItemClass;
 public:
