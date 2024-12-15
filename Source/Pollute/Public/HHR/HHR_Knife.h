@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "HHR/HHR_WeaponItem.h"
-#include "HHR_KnifeItem.generated.h"
+#include "HHR_Knife.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class POLLUTE_API AHHR_KnifeItem : public AHHR_WeaponItem
+class POLLUTE_API AHHR_Knife : public AHHR_WeaponItem
 {
 	GENERATED_BODY()
 
 public:
-    AHHR_KnifeItem();
+    AHHR_Knife();
 
 private:
 	FVector PrevEndPos;

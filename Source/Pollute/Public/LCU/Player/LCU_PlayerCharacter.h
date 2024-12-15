@@ -1,11 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "LCU/Interfaces/LCU_InteractInterface.h"
 #include "Pollute/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "Pollute/Public/LCU/LCU_Properties/LCU_Property.h"
+
+#include "NSK/NSK_Altar.h"
 #include "P_Settings/PlayData.h"
 #include "LCU_PlayerCharacter.generated.h"
 
@@ -17,11 +17,9 @@ class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , publi
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ALCU_PlayerCharacter();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -33,6 +31,15 @@ public:
 
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+    // 움직임 관련 함수들
+    virtual void Move(const FInputActionValue& Value) override;
+    void RunShiftToggle();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetRunning(bool run);
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_UpdateSpeed(float MoveForwardValue, float MoveRightValue);
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_UpdateSpeed(float NewSpeed);
 	
 	// ILCU_InteractInterface 의 메서드
 	virtual  void Interact() override;
@@ -68,7 +75,7 @@ public:
     // ## 아이템 Get
     class AHHR_Item* GetItem() {return ItemInHand;}
     // 아이템 초기화 함수
-    void InitItem() {ItemInHand = nullptr;}
+    
     
 	// Get, Set 끝
 
@@ -98,9 +105,31 @@ public:
     void DieProcess();
     // IA에 Bind될 함수
     void Attack();
+    // rpc attack
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_Attack();
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_Attack();
+
+
+    void InitItem();
+
+    // 저주 관련 TEST 위젯
+    UFUNCTION()
+    void HasCurseWidget(bool bShow);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_HasCurseWidget(bool bShow);
 
 
 private:
+
+    //  이철의
+    // 임시 저주 확인하는 위젯
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    TSubclassOf<class ULCU_TestWidget> LCU_TestWidgetFactory;
+
+    ULCU_TestWidget* LCU_TestWidget;
+    
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* BoxComponent;
@@ -124,20 +153,25 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	EGender Gender;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
 	UInputAction* IA_CarryCurse;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
 	UInputAction* IA_PickUpDropDown;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_Attack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_RunToggle;
     
     // Montage
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
     class UAnimMontage* KnifeAttackMontage;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
     class UAnimMontage* GunAttackMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
+    UAnimMontage* HitMontage;
 
 	UPROPERTY()
 	FTimerHandle TraceHandle;
@@ -145,15 +179,82 @@ private:
     UPROPERTY(Replicated)
     int32 HealthCount = 4;
 
+    UPROPERTY()
+    float CarryCurseCool = 20.f;
+    UPROPERTY()
+    float MaxCurseCool = 20.f;
+    UPROPERTY()
+    bool StartCurseCool = false;
+    UPROPERTY(Replicated)
 	bool bHasCurse = false;
-
+    
+    UPROPERTY(EditAnywhere)
+    float WalkSpeed = 400.f;
+    UPROPERTY(EditAnywhere)
+    float RunSpeed = 700.f;
+    UPROPERTY(EditAnywhere, Replicated)
+    bool bIsRunning = false;
+    
 public:
-    // 필요 없음 
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bInjuredBody = false;
+
+
+    // NSK
+    public:
+
     bool bHasItem = false;
 
+    // 제단 상호작용 키
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* IA_G;
+
+    // NSK G키 상호작용 처리 함수
+    UFUNCTION()
+    void OnInteract();
+
+    // 현재 근처 제단
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+    ANSK_Altar* NearbyAltar;
+    
+    int32 SelectedSlotIndex;
+
+    // 슬롯 인덱스를 설정하는 함수
+    void SetCurrentSlotIndex(int32 SlotIndex);
+
+    // 현재 슬롯 인덱스를 초기화하는 함수
+    void ClearCurrentSlotIndex();
+
+    // 근처 제단 설정 함수
+    void SetNearbyAltar(ANSK_Altar* Altar, int32 SlotIndex);
+    void ClearNearbyAltar();
+
+    // 현재 플레이어가 들고 있는 아이템 데이터
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
+    FItemData HeldItem;
+
+    // 플레이어가 들고 있는 아이템 반환 함수
+    FItemData GetHeldItem() const;
+
+public:
+
+    // KYH
     UPROPERTY(EditAnywhere)
     EPlayerType PlayerType = EPlayerType::Eric;
     UPROPERTY(EditDefaultsOnly)
     TArray<USkeletalMesh*> PlayerMeshType;
-};
 
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetPlayerType(EPlayerType InPlayerType);
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastRPC_UpdatePlayerMesh(EPlayerType InPlayerType);
+
+// 임시 playerhud
+public:
+    class UHHR_PlayerHUD* PlayerHUD;
+
+    // 픽업 대상 아이템
+    class AHHR_Item* RetrievedItem;
+
+};

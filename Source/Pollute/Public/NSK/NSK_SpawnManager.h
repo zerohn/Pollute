@@ -29,7 +29,28 @@ public:
 
 	void SpawnAltarHint(); // 힌트 생성
 
+// 임시 수정 부분
+public:
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_SetData(class AHHR_Item* Item, int32 idx);
+    UPROPERTY()
+    class UHHR_PlayerHUD* TestPlayerHUDIns;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+    TSubclassOf<class UHHR_PlayerHUD> PlayerHUDClass;
 
+
+protected:
+    // 생성할 아이템 클래스
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+    TSubclassOf<class AHHR_Item> ItemClass;
+    // 무기
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+    TSubclassOf<class AHHR_Knife> KnifeItemClass;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Items")
+    TSubclassOf<class AHHR_Gun> GunItemClass;
+public:
+    TArray<FItemData*> SpawnedItems; // 스폰된 아이템 저장
+    
 private:
 	// 아이템
     UPROPERTY(EditAnywhere, Category = "Spawn Manager")
@@ -39,14 +60,13 @@ private:
 
 	TArray<FItemData*> SelectedAltarItems; // 제단 아이템으로 선택된 아이템의 포인터 배열
 
-    TArray<FItemData*> SpawnedItems; // 스폰된 아이템 저장
+
+
 
 	// 힌트
 	UDataTable* SpawnHintDataTable; // 힌트 데이터 테이블
 
 	TArray<ANSK_AltarHintPoint*> AllHintPoints; // 맵에 배치된 모든 힌트 포인트 저장
-
-	TArray<FAltarHintData*> AltarHintData;  // 데이터 테이블에서 가져온 힌트 데이터
 
     // 필터링
     TArray<FItemData*> FilterCombineItems(UDataTable* DataTable); // 필터링 함수

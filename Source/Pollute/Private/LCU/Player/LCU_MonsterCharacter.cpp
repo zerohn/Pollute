@@ -4,11 +4,9 @@
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Components/SlateWrapperTypes.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HHR/HHR_ItemManager.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/HHR_WeaponItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LCU/Interfaces/LCU_InteractInterface.h"
@@ -62,8 +60,16 @@ float ALCU_MonsterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent 
     class AController* EventInstigator, AActor* DamageCauser)
 {
     float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-    
-    DieProcess();
+
+    AHHR_WeaponItem* item = Cast<AHHR_WeaponItem>(DamageCauser);
+    if(item->GetWeaponType() == EWeaponType::Knife)
+    {
+        DieProcess();
+    }
+    else if(item->GetWeaponType() == EWeaponType::TaserGun)
+    {
+        ApplyStun();
+    }
     
     return damage;
 }
@@ -135,7 +141,7 @@ void ALCU_MonsterCharacter::OnNotifyAttack()
         ObjectTypes,
         false,
         IgnoredActors,
-        EDrawDebugTrace::ForDuration, // 디버그용 선
+        EDrawDebugTrace::None, // 디버그용 선
         HitResult,
         true,
         FLinearColor::Red,

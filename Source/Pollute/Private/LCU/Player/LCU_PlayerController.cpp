@@ -7,10 +7,11 @@
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/SpectatorPawn.h"
 #include "HHR/HHR_ItemManager.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_MonsterCharacter.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "NSK/NSK_SpawnManager.h"
 #include "P_Settings/P_GameState.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
@@ -36,6 +37,21 @@ void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
 {
 	// 현재 Possess 하고 있는 폰 가져오기
 	APawn* player = GetPawn();
+    ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(player);
+    if(PlayerCharacter && HasAuthority())
+    {
+        PlayerCharacter->NetMulticast_DetachItem();
+    }
+    
+    if(PlayerCharacter->GetHasCurse())
+    {
+        AP_GameState* GS = Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
+        if (GS)
+        {
+            GS->RestartCurse();
+        }
+    }
+    
     ClientRPC_ItemUIOff();
 	UnPossess();
 
@@ -61,9 +77,9 @@ void ALCU_PlayerController::ChangeToMonster()
     // 현재 Possess 하고 있는 폰 가져오기
     APawn* player = GetPawn();
     ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(player);
-    if(PlayerCharacter)
+    if(PlayerCharacter && HasAuthority())
     {
-        PlayerCharacter->DropDown();
+        PlayerCharacter->NetMulticast_DetachItem();
     }
     ClientRPC_ItemUIOff();
     UnPossess();
@@ -76,7 +92,7 @@ void ALCU_PlayerController::ChangeToMonster()
     Possess(MonSter);
 
     player->Destroy();
-
+    
     AP_GameState* GS =Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
     if (GS)
     {
@@ -92,6 +108,11 @@ void ALCU_PlayerController::ClientRPC_ItemUIOff_Implementation()
         AHHR_ItemManager* ItemManager = Cast<AHHR_ItemManager>(IM);
         if(ItemManager)
         {
+            //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetPawn());
+            //if (player)
+            //{
+            //    player->PlayerHUD->SetVisibility(ESlateVisibility::Hidden);
+            //}
             ItemManager->TestPlayerHUDIns->SetVisibility(ESlateVisibility::Hidden);
             //ItemManager->TestPlayerHUDIns->SetItemDialogVisibility(false);
             //ItemManager->TestPlayerHUDIns->SetItemDialogText(FText());

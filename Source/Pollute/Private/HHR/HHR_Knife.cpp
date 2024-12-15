@@ -1,18 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_Knife.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "LCU/Player/LCU_MonsterCharacter.h"
 
-AHHR_KnifeItem::AHHR_KnifeItem()
+AHHR_Knife::AHHR_Knife()
 {
     WeaponType = EWeaponType::Knife;
 }
 
-void AHHR_KnifeItem::Attack()
+void AHHR_Knife::Attack()
 {
 	// Notify를 통해서 호출됨
 	// 매 틱마다 호출됨
@@ -41,9 +43,11 @@ void AHHR_KnifeItem::Attack()
     
 	if (isHit)
 	{
-		// 충돌시 Damage 적용
-		// TODO : 몬스터 생성후 ApplyDamage() 로 수정
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, "Hit");
+	    // 충돌시 Damage 적용
+	    if (ALCU_MonsterCharacter* mon = Cast<ALCU_MonsterCharacter>(hitResult.GetActor()))
+	    {
+	        hitResult.GetActor()->TakeDamage(1.f, FDamageEvent(), GetInstigatorController(), this);
+	    }
 	}
 
 	// blade의 괴적 적용을 위한 LineTrace
@@ -72,14 +76,16 @@ void AHHR_KnifeItem::Attack()
     if (isHitBlade)
     {
         // 충돌시 Damage 적용
-        // TODO : 몬스터 생성후 ApplyDamage() 로 수정
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, "Hit");
+        if (ALCU_MonsterCharacter* mon = Cast<ALCU_MonsterCharacter>(hitResult.GetActor()))
+        {
+            hitResult.GetActor()->TakeDamage(1.f, FDamageEvent(), GetInstigatorController(), this);
+        }
     }
 
     
 	
 	// DrawLineDebug
-	if (isHit)
+	/*if (isHit)
 	{
 		DrawDebugLine(GetWorld(), start, end, FColor::Red, true, 0.25);
 	}
@@ -96,7 +102,7 @@ void AHHR_KnifeItem::Attack()
     else
     {
         DrawDebugLine(GetWorld(), startBlade, endBlade, FColor::Blue, true, 0.25);
-    }
+    }*/
 
     // prevEndPos 업뎃
     PrevEndPos = endBlade;
@@ -104,7 +110,7 @@ void AHHR_KnifeItem::Attack()
 	
 }
 
-void AHHR_KnifeItem::SetPrevPos()
+void AHHR_Knife::SetPrevPos()
 {
     PrevEndPos =ItemMehsComp->GetSocketLocation("BladeEnd");
 }

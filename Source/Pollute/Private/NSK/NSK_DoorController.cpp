@@ -1,47 +1,48 @@
 #include "NSK/NSK_DoorController.h"
+#include "NSk/NSK_DoorActor.h"
+#include "EngineUtils.h"
 
 ANSK_DoorController::ANSK_DoorController()
 {
 
-	PrimaryActorTick.bCanEverTick = true;
-
-    // 도어 메쉬 초기화 부분이 없음
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void ANSK_DoorController::BeginPlay()
 {
 	Super::BeginPlay();
 
-    // 초기 상태: 닫힘
-    CloseDoor();
-	
-}
+    // 레벨에 배치된 두 문 액터를 찾기
+    for (TActorIterator<ANSK_DoorActor> It(GetWorld()); It; ++It)
+    {
+        ANSK_DoorActor* FoundDoor = *It;
 
-// 도어 매쉬가 2가지가 존재함 2개를 열고 닫고 해야함
-// 러프로 자연스럽게 문을 열고 닫게 해야함
-// 제단 재료가 True/False 시 시퀀서를 각각 만들어서 재생하게 할꺼야
+        if (FoundDoor->IsA(LeftDoorClass) && !LeftDoorInstance)
+        {
+            LeftDoorInstance = FoundDoor;
+        }
+        else if (FoundDoor->IsA(RightDoorClass) && !RightDoorInstance)
+        {
+            RightDoorInstance = FoundDoor;
+        }
+    }
+
+    if (!LeftDoorInstance || !RightDoorInstance)
+    {
+        UE_LOG(LogTemp, Error, TEXT("DoorController: Doors not found!"));
+    }
+}
 
 void ANSK_DoorController::OpenDoor()
 {
-    for (AStaticMeshActor* Door : DoorMeshes)
+    if (!LeftDoorInstance || !RightDoorInstance)
     {
-        if (Door)
-        {
-            Door->SetActorRotation(FRotator(0.f, 90.f, 0.f)); // 임시로 문을 회전
-        }
+        UE_LOG(LogTemp, Error, TEXT("문 액터가 할당되지 않았습니다! Left: %s, Right: %s"),
+            LeftDoorInstance ? *LeftDoorInstance->GetName() : TEXT("None"),
+            RightDoorInstance ? *RightDoorInstance->GetName() : TEXT("None"));
+        return;
     }
-    bIsDoorOpen = true;
-}
 
-void ANSK_DoorController::CloseDoor()
-{
-    for (AStaticMeshActor* Door : DoorMeshes)
-    {
-        if (Door)
-        {
-            Door->SetActorRotation(FRotator(0.f, 0.f, 0.f)); // 원래 위치로 닫음
-        }
-    }
-    bIsDoorOpen = false;
+    if (LeftDoorInstance) LeftDoorInstance->OpenDoor();
+    if (RightDoorInstance) RightDoorInstance->OpenDoor();
 }
-

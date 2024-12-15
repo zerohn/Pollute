@@ -18,10 +18,5 @@ class POLLUTE_API AP_LobbyGameState : public AGameStateBase
 public:
 
     virtual void BeginPlay() override;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Session")
-    TSubclassOf<UKYH_CommonUserLobby> LobbyWidgetClass;
-
-    UPROPERTY()
-    UKYH_CommonUserLobby* LobbyWidget;
+    
 };

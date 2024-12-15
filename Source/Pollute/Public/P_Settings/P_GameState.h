@@ -41,9 +41,13 @@ public:
 	void StartCurse(ALCU_PlayerCharacter* selectedPlayer);
 
 	// 저주를 가진 사람의 사망 등의 이유로 다시 저주를 걸어야해요
-	UFUNCTION(NetMulticast, Reliable)
-	void RestartCurse(ALCU_PlayerCharacter* selectedPlayer);
-	
+	UFUNCTION()
+	void RestartCurse();
+
+    // 플레이어 캐릭터 메쉬 변경
+    UFUNCTION()
+    void InitPlayerMesh();
+    
 protected:
 	// 싱글턴 객체
 	UPROPERTY(EditAnywhere)

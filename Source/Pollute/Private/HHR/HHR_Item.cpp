@@ -1,15 +1,16 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "HHR/HHR_Item.h"
 
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/Character.h"
 #include "HHR/HHR_ItemManager.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/HHR_ItemSpawnManager.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
+#include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "NSK/NSK_SpawnManager.h"
 
 // Sets default values
 AHHR_Item::AHHR_Item()
@@ -37,6 +38,7 @@ AHHR_Item::AHHR_Item()
     ItemInteractWidgetComp->SetupAttachment(RootComponent);
     ItemInteractWidgetComp->SetRelativeLocation(FVector(0, 0, 100.0f));
     ItemInteractWidgetComp->SetDrawSize(FVector2d(50, 50));
+    ItemInteractWidgetComp->SetCollisionProfileName(TEXT("NoCollision"));
 
     bReplicates = true;
     //SetReplicateMove(true);
@@ -59,6 +61,8 @@ void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutL
 
     DOREPLIFETIME(AHHR_Item, DataIdx);
     DOREPLIFETIME(AHHR_Item, ItemManager);
+    // REplicated 무조건 해줘야 함 
+    DOREPLIFETIME(AHHR_Item, ItemSpawnManager);
 }
 
 // Called every frame
@@ -75,8 +79,17 @@ void AHHR_Item::OnRep_ChangeIdx()
     {
         SetItemData(ItemManager->ItemDataMap[DataIdx]);
     }
+    if(ItemSpawnManager)
+    {
+        SetItemData(ItemSpawnManager->ItemDataMap[DataIdx]);
+    }
+    /*if(SpawnManager)
+    {
+        SetItemData(*(SpawnManager->SpawnedItems[DataIdx]));
+    }*/
 }
 
+// ItemSpawnManager에서 넣어주는 게 나을듯 
 void AHHR_Item::SetItemData(const FItemData& data)
 {
 	if(ItemData.ItemID == -1)
@@ -88,6 +101,8 @@ void AHHR_Item::SetItemData(const FItemData& data)
 	}
 }
 
+
+// 안쓰임 
 void AHHR_Item::Interact()
 {
 	// 추후 사용
@@ -100,6 +115,8 @@ void AHHR_Item::Interact()
 	// => 그래서 사실 Interact() 함수는 안 사용할 듯..
 	// => ?? InteractInterface에 SetvisibilityUI()를 만들어주는 게 맞는지 의문?
 }
+
+// 안쓰임 
 
 void AHHR_Item::SetVisibilityUI(bool Visible)
 {
@@ -121,8 +138,13 @@ void AHHR_Item::SetVisibilityUI(bool Visible)
 void AHHR_Item::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    // local player에만 보여야함
+    APawn* playerpawn = Cast<APawn>(OtherActor);
+    if(playerpawn && playerpawn->IsLocallyControlled())
+    {
+        ItemInteractWidgetComp->SetVisibility(true);
+    }
     
-    ItemInteractWidgetComp->SetVisibility(true);
     
 	// UI 처리 따로 함수로 빼서 Player Character에서 호출 
 	/*if(Cast<ACharacter>(OtherActor))
@@ -150,7 +172,13 @@ void AHHR_Item::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 
-    ItemInteractWidgetComp->SetVisibility(false);
+    // local player에만 보여야함
+    APawn* playerpawn = Cast<APawn>(OtherActor);
+    if(playerpawn && playerpawn->IsLocallyControlled())
+    {
+        ItemInteractWidgetComp->SetVisibility(false);
+    }
+    
     
 	// TODO : 필요 없음 ㅇㅅㅇ
 	// 테스트용

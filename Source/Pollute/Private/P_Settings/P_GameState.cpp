@@ -5,6 +5,7 @@
 
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "LCU/InteractActors/LCU_Curse.h"
@@ -31,6 +32,9 @@ void AP_GameState::BeginPlay()
     
     GetWorld()->GetFirstPlayerController()->SetInputMode(FInputModeGameOnly());
     GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(false);
+
+    FTimerHandle SetMeshHandle;
+    GetWorldTimerManager().SetTimer(SetMeshHandle, this, &AP_GameState::InitPlayerMesh, 1.f, false);
 }
 
 void AP_GameState::Tick(float DeltaSeconds)
@@ -93,13 +97,6 @@ void AP_GameState::RemoveHumanPlayer(ALCU_PlayerCharacter* humanPlayer)
 	if(!HumanPlayers.Contains(humanPlayer)) return;
 
 	HumanPlayers.Remove(humanPlayer);
-
-	// 지우고 나서 다시 확인 했을 때 더 이상 사람이 없다면 게임 끝
-	if(HumanPlayers.IsEmpty())
-	{
-		// TODO 게임 끝
-		
-	}
 }
 
 void AP_GameState::SelectPlayer()
@@ -128,11 +125,20 @@ void AP_GameState::SelectPlayer()
 }
 
 // 저주를 다시 시작 ( 저주를 가진 사람이 죽거나 탈출 했을 때 호출 )
-void AP_GameState::RestartCurse_Implementation(ALCU_PlayerCharacter* selectedPlayer)
+void AP_GameState::RestartCurse()
 {
-	RemoveHumanPlayer(selectedPlayer);
 	ALCU_Curse::GetInstance(GetWorld())->InitCurseTime();
 	SelectPlayer();
+}
+
+void AP_GameState::InitPlayerMesh()
+{
+    for (int i = 0; i < PlayerArray.Num(); i++)
+    {
+        ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(PlayerArray[i]->GetPawn());
+        if (!PlayerCharacter || GetGameInstance<UP_GameInstance>()->PlayerTypes.Num() <= i) continue;
+        PlayerCharacter->ServerRPC_SetPlayerType(GetGameInstance<UP_GameInstance>()->PlayerTypes[i]);
+    }
 }
 
 //void AP_GameState::StartCurse_Implementation(ALCU_PlayerCharacter* selectedPlayer)

@@ -1,6 +1,13 @@
 #include "NSK/NSK_SpawnManager.h"
 #include "EngineUtils.h"
+#include "Blueprint/UserWidget.h"
 #include <HHR/HHR_Item.h>
+
+#include "HHR/HHR_Gun.h"
+#include "HHR/HHR_Knife.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
+#include "Kismet/GameplayStatics.h"
+#include "LCU/Player/LCU_PlayerCharacter.h"
 
 ANSK_SpawnManager::ANSK_SpawnManager()
 {
@@ -24,6 +31,17 @@ ANSK_SpawnManager::ANSK_SpawnManager()
 void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 액터 검색은 게임 시작 후 : 시작 전에 월드에 액터가 완전히 준비되지 않을 수 있음
 {
 	Super::BeginPlay();
+
+    //--
+    // Combine Item만 임시 생성
+    TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
+    TestPlayerHUDIns->AddToViewport();
+    // character에서 임시로 hud 생성
+    ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    player->PlayerHUD = TestPlayerHUDIns;
+    //--
+
+    if (!HasAuthority()) return;
 
     // 맵에 있는 모든 ItemSpawnPoint 찾기
     // 템플릿 타입으로 지정한 클래스(예: MyActorClass)에 해당하는 액터들만 필터링하여 순회합니다.
@@ -54,17 +72,7 @@ void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 
 void ANSK_SpawnManager::SpawnRandomItems()
 {
     TArray<FItemData*> CombineItems = FilterCombineItems(SpawnItemDataTable);
-
-    // 랜덤으로 8개 아이템 선택
-    SpawnedItems.Empty(); // 멤버 변수로 저장
-    for (int32 i = 0; i < 8 && CombineItems.Num() > 0; ++i)
-    {
-        int32 RandomIndex = FMath::RandRange(0, CombineItems.Num() - 1);
-        FItemData* RandomItem = CombineItems[RandomIndex];
-        SpawnedItems.Add(RandomItem); // 스폰된 아이템 저장
-        CombineItems.RemoveAt(RandomIndex);
-    }
-
+    
     // 랜덤 스폰 포인트 배열 준비
     TArray<ANSK_ItemSpawnPoint*> RandomSpawnPoints;
     for (ANSK_ItemSpawnPoint* SpawnPoint : AllSpawnPoints)
@@ -83,10 +91,38 @@ void ANSK_SpawnManager::SpawnRandomItems()
 
     RandomSpawnPoints.SetNum(8);
 
-    // 아이템과 포인트 매칭 후 스폰
-    for (int32 i = 0; i < SpawnedItems.Num(); ++i)
+    // 랜덤으로 8개 아이템 선택
+    /*SpawnedItems.Empty(); // 멤버 변수로 저장
+    for (int32 i = 0; i < 8 && CombineItems.Num() > 0; ++i)
     {
-        FItemData* SelectedItem = SpawnedItems[i];
+        int32 RandomIndex = FMath::RandRange(0, CombineItems.Num() - 1);
+        FItemData* RandomItem = CombineItems[RandomIndex];
+        SpawnedItems.Add(RandomItem); // 스폰된 아이템 저장
+        CombineItems.RemoveAt(RandomIndex);
+    }*/
+
+    /*// 랜덤 스폰 포인트 배열 준비
+    TArray<ANSK_ItemSpawnPoint*> RandomSpawnPoints;
+    for (ANSK_ItemSpawnPoint* SpawnPoint : AllSpawnPoints)
+    {
+        if (SpawnPoint)
+        {
+            RandomSpawnPoints.Add(SpawnPoint);
+        }
+    }
+
+    // 랜덤하게 8개의 스폰 포인트 선택
+    RandomSpawnPoints.Sort([](const ANSK_ItemSpawnPoint& A, const ANSK_ItemSpawnPoint& B)
+        {
+            return FMath::RandBool();
+        });
+
+    RandomSpawnPoints.SetNum(8);*/
+
+    // 아이템과 포인트 매칭 후 스폰
+    for (int32 i = 0; i < CombineItems.Num(); ++i)
+    {
+        FItemData* SelectedItem = CombineItems[i];
         ANSK_ItemSpawnPoint* SpawnPoint = RandomSpawnPoints[i];
 
         if (SelectedItem && SpawnPoint)
@@ -96,20 +132,56 @@ void ANSK_SpawnManager::SpawnRandomItems()
             SpawnParams.Owner = this;
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-            // AHHR_Item 클래스의 인스턴스 생성
-            AHHR_Item* SpawnedItem = GetWorld()->SpawnActor<AHHR_Item>(AHHR_Item::StaticClass(), SpawnPoint->GetActorTransform(), SpawnParams);
-
-            if (SpawnedItem)
+            
+            if (SelectedItem->ItemType == EItemType::CombineItem)
             {
-                // 아이템 데이터 초기화
-                SpawnedItem->SetItemData(*SelectedItem);
-
-                // 스폰 포인트 사용 상태 업데이트
-                SpawnPoint->bSpawnPointIsUsed = true;
-
-                P_LOG(PolluteLog, Warning, TEXT("Spawned Item: %s at SpawnPoint: %s"), *SelectedItem->ItemName.ToString(), *SpawnPoint->GetName());
+                // AHHR_Item 클래스의 인스턴스 생성
+                AHHR_Item* SpawnedItem = GetWorld()->SpawnActor<AHHR_Item>(ItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
+                SpawnedItem->PlayerHUD = TestPlayerHUDIns;
+                NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
+                if (SpawnedItem)
+                {
+                    // 아이템 데이터 초기화
+                    SpawnedItem->SetItemData(*SelectedItem);
+                    // 스폰 포인트 사용 상태 업데이트
+                    SpawnPoint->bSpawnPointIsUsed = true;
+                }
             }
-                SpawnPoint->Destroy();
+            else if (SelectedItem->ItemType == EItemType::WeaponItem)
+            {
+                if(SelectedItem->ItemName.ToString() == FString("Sword"))
+                {
+                    // AHHR_Item 클래스의 인스턴스 생성
+                    AHHR_Knife* SpawnedItem = GetWorld()->SpawnActor<AHHR_Knife>(KnifeItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
+                    SpawnedItem->PlayerHUD = TestPlayerHUDIns;
+                    NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
+                    if (SpawnedItem)
+                    {
+                        // 아이템 데이터 초기화
+                        SpawnedItem->SetItemData(*SelectedItem);
+                        // 스폰 포인트 사용 상태 업데이트
+                        SpawnPoint->bSpawnPointIsUsed = true;
+                    }
+                }
+                else
+                {
+                    // AHHR_Item 클래스의 인스턴스 생성
+                    AHHR_Gun* SpawnedItem = GetWorld()->SpawnActor<AHHR_Gun>(GunItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
+                    SpawnedItem->PlayerHUD = TestPlayerHUDIns;
+                    NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
+                    if (SpawnedItem)
+                    {
+                        // 아이템 데이터 초기화
+                        SpawnedItem->SetItemData(*SelectedItem);
+                        // 스폰 포인트 사용 상태 업데이트
+                        SpawnPoint->bSpawnPointIsUsed = true;
+                    }
+                }
+            }
+
+            
+
+            SpawnPoint->Destroy();
         }
     }
 
@@ -217,6 +289,13 @@ void ANSK_SpawnManager::SpawnAltarHint()
             RandomizedHintPoints[i]->Destroy(); // 힌트 포인트 삭제
         }
     }
+}
+
+void ANSK_SpawnManager::NetMulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
+{
+    //Item->ItemSpawnManager = this;
+    Item->PlayerHUD = TestPlayerHUDIns;
+    Item->DataIdx = idx;
 }
 
 TArray<FItemData*> ANSK_SpawnManager::FilterCombineItems(UDataTable* DataTable)

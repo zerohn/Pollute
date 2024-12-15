@@ -27,9 +27,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-/////////////////////////////////////////
-// Variables
-
+// ###### Variables #######
 public:
     UPROPERTY(ReplicatedUsing = OnRep_ChangeIdx)
     int32 DataIdx;
@@ -38,6 +36,8 @@ public:
 
     UPROPERTY(Replicated)
     class AHHR_ItemManager* ItemManager;
+    UPROPERTY(Replicated)
+    class AHHR_ItemSpawnManager* ItemSpawnManager;
 	
 // Components
 protected:
@@ -62,18 +62,28 @@ public:
     // Item Interaction Widget Data
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item")
     TSubclassOf<class UUserWidget> ItemWidgetClass;
+
+private:
+    // 제단 아이템 확인
+    bool bIsAltarItem = false;
     
-/////////////////////////////////////////////
-// Functions
+    
+// ###### Functions #######
 public:
-	// Item Data Set
+    // set, get
+    FORCEINLINE UWidgetComponent* GetItemInteractWidgetComponent() { return ItemInteractWidgetComp; }
+    FORCEINLINE void SetIsAltarItem(bool bIsAltar) {bIsAltarItem = bIsAltar;}
+    FORCEINLINE bool GetIsAltarItem() {return bIsAltarItem;}
+    // 
+
+    
+	// Item Data Sets
 	void SetItemData(const FItemData& data);
 	
-	// Player가 줍는 상호작용 
-	virtual void Interact() override;
-	// UI 띄우는 함수
+    // UI
 	virtual void SetVisibilityUI(bool Visible) override;
-    
+
+    virtual void Interact() override;;
 
 protected:
 	// 충돌 처리 함수
@@ -88,6 +98,9 @@ protected:
 // TODO : UI Player Controller 혹은 다른 UI 관리자로부터 가져와서 변경
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
-	class UHHR_TestPlayerHUD* PlayerHUD;
+	class UHHR_PlayerHUD* PlayerHUD;
 
+
+
+    
 };

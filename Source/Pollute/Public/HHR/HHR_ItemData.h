@@ -46,6 +46,7 @@ struct FItemData : public FTableRowBase
 	class UStaticMesh* ItemMesh;
 
 	// Hand UI에 표시될 아이템 image
+    // Texture2D를 직접 가지는 것 보다 경로로 저장해서 나중에 로드 하는게 비용적으로 좋지 않을까 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	class UTexture2D* ItemImage;
 
