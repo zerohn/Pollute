@@ -78,8 +78,6 @@ public:
     // 세션 생성이 완료 될 때 전달해주는 델리게이트
     FCreateComplete OnCreateCompleteDelegates;
 
-    // 저장된 플레이어의 캐릭터 타입을 반환해 주는 함수
-    TArray<EPlayerType> GetPlayerTypes() const { return PlayerTypes; }
 private:
 	
 };
