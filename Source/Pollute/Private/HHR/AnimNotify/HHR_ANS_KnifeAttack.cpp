@@ -4,7 +4,7 @@
 #include "HHR/AnimNotify/HHR_ANS_KnifeAttack.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "HHR/HHR_KnifeItem.h"
+#include "HHR/HHR_Knife.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
 void UHHR_ANS_KnifeAttack::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -15,7 +15,7 @@ void UHHR_ANS_KnifeAttack::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSe
     ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(MeshComp->GetOwner());
     if(player)
     {
-        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(player->GetItem());
+        AHHR_Knife* knife = Cast<AHHR_Knife>(player->GetItem());
         if(knife)
         {
             knife->SetPrevPos();
@@ -33,7 +33,7 @@ void UHHR_ANS_KnifeAttack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSeq
     ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(MeshComp->GetOwner());
     if(player)
     {
-        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(player->GetItem());
+        AHHR_Knife* knife = Cast<AHHR_Knife>(player->GetItem());
         if(knife)
         {
             knife->Attack();
@@ -50,7 +50,7 @@ void UHHR_ANS_KnifeAttack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequ
     ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(MeshComp->GetOwner());
     if(player)
     {
-        AHHR_KnifeItem* knife = Cast<AHHR_KnifeItem>(player->GetItem());
+        AHHR_Knife* knife = Cast<AHHR_Knife>(player->GetItem());
         if(knife)
         {
             knife->DestoryDelay(player);

@@ -19,16 +19,13 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemSpawnPoint")
-	FName SpawnName; // ID¸¦ ÅëÇØ °³º° °ü¸® °¡´É
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ItemSpawnPoint")
-	bool bSpawnPointIsUsed = false; // ½ºÆù Æ÷ÀÎÆ®°¡ »ç¿ëµÇ¾ú´ÂÁö ¿©ºÎ
+	bool bSpawnPointIsUsed = false; // ìŠ¤í° í¬ì¸íŠ¸ê°€ ì‚¬ìš©ë˜ì—ˆëŠ”ì§€ ì—¬ë¶€
 
-	UFUNCTION(BlueprintCallable, Category = "ItemSpawnPoint") // ºíÇÁ¿¡¼­ °¡½Ã¼ºÀ» °ü¸®ÇØ¾ß ÇÏ´Â °æ¿ì
-	void HideSpawnPointMesh(); // °ÔÀÓ ½ÃÀÛ ½Ã ½ºÆù Æ÷ÀÎÆ® ¸Ş½Ã¸¦ Á¦°ÅÇÏ´Â ÇÔ¼ö
+	UFUNCTION(BlueprintCallable, Category = "ItemSpawnPoint") // ë¸”í”„ì—ì„œ ê°€ì‹œì„±ì„ ê´€ë¦¬í•´ì•¼ í•˜ëŠ” ê²½ìš°
+	void HideSpawnPointMesh(); // ê²Œì„ ì‹œì‘ ì‹œ ìŠ¤í° í¬ì¸íŠ¸ ë©”ì‹œë¥¼ ì œê±°í•˜ëŠ” í•¨ìˆ˜
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ItemSpawnPoint")
-	UStaticMeshComponent* SpawnPointMesh; // ½ºÅÂÆ½ ¸Ş½Ã ÄÄÆ÷³ÍÆ®
+	UStaticMeshComponent* SpawnPointMesh; // ìŠ¤íƒœí‹± ë©”ì‹œ ì»´í¬ë„ŒíŠ¸
 };

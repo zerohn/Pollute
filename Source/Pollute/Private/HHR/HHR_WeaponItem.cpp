@@ -6,7 +6,7 @@
 #include "TimerManager.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "Slate/SGameLayerManager.h"
