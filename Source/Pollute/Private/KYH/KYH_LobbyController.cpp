@@ -9,6 +9,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "KYH/KYH_CommonUserLobby.h"
+#include "KYH/KYH_PolluteButtonBase.h"
 #include "P_Settings/P_GameInstance.h"
 #include "P_Settings/P_PlayerState.h"
 #include "P_Settings/PlayData.h"
@@ -26,10 +27,16 @@ void AKYH_LobbyController::BeginPlay()
         SetShowMouseCursor(true);
         LobbyWidget = CreateWidget<UKYH_CommonUserLobby>(GetWorld(), LobbyWidgetClass);
         LobbyWidget->AddToViewport();
+        if (HasAuthority()) LobbyWidget->Btn_Start->SetVisibility(ESlateVisibility::Visible);
         FTimerHandle DelayHandle;
         GetWorldTimerManager().SetTimer(DelayHandle, this, &AKYH_LobbyController::InitLobbyWidget, 0.1f, false);
     }
-    
+}
+
+void AKYH_LobbyController::ServerRPC_SetPlayerType_Implementation(EPlayerType InPlayerType)
+{
+    CurrentPlayerType = InPlayerType;
+    InitLobbyWidget();
 }
 
 void AKYH_LobbyController::InitLobbyWidget_Implementation()

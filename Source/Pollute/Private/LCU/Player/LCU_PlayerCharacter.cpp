@@ -23,6 +23,7 @@
 #include "Engine/SkeletalMesh.h"
 #include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "LCU/Player/LCU_TestWidget.h"
+#include "P_Settings/P_GameState.h"
 
 
 // Sets default values
@@ -68,43 +69,6 @@ void ALCU_PlayerCharacter::BeginPlay()
             LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
         }
     }
-    
-    switch (PlayerType)
-    {
-    case EPlayerType::Eric:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[0]);
-            break;
-        }
-    case EPlayerType::Manuel:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[1]);
-        }
-        break;
-    case EPlayerType::Sophia:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[2]);
-            break;
-        }
-    case EPlayerType::Carla:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[3]);
-            break;
-        }
-    case EPlayerType::Nathan:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[4]);
-            break;
-        }
-    case EPlayerType::Claudia:
-        {
-            GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[5]);
-            break;
-        }
-    default:
-        break;
-    }
-
 
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
@@ -850,8 +814,15 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
     SelectedSlotIndex = INDEX_NONE;
 }
 
-void ALCU_PlayerCharacter::UpdatePlayerMesh()
+
+void ALCU_PlayerCharacter::ServerRPC_SetPlayerType_Implementation(EPlayerType InPlayerType)
 {
+    MulticastRPC_UpdatePlayerMesh(InPlayerType);
+}
+
+void ALCU_PlayerCharacter::MulticastRPC_UpdatePlayerMesh_Implementation(EPlayerType InPlayerType)
+{
+    PlayerType = InPlayerType;
     GetMesh()->SetSkeletalMeshAsset(PlayerMeshType[(int32)PlayerType]);
 }
 

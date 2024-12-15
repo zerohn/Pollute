@@ -41,8 +41,9 @@ protected:
     UPROPERTY()
     UKYH_CommonUserLobby* LobbyWidget;
 
+    UPROPERTY()
     EPlayerType CurrentPlayerType;
-
+    
 public:
 
     UFUNCTION(Server, Reliable)
@@ -54,4 +55,10 @@ public:
     void ServerRPC_SendChat(const FString& Message);
     UFUNCTION(Client, Reliable)
     void ClientRPC_UpdateChat(const FString& Message);
+
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetPlayerType(EPlayerType InPlayerType);
+
+    UFUNCTION()
+    EPlayerType GetCurrentPlayerType() { return CurrentPlayerType; }
 };

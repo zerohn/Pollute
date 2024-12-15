@@ -69,7 +69,7 @@ protected:
     
 public:
     
-    TMap<int32, EPlayerType> PlayerTypes;
+    TArray<EPlayerType> PlayerTypes;
     
 	// 세션이 검색 되었을 때 각 세션의 정보를 전달해주는 델리게이트
 	FAddSession OnAddSessionDelegates;

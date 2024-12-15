@@ -5,6 +5,7 @@
 
 #include "CommonTextBlock.h"
 #include "Components/Image.h"
+#include "KYH/KYH_LobbyController.h"
 #include "KYH/KYH_PolluteButtonBase.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
@@ -73,8 +74,10 @@ void UKYH_PlayerSlot::ChangeCharacterRight()
 
 void UKYH_PlayerSlot::UpdatePlayerType(EPlayerType InPlayerType)
 {
-    FSlateBrush Brush;
-    Brush.SetResourceObject(PlayerThumbImage[(int32)InPlayerType]);
-    Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(144, 106)));
-    Player_Thumbnail->SetBrush(Brush);
+    AKYH_LobbyController* LobbyController = Cast<AKYH_LobbyController>(GetWorld()->GetFirstPlayerController());
+    LobbyController->ServerRPC_SetPlayerType(InPlayerType);
+    // FSlateBrush Brush;
+    // Brush.SetResourceObject(PlayerThumbImage[(int32)InPlayerType]);
+    // Brush.SetImageSize(FDeprecateSlateVector2D(FVector2f(144, 106)));
+    // Player_Thumbnail->SetBrush(Brush);
 }

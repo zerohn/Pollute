@@ -212,9 +212,11 @@ public:
     EPlayerType PlayerType = EPlayerType::Eric;
     UPROPERTY(EditDefaultsOnly)
     TArray<USkeletalMesh*> PlayerMeshType;
-    
-    void SetPlayerType(EPlayerType InPlayerType) { PlayerType = InPlayerType; }
-    void UpdatePlayerMesh();
+
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetPlayerType(EPlayerType InPlayerType);
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastRPC_UpdatePlayerMesh(EPlayerType InPlayerType);
 
 // 임시 playerhud
 public:

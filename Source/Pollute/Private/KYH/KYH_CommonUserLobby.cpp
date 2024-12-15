@@ -11,6 +11,7 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Engine.h"
+#include "GameFramework/GameState.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "KYH/KYH_CommonUserChat.h"
@@ -47,6 +48,12 @@ void UKYH_CommonUserLobby::StartGame()
     P_LOG(PolluteLog, Warning, TEXT("Press Start"))
     if (!GetWorld()->GetFirstPlayerController()->HasAuthority()) return;
     UP_GameInstance* GI = Cast<UP_GameInstance>(GetWorld()->GetGameInstance());
+    TArray<APlayerState*> PStateArray = GetWorld()->GetGameState()->PlayerArray;
+    GI->PlayerTypes.Empty();
+    for (APlayerState* PState : PStateArray)
+    {
+        GI->PlayerTypes.Add(Cast<AKYH_LobbyController>(PState->GetPlayerController())->GetCurrentPlayerType());
+    }
     GetWorld()->ServerTravel(GI->GetMainGameLevelURL() + "?Listen", true);
 }
 
