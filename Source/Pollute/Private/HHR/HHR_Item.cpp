@@ -63,6 +63,8 @@ void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutL
     DOREPLIFETIME(AHHR_Item, ItemManager);
     // REplicated 무조건 해줘야 함 
     DOREPLIFETIME(AHHR_Item, ItemSpawnManager);
+
+    DOREPLIFETIME(AHHR_Item, bIsAltarItem);
 }
 
 // Called every frame
@@ -83,11 +85,8 @@ void AHHR_Item::OnRep_ChangeIdx()
     {
         SetItemData(ItemSpawnManager->ItemDataMap[DataIdx]);
     }
-    /*if(SpawnManager)
-    {
-        SetItemData(*(SpawnManager->SpawnedItems[DataIdx]));
-    }*/
 }
+
 
 // ItemSpawnManager에서 넣어주는 게 나을듯 
 void AHHR_Item::SetItemData(const FItemData& data)

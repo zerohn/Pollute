@@ -126,7 +126,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
             ++spawnPointIdx;
             ItemArray.Add(item);
-            // TODO : 데이터 세팅 동기화
+            
             item->SetItemData(itemPair.Value);
             NetMuulticast_SetData(item, itemPair.Key);
         }
@@ -169,29 +169,23 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
         }
 
     }
-
-    // TODO : 임시
-    for(AHHR_ItemSpawnPoint* point : SpawnPoints)
-    {
-        point->Destroy();
-    }
+    
 
     // 2. 제단 아이템 선택
-    // TODO : 제단 세팅 동기화 필요
+    // TODO : 제단 세팅 동기화 필요 -> Replicated 변수 이용 
     TArray<int32> AltarItemIdx;
     ShuffleIdx(AltarItemIdx, ItemArray.Num(), MaxAltarItem );
     for(int32 idx : AltarItemIdx)
     {
         ItemArray[idx]->SetIsAltarItem(true);
-        // TODO : 임시
-        P_LOG(PolluteLog, Warning, TEXT("%s"), *(ItemArray[idx]->ItemData.ItemName.ToString()) )
+        //P_LOG(PolluteLog, Warning, TEXT("%s"), *(ItemArray[idx]->ItemData.ItemName.ToString()));
     }
-    
 
-
-    
 
     // TODO: 4. 힌트 아이템 생성
+    // Item ins 배열에서 altar 아이템인 것들 중에 매칭되는 아이템을 생성
+    // altar 아이템의 key(id)에 대응되는 위치에 액자 힌트 할당
+    // 엑자 (힌트 액자 8개 / 걍 액자 8개) 
     
     
 }
