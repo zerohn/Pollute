@@ -236,6 +236,12 @@ public:
 
     // 플레이어가 들고 있는 아이템 반환 함수
     FItemData GetHeldItem() const;
+    
+    
+    // NSK Ladder
+
+
+
 
 public:
 

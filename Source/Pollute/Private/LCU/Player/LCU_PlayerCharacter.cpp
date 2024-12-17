@@ -681,7 +681,7 @@ void ALCU_PlayerCharacter::DetachItem()
     // 캐릭터 발 아래 위치
     FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
     // 아이템이 캐릭터 방향을 따라 회전하도록 설정
-    FRotator DropRotation = GetActorRotation(); 
+    FRotator DropRotation = GetActorRotation();
 
     // FinalOverlapItem을 월드에 분리
 		
