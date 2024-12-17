@@ -83,7 +83,7 @@ public:
     // UI
 	virtual void SetVisibilityUI(bool Visible) override;
 
-    virtual void Interact() override;;
+    virtual void Interact() override;
 
 protected:
 	// 충돌 처리 함수
@@ -92,7 +92,6 @@ protected:
 
 	UFUNCTION()
 	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 
 // 임시 Player HUD
 // TODO : UI Player Controller 혹은 다른 UI 관리자로부터 가져와서 변경

@@ -9,6 +9,7 @@
 #include "P_Settings/PlayData.h"
 #include "LCU_PlayerCharacter.generated.h"
 
+class ALCU_PlayerController;
 enum class EPlayerType : uint8;
 
 UCLASS()
@@ -93,7 +94,6 @@ public:
     void NetMulticast_DetachItem();
     void DetachItem();
     
-
     void DropDown();
 	void PickUpDropDown();
 	void ShootTrace();
@@ -111,7 +111,6 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_Attack();
 
-
     void InitItem();
 
     // 저주 관련 TEST 위젯
@@ -119,7 +118,6 @@ public:
     void HasCurseWidget(bool bShow);
     UFUNCTION(Client, Reliable)
     void ClientRPC_HasCurseWidget(bool bShow);
-
 
 private:
 
@@ -129,6 +127,9 @@ private:
     TSubclassOf<class ULCU_TestWidget> LCU_TestWidgetFactory;
 
     ULCU_TestWidget* LCU_TestWidget;
+
+    // 플레이어 컨트롤러
+    ALCU_PlayerController* LCU_Pc;
     
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))

@@ -11,7 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_MonsterCharacter.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
-#include "NSK/NSK_SpawnManager.h"
+#include "LCU/UI/LCU_UIManager.h"
 #include "P_Settings/P_GameState.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
@@ -21,6 +21,9 @@ ALCU_PlayerController::ALCU_PlayerController()
 void ALCU_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+    // 싱글턴 객체 생성
+    UIManager->GetInstance(GetWorld(), UIManagerFactory);
 }
 
 void ALCU_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)

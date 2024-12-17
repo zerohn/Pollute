@@ -3,7 +3,6 @@
 
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
-#include "DrawDebugHelpers.h"
 #include "EnhancedInputComponent.h"
 #include "TimerManager.h"
 #include "Camera/CameraComponent.h"
@@ -20,12 +19,12 @@
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimInstance.h"
 #include "Components/WidgetComponent.h"
-#include "Engine/SkeletalMesh.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
+#include "LCU/Player/LCU_PlayerController.h"
+#include "LCU/UI/LCU_UIManager.h"
 
 
 // Sets default values
@@ -60,7 +59,7 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 // Called when the game starts or when spawned
 void ALCU_PlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
     if(LCU_TestWidgetFactory && IsLocallyControlled())
     {
@@ -71,7 +70,11 @@ void ALCU_PlayerCharacter::BeginPlay()
             LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
         }
     }
-
+    
+    if(IsLocallyControlled())
+    {
+        LCU_Pc = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController());
+    }
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
 
@@ -790,6 +793,7 @@ void ALCU_PlayerCharacter::DieProcess()
     if(pc && IsLocallyControlled())
     {
         HasCurseWidget(false);
+        ALCU_UIManager::GetInstance(GetWorld())->ShowCurseWidget(false);
         pc->ServerRPC_ChangeToSpector();
     }
 }
