@@ -33,7 +33,7 @@ ALCU_UIManager* ALCU_UIManager::GetInstance(UWorld* world)
 {
     if(!Instance && world)
     {
-        ALCU_PlayerController* pc= Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController());
+        ALCU_PlayerController* pc= Cast<ALCU_PlayerController>(world->GetFirstPlayerController());
         if(pc)
         {
             GetInstance(world, pc->UIManagerFactory);
