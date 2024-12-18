@@ -22,7 +22,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+    
+// #### Variables ####
 // TODO : UIManager로 옮기고 수정 
 public:
     UPROPERTY()
@@ -40,7 +41,7 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category="Items")
     TSubclassOf<class AHHR_Gun> GunClass;
 
-// # Item, Hint 저장 #
+    // # Item, Hint 저장 #
 public:
     // 아이템 데이터 저장
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
@@ -61,7 +62,7 @@ private:
     TMap<int32, TSubclassOf<class AHHR_Hint>> Hints;
 
     
-// # Setting 변수들 #
+    // # Setting 변수들 #
 private:
     // 제단 아이템 최대 개수
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
@@ -108,11 +109,6 @@ private:
     // Data 세팅 Multicast
     UFUNCTION(NetMulticast, Reliable)
     void NetMuulticast_SetData(class AHHR_Item* Item, int32 idx);
-
-    // Hint picture invisible 세팅 multicast
-    UFUNCTION(NetMulticast, Reliable)
-    void NetMulticast_InvisiblePicture(class AHHR_Hint* hint);
-    
 
 
     

@@ -113,11 +113,10 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
     // 랜덤 위치 뽑아줌 
     TArray<int32> RandomSpawnPointIdx;
     // SpawnPoint에서 스폰되는 아이템 만큼 랜덤 indx 뽑아줌
-    // TODO : 나중에 상수에서 MaxSpawnItem 으로 수정 
+    // TODO : 나중에 탈출 아이템 클래스 만들어지면 상수에서 MaxSpawnItem 으로 수정 
     ShuffleIdx(RandomSpawnPointIdx, SpawnPoints.Num(),14 );
 
     int32 spawnPointIdx = 0;
-    int32 altarCnt = 0;
     // 아이템 생성 
     for(const TPair<int32, FItemData> &itemPair : ItemDataMap)
     {
@@ -132,6 +131,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             ItemArray.Add(item);
             
             item->SetItemData(itemPair.Value);
+            // TODO : 그냥 OnReplicated 되어 있는 변수만 변경해주면 됨... Multicast 쏠 필요 없음 
             NetMuulticast_SetData(item, itemPair.Key);
         }
         else if(itemPair.Value.ItemType == EItemType::WeaponItem)
@@ -185,11 +185,12 @@ void AHHR_ItemSpawnManager::FindSpawnPoints()
 
 void AHHR_ItemSpawnManager::SpawnHint()
 {
-    // 2. 제단 아이템 선택
+    
     // 제단 세팅 동기화 -> Replicated 변수 이용
     // ! 조합 아이템만 제단 아이템으로 선택해줘야 함
 
-    // 1) 조합 아이템만 뽑기
+    // 2. 제단 아이템 선택
+    // 2-1) 생성된 아이템들 중에 조합 아이템만 뽑기
     TArray<AHHR_Item*> CombineItems;
     for(AHHR_Item* item: ItemArray)
     {
@@ -198,7 +199,7 @@ void AHHR_ItemSpawnManager::SpawnHint()
             CombineItems.Add(item);
         }
     }
-    // 2) 랜덤 인덱스들 설정 
+    // 2-2) 랜덤 인덱스로 제단 아이템 선택
     TArray<int32> AltarItemIdx;
     ShuffleIdx(AltarItemIdx, CombineItems.Num(), MaxAltarItem );
     for(int32 idx : AltarItemIdx)
@@ -207,13 +208,14 @@ void AHHR_ItemSpawnManager::SpawnHint()
         //P_LOG(PolluteLog, Warning, TEXT("%s"), *(ItemArray[idx]->ItemData.ItemName.ToString()));
     }
 
-    // 3) 힌트 생성 
+    // 3. 힌트 생성 
     for(AHHR_Item* cItem : CombineItems)
     {
         // key 값에 대응하는 hint 생성
         AHHR_Hint* hint = GetWorld()->SpawnActor<AHHR_Hint>(Hints[cItem->ItemData.ItemID], cItem->GetActorLocation(), cItem->GetActorRotation());
         hint->SetActorLocation(hint->GetHintSpawnTransform()->GetLocation());
         hint->SetActorRotation(hint->GetHintSpawnTransform()->GetRotation());
+        hint->SetActorScale3D(hint->GetHintSpawnTransform()->GetScale3D());
 
         // 제단 아이템 아니면 
         if(!cItem->GetIsAltarItem())
@@ -227,6 +229,7 @@ void AHHR_ItemSpawnManager::SpawnHint()
             {
                 // mesh 꺼주는 거 동기화 필요 -> 이것도 OnRep 함수 사용해서 나중에 동기화 처리
                 hint->InvisiblePicture();
+                // ReplicatedUsing 변수를 바꿔서 동기화 
                 hint->SetInvisiblePicture(true);
             }
         }
@@ -257,12 +260,6 @@ void AHHR_ItemSpawnManager::ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum
     }
     
 }
-
-void AHHR_ItemSpawnManager::NetMulticast_InvisiblePicture_Implementation(class AHHR_Hint* hint)
-{
-    hint->InvisiblePicture();
-}
-
 
 
 void AHHR_ItemSpawnManager::NetMuulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
