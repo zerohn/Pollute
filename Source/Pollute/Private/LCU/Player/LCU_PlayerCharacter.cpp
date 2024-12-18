@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
@@ -25,6 +26,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "LCU/Player/LCU_TestWidget.h"
+#include "NSK/NSK_LadderInstallPoint.h"
+#include "EngineUtils.h"
+#include <NSK/NSK_Ladder.h>
 
 
 // Sets default values
@@ -185,6 +189,8 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
         EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
 	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
+        EnhancedInputComponent->BindAction(IA_Ladder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInstallLadder);
+        EnhancedInputComponent->BindAction(IA_ClimingLadder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithLadder);
 	}
 }
 
@@ -1007,5 +1013,83 @@ void ALCU_PlayerCharacter::OnInteract()
 void ALCU_PlayerCharacter::ServerRPC_Attack_Implementation()
 {
     NetMulticast_Attack();
+}
+
+// NSK 사다리 설치 함수
+void ALCU_PlayerCharacter::OnInstallLadder()
+{
+    if (bHasItem && ItemInHand)
+    {
+        // 설치 지점 확인
+        for (TActorIterator<ANSK_LadderInstallPoint> It(GetWorld()); It; ++It)
+        {
+            ANSK_LadderInstallPoint* InstallPoint = *It;
+            if (InstallPoint && InstallPoint->bPlayerIsNear)
+            {
+                // 인스톨 포인트에 사다리 액터 생성 추가 로직
+                InstallPoint->SetupInteraction();
+
+                InstallAndDeleteItem();
+
+                P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되었습니다."));
+                break;
+            }
+        }
+    }
+}
+
+// NSK 인스톨->드랍,삭제 함수
+void ALCU_PlayerCharacter::InstallAndDeleteItem()
+{
+    // 아이템이 손에 있을 때만 드랍 처리
+    if (bHasItem && ItemInHand)
+    {
+        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        ItemInHand->Destroy();
+        ItemInHand = nullptr;
+        bHasItem = false;
+
+        P_LOG(PolluteLog, Warning, TEXT("아이템을 손에서 해제했습니다."));
+    }
+}
+
+// NSK 사다리 인터렉션 함수
+void ALCU_PlayerCharacter::InteractWithLadder(const FInputActionValue& Value)
+{
+    // 입력 값을 불리언으로 가져옴 (Pressed 상태 확인)
+    bool bIsPressed = Value.Get<bool>();
+
+    if (bIsPressed)
+    {
+        // 플레이어가 설치된 사다리와 상호작용
+        FVector PlayerLocation = GetActorLocation();
+        float ClosestDistance = 200.f; // 상호작용 거리
+        ANSK_Ladder* ClosestLadder = nullptr;
+
+        for (TActorIterator<ANSK_Ladder> It(GetWorld()); It; ++It)
+        {
+            ANSK_Ladder* Ladder = *It;
+            if (Ladder && Ladder->bIsInstalled) // 설치된 사다리만 필터링
+            {
+                float Distance = FVector::Dist(PlayerLocation, Ladder->GetActorLocation());
+                if (Distance < ClosestDistance)
+                {
+                    ClosestLadder = Ladder;
+                    ClosestDistance = Distance;
+                }
+            }
+        }
+
+        if (ClosestLadder && ClosestLadder->TopPosition)
+        {
+            FVector TopLocation = ClosestLadder->TopPosition->GetComponentLocation();
+            SetActorLocation(TopLocation + FVector(0.f, 0.f, 50.f)); // 사다리 상단으로 이동
+            P_LOG(PolluteLog, Warning, TEXT("사다리 맨 위로 이동 완료"));
+        }
+        else
+        {
+            P_LOG(PolluteLog, Warning, TEXT("근처에 설치된 사다리가 없습니다."));
+        }
+    }
 }
 

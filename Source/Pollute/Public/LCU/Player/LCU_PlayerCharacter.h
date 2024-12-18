@@ -164,6 +164,12 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_RunToggle;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_Ladder;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_ClimingLadder;
     
     // Montage
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
@@ -238,10 +244,14 @@ public:
     FItemData GetHeldItem() const;
     
     
+
     // NSK Ladder
+    void OnInstallLadder();
 
+    void InstallAndDeleteItem();
 
-
+    UFUNCTION()
+    void InteractWithLadder(const FInputActionValue& Value);
 
 public:
 

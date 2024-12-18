@@ -54,7 +54,7 @@ public:
     FRotator LadderInstallRotation = FRotator(0.f, 0.f, 0.f);
 
     // 사다리 설치 함수
-    void InstallLadder(ALCU_PlayerCharacter* Player);
+    void InstallLadder(class ALCU_PlayerCharacter* Player);
 
     // 키로 상호작용 시 사다리 설치
     void SetupInteraction();

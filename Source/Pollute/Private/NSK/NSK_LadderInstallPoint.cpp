@@ -1,9 +1,9 @@
 #include "NSK/NSK_LadderInstallPoint.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "GameFramework/Actor.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include <Kismet/GameplayStatics.h>
+#include "Engine/World.h"
 #include "NSK/NSK_Ladder.h"
 
 ANSK_LadderInstallPoint::ANSK_LadderInstallPoint()
@@ -30,6 +30,7 @@ void ANSK_LadderInstallPoint::BeginPlay()
 	Super::BeginPlay();
     InstallCollision->OnComponentBeginOverlap.AddDynamic(this, &ANSK_LadderInstallPoint::OnOverlapBegin);
     InstallCollision->OnComponentEndOverlap.AddDynamic(this, &ANSK_LadderInstallPoint::OnOverlapEnd);
+    UWorld* world = GetWorld();
 }
 
 void ANSK_LadderInstallPoint::OnOverlapBegin(
@@ -83,21 +84,55 @@ void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
 {
     if (bPlayerIsNear)
     {
-        // FActorSpawnParameters 정의 및 설정
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.Owner = Player; // 플레이어를 소유자로 설정 (옵션)
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn; // 충돌 설정 (액터가 겹치지 않도록)
+        UClass* BP_LadderClass = LoadObject<UClass>(nullptr, TEXT("Blueprint'/Game/NSK/BP/BP_NSK_Ladder.BP_NSK_Ladder_C'"));
 
-        // 사다리 액터를 설치 지점에 스폰
-        FVector SpawnLocation = InstallMesh->GetComponentLocation(); // 설치 지점 위치
-        FRotator SpawnRotation = InstallMesh->GetComponentRotation(); // 설치 지점의 회전
-
-        // 실제로 액터를 스폰
-        AActor* SpawnedActor = GetWorld()->SpawnActor<ANSK_Ladder>(ANSK_Ladder::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
-
-        if (SpawnedActor)
+        if (BP_LadderClass)
         {
-            P_LOG(PolluteLog, Warning, TEXT("사다리 생성 성공!"));
+            // FActorSpawnParameters 정의 및 설정
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn; // 충돌 설정 (액터가 겹치지 않도록)
+
+            //SpawnParams.Owner = Player; // 플레이어를 소유자로 설정 (옵션)
+
+            // 사다리 액터를 설치 지점에 스폰
+            FVector SpawnLocation = InstallMesh->GetComponentLocation(); // 설치 지점 위치
+            FRotator SpawnRotation = InstallMesh->GetComponentRotation(); // 설치 지점의 회전
+
+            // 실제로 액터를 스폰
+            AActor* SpawnedActor = GetWorld()->SpawnActor<ANSK_Ladder>(BP_LadderClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+            // 가져오는게 잘못됨 메쉬가 빠짐 -> 원인 : C++ 자체를 가지고 오고 있어서 Mesh가 빠졌는데 BP를 가져와서 생성해줘야함!!
+
+            if (SpawnedActor)
+            {
+                P_LOG(PolluteLog, Warning, TEXT("사다리 생성 성공!"));
+
+                if (Player)
+                {
+                    Player->InstallAndDeleteItem();
+                }
+
+                ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(SpawnedActor);
+                if (Ladder)
+                {
+                    Ladder->bIsInstalled = true; // 설치 상태
+                    P_LOG(PolluteLog, Warning, TEXT("사다리 설치 성공"));
+                }
+
+                // 설치 후 인스톨 포인트 삭제
+                Destroy();
+
+                // 설치 후 더 이상 설치 지점 사용 불가능
+                bPlayerIsNear = false;
+            }
+            else
+            {
+                P_LOG(PolluteLog, Warning, TEXT("사다리 생성 실패!"));
+            }
+        }
+        else
+        {
+            P_LOG(PolluteLog, Warning, TEXT("플레이어가 유효하지 않습니다"));
         }
     }
 }
@@ -105,13 +140,20 @@ void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
 // 키로 상호작용 시 사다리 설치
 void ANSK_LadderInstallPoint::SetupInteraction()
 {
-    // 플레이어가 설치 지점에 있을 때 상호작용 확인 (예: 플레이어가 Overlap 상태일 때)
     if (bPlayerIsNear)
     {
-        ALCU_PlayerCharacter* Player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));  // 플레이어 가져오기
-        if (Player && Player->IsInputKeyDown(EKeys::LeftMouseButton))  // 마우스 왼쪽 클릭
+        ALCU_PlayerCharacter* Player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+        if (Player)
         {
-            InstallLadder(Player); // 사다리 설치 함수 호출
+            InstallLadder(Player);
         }
+        else
+        {
+            P_LOG(PolluteLog, Warning, TEXT("플레이어가 존재하지 않는다"));
+        }
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("플레이어가 인스톨 포인트 근처에 없습니다"));
     }
 }
