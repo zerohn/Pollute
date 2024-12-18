@@ -40,6 +40,7 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category="Items")
     TSubclassOf<class AHHR_Gun> GunClass;
 
+// # Item, Hint 저장 #
 public:
     // 아이템 데이터 저장
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
@@ -53,11 +54,15 @@ private:
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
     TArray<class AHHR_ItemSpawnPoint*> SpawnPoints;
     // 랜던 Spawn point index
-    //TArray<int32> RandomSpawnPointIdx;
-    
+    //TArray<int32> RandomSpawnPointIdx;hi
 
+    // Hint 저장 배열
+    UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess), Category="Hints")
+    TMap<int32, TSubclassOf<class AHHR_Hint>> Hints;
+
+    
+// # Setting 변수들 #
 private:
-    // # Setting 변수들 #
     // 제단 아이템 최대 개수
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
     int32 MaxAltarItem = 4;
@@ -94,12 +99,19 @@ private:
     // 레벨에 배치된 spawnpoint 찾아와서 저장
     void FindSpawnPoints();
 
+    // 힌트 생성 함수
+    void SpawnHint();
+
     // shuffle로 인덱스 랜덤 뽑기
     void ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum, int32 RandomNum);
 
     // Data 세팅 Multicast
     UFUNCTION(NetMulticast, Reliable)
     void NetMuulticast_SetData(class AHHR_Item* Item, int32 idx);
+
+    // Hint picture invisible 세팅 multicast
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_InvisiblePicture(class AHHR_Hint* hint);
     
 
 
