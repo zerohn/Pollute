@@ -48,6 +48,7 @@ void AHHR_ItemSpawnManager::BeginPlay()
     SpawnRandomItem();
     // 힌트 생성
     SpawnHint();
+    // TODO : 저주 아이템 선택 
 	
 }
 
