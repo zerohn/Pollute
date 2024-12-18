@@ -23,7 +23,6 @@
 #include "Engine/SkeletalMesh.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
 #include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
 

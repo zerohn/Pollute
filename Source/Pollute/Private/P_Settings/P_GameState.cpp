@@ -34,7 +34,7 @@ void AP_GameState::BeginPlay()
     GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(false);
 
     FTimerHandle SetMeshHandle;
-    GetWorldTimerManager().SetTimer(SetMeshHandle, this, &AP_GameState::InitPlayerMesh, 1.f, false);
+    GetWorldTimerManager().SetTimer(SetMeshHandle, this, &AP_GameState::InitPlayerMesh, 10.f, false);
 }
 
 void AP_GameState::Tick(float DeltaSeconds)
@@ -133,6 +133,8 @@ void AP_GameState::RestartCurse()
 
 void AP_GameState::InitPlayerMesh()
 {
+    if (!HasAuthority()) return;
+    
     for (int i = 0; i < PlayerArray.Num(); i++)
     {
         ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(PlayerArray[i]->GetPawn());
