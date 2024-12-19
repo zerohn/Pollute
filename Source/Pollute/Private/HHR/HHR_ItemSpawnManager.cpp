@@ -128,7 +128,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             // 조합 아이템 생성
             item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
             ++spawnPointIdx;
-            ItemArray.Add(item);
+            ItemInsArray.Add(item);
             
             item->SetItemData(itemPair.Value);
             // TODO : 그냥 OnReplicated 되어 있는 변수만 변경해주면 됨... Multicast 쏠 필요 없음 
@@ -143,7 +143,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                 {
                     item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                     ++spawnPointIdx;
-                    ItemArray.Add(item);
+                    ItemInsArray.Add(item);
                     item->SetItemData(itemPair.Value);
                     NetMuulticast_SetData(item, itemPair.Key);
                 }
@@ -154,7 +154,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                 {
                     item = GetWorld()->SpawnActor<AHHR_Gun>(GunClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                     ++spawnPointIdx;
-                    ItemArray.Add(item);
+                    ItemInsArray.Add(item);
                     item->SetItemData(itemPair.Value);
                     NetMuulticast_SetData(item, itemPair.Key);
                 }
@@ -167,7 +167,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             // TODO : 탈출 아이템 클래스로 생성, 개수 중복해서 생성 
             item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
             ++spawnPointIdx;
-            ItemArray.Add(item);
+            ItemInsArray.Add(item);
             item->SetItemData(itemPair.Value);
             NetMuulticast_SetData(item, itemPair.Key);
         }
@@ -192,7 +192,7 @@ void AHHR_ItemSpawnManager::SpawnHint()
     // 2. 제단 아이템 선택
     // 2-1) 생성된 아이템들 중에 조합 아이템만 뽑기
     TArray<AHHR_Item*> CombineItems;
-    for(AHHR_Item* item: ItemArray)
+    for(AHHR_Item* item: ItemInsArray)
     {
         if(item->ItemData.ItemType == EItemType::CombineItem)
         {
@@ -261,7 +261,7 @@ void AHHR_ItemSpawnManager::ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum
     
 }
 
-
+// TODO : 별로 의미 있는 함수 아님 -> Refactoring 필요할듯 
 void AHHR_ItemSpawnManager::NetMuulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
 {
     //Item->SetItemData(ItemDataMap[idx]);

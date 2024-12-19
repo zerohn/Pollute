@@ -49,13 +49,11 @@ public:
 private:
     // 생성된 아이템 저장
     UPROPERTY()
-    TArray<class AHHR_Item*> ItemArray;
+    TArray<class AHHR_Item*> ItemInsArray;
 
     // Spawn point 저장
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
     TArray<class AHHR_ItemSpawnPoint*> SpawnPoints;
-    // 랜던 Spawn point index
-    //TArray<int32> RandomSpawnPointIdx;hi
 
     // Hint 저장 배열
     UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess), Category="Hints")

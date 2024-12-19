@@ -147,7 +147,8 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_CarryCurse, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::CarryCurse);
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
-        EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+        //EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+	    EnhancedInputComponent->BindAction(IA_PutItemOnAltar, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PutItemOnAltar);
 	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
 	}
 }
@@ -903,6 +904,25 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
     SelectedSlotIndex = INDEX_NONE;
 }
 
+void ALCU_PlayerCharacter::PutItemOnAltar()
+{
+    // G 클릭시
+    // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면 Delegate broadcast
+    if(bNearByAltar && ItemInHand)
+    {
+        // ItemInHand 손에서 Detatch
+        // TODO : Detatch 동기화 처리 필요
+        AHHR_Item* tempItem = ItemInHand;
+        NetMulticast_DetachItem();
+
+        // 델리게이트 실행 -> Attach Item On Altar
+        if(OnAttachItemOnAltar.IsBound())
+        {
+            OnAttachItemOnAltar.Execute(tempItem);
+        }
+    }
+}
+
 
 void ALCU_PlayerCharacter::ServerRPC_SetPlayerType_Implementation(EPlayerType InPlayerType)
 {
@@ -928,7 +948,7 @@ void ALCU_PlayerCharacter::ClearCurrentSlotIndex()
 }
 
 // NSK 캐릭터 제단 상호작용 로직
-void ALCU_PlayerCharacter::OnInteract()
+/*void ALCU_PlayerCharacter::OnInteract()
 {
     if (NearbyAltar && ItemInHand)
     {
@@ -973,7 +993,7 @@ void ALCU_PlayerCharacter::OnInteract()
             P_LOG(PolluteLog, Error, TEXT("유효하지 않은 슬롯 인덱스입니다."));
         }
     }
-}
+}*/
 
 void ALCU_PlayerCharacter::ServerRPC_Attack_Implementation()
 {

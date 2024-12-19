@@ -11,6 +11,10 @@
 
 enum class EPlayerType : uint8;
 
+
+// Delegates by hhr
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnAttachItemOnAltar, class AHHR_Item*, Item);
+
 UCLASS()
 class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , public ILCU_InteractInterface
 {
@@ -202,17 +206,17 @@ public:
 
 
     // NSK
-    public:
+public:
 
     bool bHasItem = false;
 
     // 제단 상호작용 키
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    /*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputAction* IA_G;
 
     // NSK G키 상호작용 처리 함수
     UFUNCTION()
-    void OnInteract();
+    void OnInteract();*/
 
     // 현재 근처 제단
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
@@ -250,11 +254,41 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void MulticastRPC_UpdatePlayerMesh(EPlayerType InPlayerType);
 
+
+
+ 
+// ** 제단 ** by HHR
+    // Delegates
+public:
+    FOnAttachItemOnAltar OnAttachItemOnAltar;
+    
+private:
+    // IA
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_PutItemOnAltar;
+
+    // 
+    bool bNearByAltar = false;
+
+    
+    
+protected:
+    // Input system에 바인딩될 함수
+    void PutItemOnAltar();
+
+public:
+    // Get, Set
+    FORCEINLINE bool GetNearByAltar() const {return bNearByAltar;}
+    FORCEINLINE void SetNearByAltar(bool InNearByAltar){bNearByAltar = InNearByAltar;}
+    
+
+    
+
 // 임시 playerhud
 public:
     class UHHR_PlayerHUD* PlayerHUD;
 
-    // 픽업 대상 아이템
+    // 픽업 대상 아이템 by lcu
     class AHHR_Item* RetrievedItem;
 
 };
