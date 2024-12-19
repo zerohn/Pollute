@@ -72,9 +72,8 @@ void ALCU_Curse::Tick(float DeltaTime)
 			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
 			if(P_pc)
 			{
-			    OwnerCharacter->ClientRPC_HasCurseWidget(false);
 				P_pc->ChangeToMonster();
-			    P_pc->UIManager->GetInstance(GetWorld())->ClientRPC_ShowCurseWidget(false);
+			    P_pc->ClientRPC_CurseUISet(false);
 			}
 			
 			AP_GameState* P_GS =  Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
@@ -112,13 +111,12 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 
 	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
-    OwnerCharacter->ClientRPC_HasCurseWidget(true);
     ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
     if(P_pc)
     {
-        P_pc->UIManager->GetInstance(GetWorld())->ClientRPC_ShowCurseWidget(true);
+        P_pc->ClientRPC_CurseUISet(true);
     }
-		
+	
 	// 저주 시작
 	bStartCurseTime = true;
 }

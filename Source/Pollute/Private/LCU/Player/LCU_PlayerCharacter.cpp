@@ -60,20 +60,9 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 void ALCU_PlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
-
-    if(LCU_TestWidgetFactory && IsLocallyControlled())
+    if(HasAuthority())
     {
-        LCU_TestWidget = CreateWidget<ULCU_TestWidget>(GetWorld()->GetFirstPlayerController(),LCU_TestWidgetFactory);
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->AddToViewport();
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
-    
-    if(IsLocallyControlled())
-    {
-        LCU_Pc = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController());
+        LCU_Pc = Cast<ALCU_PlayerController>(GetController());
     }
 	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
@@ -101,18 +90,6 @@ void ALCU_PlayerCharacter::UpdateCameraTransform()
 		BoxComponent->SetWorldLocation(BoxLocation);
 		BoxComponent->SetWorldRotation(CameraRotation);
 	}
-
-	//DrawDebugBox(
-	//	GetWorld(),
-	//	BoxComponent->GetComponentLocation(),
-	//	BoxComponent->GetScaledBoxExtent(),
-	//	BoxComponent->GetComponentQuat(), // 박스 회전
-	//	FColor::Blue,
-	//	false,  // 지속 표시 (Tick마다 새로 그림)
-	//	1.f, // 1초 동안 유지
-	//	0,     // 디버그 선 우선순위
-	//	5.0f   // 선 두께
-	//);
 }
 
 // Called every frame
@@ -163,6 +140,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
+    DOREPLIFETIME(ALCU_PlayerCharacter, LCU_Pc);
     
 }
 
@@ -199,8 +177,6 @@ void ALCU_PlayerCharacter::RunShiftToggle()
 {
    if(IsLocallyControlled())
    {
-       FString aa = bIsRunning ? "true" : "false";
-       P_SCREEN(1.f, FColor::Black, TEXT("%s"), *aa);
        ServerRPC_SetRunning(!bIsRunning);
    }
 }
@@ -384,12 +360,15 @@ void ALCU_PlayerCharacter::CarryCurse()
 
 void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
 {
-	// NetMulticast_CarryCurse();
     // 저주를 옮겨요
     FinalOverapPlayer->SetHasCurse(true);
-    FinalOverapPlayer->ClientRPC_HasCurseWidget(true);
+    ALCU_PlayerController* localPc = Cast<ALCU_PlayerController>(FinalOverapPlayer->GetController());
+    if(localPc)
+    {
+       localPc->ClientRPC_CurseUISet(true);
+    }
     bHasCurse = false;
-    ClientRPC_HasCurseWidget(false);
+    LCU_Pc->CurseUISet(false);
     ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
 
     // 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
@@ -398,21 +377,6 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
     {
         OverlappingPlayers.Empty();
     }
-}
-
-void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
-{
-	// 저주를 옮겨요
-	FinalOverapPlayer->SetHasCurse(true);
-	bHasCurse = false;
-	ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
-
-	// 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
-	FinalOverapPlayer = nullptr;
-	if(!OverlappingPlayers.IsEmpty())
-	{
-		OverlappingPlayers.Empty();
-	}
 }
 
 void ALCU_PlayerCharacter::DropDown()
@@ -789,12 +753,10 @@ void ALCU_PlayerCharacter::ShootTrace()
 
 void ALCU_PlayerCharacter::DieProcess()
 {
-    ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(GetController());
-    if(pc && IsLocallyControlled())
+    if(LCU_Pc && IsLocallyControlled())
     {
-        HasCurseWidget(false);
-        ALCU_UIManager::GetInstance(GetWorld())->ShowCurseWidget(false);
-        pc->ServerRPC_ChangeToSpector();
+        LCU_Pc->CurseUISet(false);
+        LCU_Pc->ServerRPC_ChangeToSpector();
     }
 }
 
@@ -815,45 +777,6 @@ void ALCU_PlayerCharacter::InitItem()
         PlayerHUD->ChangeItemImageNull();
     }
     ItemInHand = nullptr;
-}
-
-void ALCU_PlayerCharacter::HasCurseWidget(bool bShow)
-{
-    if(!IsLocallyControlled()) return;
-
-
-    if(bShow)
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Visible);
-        }
-    }
-    else
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
-}
-
-void ALCU_PlayerCharacter::ClientRPC_HasCurseWidget_Implementation(bool bShow)
-{
-    if(bShow)
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Visible);
-        }
-    }
-    else
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
 }
 
 void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()

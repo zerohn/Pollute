@@ -3,6 +3,7 @@
 
 #include "LCU/Player/LCU_PlayerController.h"
 
+#include "NavigationSystemTypes.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/SpectatorPawn.h"
@@ -12,18 +13,24 @@
 #include "LCU/Player/LCU_MonsterCharacter.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "LCU/UI/LCU_UIManager.h"
+#include "Net/UnrealNetwork.h"
 #include "P_Settings/P_GameState.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
 {
+    bReplicates = true;
 }
 
 void ALCU_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-    // 싱글턴 객체 생성
-    UIManager->GetInstance(GetWorld(), UIManagerFactory);
+    if(!IsLocalController()) return;
+    if(UIManagerFactory)
+    {
+        UIManager = GetWorld()->SpawnActor<ALCU_UIManager>(UIManagerFactory);
+        UIManager->SetOwner(this);
+        UIManager->Init();
+    }
 }
 
 void ALCU_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -34,6 +41,12 @@ void ALCU_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ALCU_PlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ALCU_PlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
 }
 
 void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
@@ -101,6 +114,20 @@ void ALCU_PlayerController::ChangeToMonster()
     {
         GS->GetAllCharacters();
     }
+}
+
+void ALCU_PlayerController::CurseUISet(bool bShow)
+{
+    if(!UIManager) return;
+
+    UIManager->ShowCurseWidget(bShow);
+}
+
+void ALCU_PlayerController::ClientRPC_CurseUISet_Implementation(bool bShow)
+{
+    if(!UIManager) return;
+
+    UIManager->ShowCurseWidget(bShow);
 }
 
 void ALCU_PlayerController::ClientRPC_ItemUIOff_Implementation()
