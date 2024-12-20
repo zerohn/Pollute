@@ -1117,14 +1117,18 @@ void ALCU_PlayerCharacter::InteractWithParachute()
         // 캐릭터를 탈출 처리 상태로 설정
         if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
         {
-            P_LOG(PolluteLog, Warning, TEXT("PlayerController found: %s"), *PlayerController->GetName());
+            if (IsValid(ItemInHand))
+            {
+                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
+                ItemInHand->Destroy();  // 낙하산 액터 제거
+                ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
+                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
+            }
 
             if (PlayerController->IsLocalController())
             {
                 PlayerController->ServerRPC_ChangeToSpector();
             }
-
-            // 모두 스펙터 모드 시 -> 게임 로비로 이동
         }
     }
     else

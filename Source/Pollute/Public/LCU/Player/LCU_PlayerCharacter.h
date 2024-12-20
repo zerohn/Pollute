@@ -256,7 +256,7 @@ public:
     UFUNCTION()
     void InteractWithLadder(const FInputActionValue& Value);
 
-    // NSK PArachute
+    // NSK Parachute
     UFUNCTION()
     void InteractWithParachute();
 
