@@ -280,8 +280,7 @@ public:
     // Get, Set
     FORCEINLINE bool GetNearByAltar() const {return bNearByAltar;}
     FORCEINLINE void SetNearByAltar(bool InNearByAltar){bNearByAltar = InNearByAltar;}
-    
-
+// ** hhr
     
 
 // 임시 playerhud

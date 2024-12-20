@@ -511,12 +511,13 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 
     //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
     //ServerRPC_PickUpDropDown();
-    
+
     ServerRPC_PickUpDropDown();
 }
 
 void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 {
+    
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
     
@@ -907,13 +908,14 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
 void ALCU_PlayerCharacter::PutItemOnAltar()
 {
     // G 클릭시
-    // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면 Delegate broadcast
-    if(bNearByAltar && ItemInHand)
+    // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면(+그 아이템이 조합 아이템이여야함) Delegate broadcast
+    P_SCREEN(1.0f, FColor::Red, TEXT("G!"));
+    if(bNearByAltar && ItemInHand && ItemInHand->ItemData.ItemType == EItemType::CombineItem)
     {
         // ItemInHand 손에서 Detatch
         // TODO : Detatch 동기화 처리 필요
         AHHR_Item* tempItem = ItemInHand;
-        NetMulticast_DetachItem();
+        DetachItem();
 
         // 델리게이트 실행 -> Attach Item On Altar
         if(OnAttachItemOnAltar.IsBound())

@@ -20,6 +20,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	// Called every frame
@@ -46,12 +47,23 @@ private:
 // *아이템 배치에 사용할 변수들*
 private:
     int32 MaxItemCnt;
+    // 현재 Item cnt는 동기화 되어야 하는 변수
+    UPROPERTY(Replicated)
     int32 CurrentItemCnt;
 
     
 
 // #### Functions ####
-// * 충돌 처리 함수 *
+// *RPC 함수*
+public:
+    // multicast 함수
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_AttachToAltar(class AHHR_Item* Item);
+    // 서버 호출 함수
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_AttachToAltar(class AHHR_Item* Item);
+    
+// *충돌 처리 함수*
 protected:
     UFUNCTION()
     void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

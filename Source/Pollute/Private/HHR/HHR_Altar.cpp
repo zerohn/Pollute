@@ -2,6 +2,8 @@
 
 
 #include "HHR/HHR_Altar.h"
+
+#include "TimerManager.h"
 #include "HHR/HHR_Item.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -9,7 +11,9 @@
 #include "Debugging/SlateDebugging.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
 // Sets default values
@@ -37,7 +41,9 @@ AHHR_Altar::AHHR_Altar()
         AltarStaticMeshComp->SetStaticMesh(altarMeshAsset.Object);
     }
 
+    bReplicates = true;
     
+
 
 }
 
@@ -56,6 +62,27 @@ void AHHR_Altar::BeginPlay()
     // 변수 세팅
     MaxItemCnt = ItemAttachPos.Num();
 
+    // owner 설정 -> 딜레이 안주면 안되는듯... 레벨에 배치되어 있어서 contorller 생성보다 빠른듯
+    //SetOwner(GetWorld()->GetFirstPlayerController());
+    //P_LOG(PolluteLog, Warning, TEXT("owner 설정 : %s"), *GetOwner()->GetName());
+    
+    FTimerHandle timerHandle;
+    GetWorld()->GetTimerManager().SetTimer(timerHandle, FTimerDelegate::CreateLambda([&]()
+    {
+        ACharacter* cha = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+        //SetOwner(GetWorld()->GetFirstPlayerController());
+        SetOwner(cha);
+        P_LOG(PolluteLog, Warning, TEXT("owner 설정 : %s"), *GetOwner()->GetName());
+    }), 4.0f, false);
+
+
+}
+
+void AHHR_Altar::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AHHR_Altar, CurrentItemCnt);
 }
 
 // Called every frame
@@ -63,6 +90,15 @@ void AHHR_Altar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+    if(GetOwner())
+    {
+        P_LOG(PolluteLog, Warning, TEXT("%s"), *GetOwner()->GetName());
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("NoOwner"));
+    }
+    
 }
 
 
@@ -90,16 +126,42 @@ void AHHR_Altar::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent,
     }
 }
 
+// 델리게이트에 바인딩 되는 함수 
 void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
 {
     // Item Attach
     // TODO : Item 부착 동기화 필요
-
     if(CurrentItemCnt < MaxItemCnt)
     {
-    
+        if(GetOwner())
+        {
+            P_LOG(PolluteLog, Warning, TEXT("OnAttachItem : %s"), *GetOwner()->GetName());
+        }
+        else
+        {
+            P_LOG(PolluteLog, Warning, TEXT("owner 없음 "));
+        }
+
+        if (IsValid(this))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Valid actor reference on client."));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Invalid actor reference on client."));
+        }
 
         
+        if(!HasAuthority())
+        {
+            P_LOG(PolluteLog, Warning, TEXT("슈벌2"));
+            ServerRPC_AttachToAltar(Item);
+        }
+        else
+        {
+            P_LOG(PolluteLog, Warning, TEXT("슈벌"));
+            ServerRPC_AttachToAltar(Item);
+        }
         // TODO : Attach 해주면 그 Item의 collision 어떻게 해줄지 정해줘야 함 
     }
     else
@@ -109,5 +171,18 @@ void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
     }
 }
 
+void AHHR_Altar::NetMulticast_AttachToAltar_Implementation(AHHR_Item* Item)
+{
+    // Attach 가능
+    P_LOG(PolluteLog, Warning, TEXT("multicast attach"));
+    Item->AttachToComponent(SphereCollisionComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+    Item->SetActorRelativeLocation(ItemAttachPos[CurrentItemCnt++]);
+}
+
+void AHHR_Altar::ServerRPC_AttachToAltar_Implementation(AHHR_Item* Item)
+{
+    P_LOG(PolluteLog, Warning, TEXT("ServerRpc attach"));
+    NetMulticast_AttachToAltar(Item);
+}
 
 
