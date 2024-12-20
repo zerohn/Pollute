@@ -29,6 +29,7 @@
 #include "NSK/NSK_LadderInstallPoint.h"
 #include "EngineUtils.h"
 #include <NSK/NSK_Ladder.h>
+#include "NSK/NSK_Parachute.h"
 
 
 // Sets default values
@@ -191,6 +192,7 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
         EnhancedInputComponent->BindAction(IA_Ladder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInstallLadder);
         EnhancedInputComponent->BindAction(IA_ClimingLadder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithLadder);
+        EnhancedInputComponent->BindAction(IA_Parachute, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithParachute);
 	}
 }
 
@@ -591,6 +593,16 @@ void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 
 void ALCU_PlayerCharacter::AttachItem()
 {
+    if (ItemInHand && ItemInHand->IsA<ANSK_Ladder>())
+    {
+        ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(ItemInHand);
+        if (Ladder && Ladder->bIsInstalled) // 사다리가 설치 됐다면
+        {
+            P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
+            return;
+        }
+    }
+
     // Item의 Interactive 허용
     if(IsLocallyControlled())
     {
@@ -1093,3 +1105,43 @@ void ALCU_PlayerCharacter::InteractWithLadder(const FInputActionValue& Value)
     }
 }
 
+// NSK 낙하산 인터렉션 함수
+void ALCU_PlayerCharacter::InteractWithParachute()
+{
+    P_LOG(PolluteLog, Warning, TEXT("낙하산 탈출 호출"));
+
+    if (bCanUseParachute && ItemInHand && ItemInHand->IsA<ANSK_Parachute>())
+    {
+        // 낙하산 액터를 사용 시 스펙터 모드로 전환
+
+        // 캐릭터를 탈출 처리 상태로 설정
+        if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
+        {
+            P_LOG(PolluteLog, Warning, TEXT("PlayerController found: %s"), *PlayerController->GetName());
+
+            if (PlayerController->IsLocalController())
+            {
+                PlayerController->ServerRPC_ChangeToSpector();
+            }
+
+            // 모두 스펙터 모드 시 -> 게임 로비로 이동
+        }
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
+{
+    bCanUseParachute = bCanUse; // 낙하산 사용 가능 여부
+    if (bCanUseParachute)
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 있습니다."));
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}

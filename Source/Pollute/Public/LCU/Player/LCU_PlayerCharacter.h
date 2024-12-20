@@ -170,6 +170,9 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_ClimingLadder;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_Parachute;
     
     // Montage
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
@@ -252,6 +255,15 @@ public:
 
     UFUNCTION()
     void InteractWithLadder(const FInputActionValue& Value);
+
+    // NSK PArachute
+    UFUNCTION()
+    void InteractWithParachute();
+
+    UFUNCTION()
+    void CanUseParachute(bool bCanUse);
+
+    bool bCanUseParachute;
 
 public:
 

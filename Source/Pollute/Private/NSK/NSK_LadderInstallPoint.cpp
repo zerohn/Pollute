@@ -92,8 +92,6 @@ void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
             FActorSpawnParameters SpawnParams;
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn; // 충돌 설정 (액터가 겹치지 않도록)
 
-            //SpawnParams.Owner = Player; // 플레이어를 소유자로 설정 (옵션)
-
             // 사다리 액터를 설치 지점에 스폰
             FVector SpawnLocation = InstallMesh->GetComponentLocation(); // 설치 지점 위치
             FRotator SpawnRotation = InstallMesh->GetComponentRotation(); // 설치 지점의 회전
@@ -116,6 +114,7 @@ void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
                 if (Ladder)
                 {
                     Ladder->bIsInstalled = true; // 설치 상태
+                    Ladder->EnableCollisionAfterInstall(); // 설치된 사다리의 충돌 활성화
                     P_LOG(PolluteLog, Warning, TEXT("사다리 설치 성공"));
                 }
 

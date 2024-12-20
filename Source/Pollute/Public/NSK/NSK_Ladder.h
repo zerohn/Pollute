@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "HHR/HHR_Item.h"
+#include "Components/BoxComponent.h"
 #include "NSK_Ladder.generated.h"
 
 UCLASS()
@@ -22,5 +23,8 @@ public:
 
     // 충돌 컴포넌트
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ladder")
-    UBoxComponent* CollisionComponent;
+    UBoxComponent* Collision;
+
+    UFUNCTION()
+    void EnableCollisionAfterInstall();
 };
