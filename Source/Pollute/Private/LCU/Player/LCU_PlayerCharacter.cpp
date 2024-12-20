@@ -60,7 +60,7 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 void ALCU_PlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    if(HasAuthority())
+    if(IsLocallyControlled())
     {
         LCU_Pc = Cast<ALCU_PlayerController>(GetController());
     }
@@ -546,11 +546,14 @@ void ALCU_PlayerCharacter::AttachItem()
         ItemInHand->SetOwner(this);
         
         // UI 변경
-        if(PlayerHUD)
+        //if(PlayerHUD)
+        //{
+        //    PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
+        //}
+        if(LCU_Pc && LCU_Pc->UIManager)
         {
-            PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
+            LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
         }
-        
     }
 }
 
@@ -632,9 +635,14 @@ void ALCU_PlayerCharacter::DetachItem()
     ItemInHand = nullptr;
 
     // UI 변경 
-    if(PlayerHUD)
+    //if(PlayerHUD)
+    //{
+    //    PlayerHUD->ChangeItemImageNull();
+    //}
+    
+    if(LCU_Pc && LCU_Pc->UIManager)
     {
-        PlayerHUD->ChangeItemImageNull();
+        LCU_Pc->UIManager->PlayerHUD->ChangeItemImageNull();
     }
     
     /*
@@ -736,18 +744,6 @@ void ALCU_PlayerCharacter::ShootTrace()
 		5.0f
 	);
 
-	if(bHit)
-	{
-		AActor* HitActor = HitResult.GetActor();
-
-
-		//ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
-		//if(InteractInterface)
-		//{
-		//	InteractInterface->Interact();
-		//}
-
-	}
 }
 
 
@@ -767,7 +763,6 @@ void ALCU_PlayerCharacter::Attack()
         ServerRPC_Attack();
     }
 }
-
 
 void ALCU_PlayerCharacter::InitItem()
 {
@@ -806,7 +801,7 @@ void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
             }
 
         }
-
+        
     }
 }
 

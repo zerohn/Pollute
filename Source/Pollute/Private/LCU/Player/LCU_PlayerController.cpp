@@ -132,20 +132,7 @@ void ALCU_PlayerController::ClientRPC_CurseUISet_Implementation(bool bShow)
 
 void ALCU_PlayerController::ClientRPC_ItemUIOff_Implementation()
 {
-    AActor* IM = UGameplayStatics::GetActorOfClass(GetWorld(), AHHR_ItemManager::StaticClass());
-    if(IM)
-    {
-        AHHR_ItemManager* ItemManager = Cast<AHHR_ItemManager>(IM);
-        if(ItemManager)
-        {
-            //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetPawn());
-            //if (player)
-            //{
-            //    player->PlayerHUD->SetVisibility(ESlateVisibility::Hidden);
-            //}
-            ItemManager->TestPlayerHUDIns->SetVisibility(ESlateVisibility::Hidden);
-            //ItemManager->TestPlayerHUDIns->SetItemDialogVisibility(false);
-            //ItemManager->TestPlayerHUDIns->SetItemDialogText(FText());
-        }
-    }
+    if(!UIManager) return;
+    if(!UIManager->PlayerHUD) return;
+    UIManager->PlayerHUD->SetVisibility(ESlateVisibility::Hidden);
 }

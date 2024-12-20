@@ -32,10 +32,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category= "Widget")
     TSubclassOf<class ULCU_CurseWidget> LCU_CurseWidgetFactory;
 
+    UPROPERTY()
     ULCU_CurseWidget* LCU_CurseWidget;
 
     void ShowCurseWidget(bool bShow);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category= "Widget")
+    TSubclassOf<class UHHR_PlayerHUD> PlayerHUDFactory;
+    
+    UPROPERTY()
+    UHHR_PlayerHUD* PlayerHUD;
+    
     // 사람 HUD END!!
 
 

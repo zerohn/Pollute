@@ -56,16 +56,16 @@ void AHHR_WeaponItem::DelegateDestroy(class ALCU_PlayerCharacter* player)
     // Owner의 FinalItem null 설정
     // 오브젝트 삭제
     // item의 setowner가 Replicated 되어 있어서 이렇게 하면 안됨 
-    //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+    ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
     if(player)
     {
         // 임시 UI
         // Controller 가지고 있어야 삭제해야함
-        if(player->PlayerHUD && player->IsLocallyControlled())
-        {
-            player->PlayerHUD->ChangeItemImageNull();
-        }
-        player->InitItem();
+        //if(player->PlayerHUD && player->IsLocallyControlled())
+        //{
+        //    player->PlayerHUD->ChangeItemImageNull();
+        //}
+        //player->InitItem();
     }
     Destroy();
 }

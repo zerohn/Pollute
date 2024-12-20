@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "LCU/Player/LCU_PlayerController.h"
 #include "LCU/UI/LCU_CurseWidget.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 
 // Sets default values
 ALCU_UIManager::ALCU_UIManager()
@@ -70,14 +71,30 @@ void ALCU_UIManager::Init()
     {
         P_LOG(PolluteLog, Log, TEXT("123123213213"));
     }
+
+    if(!LCU_Pc) return;
+    
     // 사람 전용 저주 위젯 추가하가
     if(LCU_CurseWidgetFactory)
     {
-        LCU_CurseWidget = CreateWidget<ULCU_CurseWidget>(GetWorld()->GetFirstPlayerController(),LCU_CurseWidgetFactory);
+        LCU_CurseWidget = CreateWidget<ULCU_CurseWidget>(LCU_Pc,LCU_CurseWidgetFactory);
+        //LCU_CurseWidget = CreateWidget<ULCU_CurseWidget>(GetWorld()->GetFirstPlayerController(),LCU_CurseWidgetFactory);
         if(LCU_CurseWidget)
         {
             LCU_CurseWidget->AddToViewport();
             LCU_CurseWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+
+    // 사람 HUD 추가하기
+    if(PlayerHUDFactory)
+    {
+        PlayerHUD = CreateWidget<UHHR_PlayerHUD>(LCU_Pc,PlayerHUDFactory);
+        //PlayerHUD = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(),PlayerHUDFactory);
+        if(PlayerHUD)
+        {
+            PlayerHUD->AddToViewport();
+            PlayerHUD->SetItemDialogVisibility(false);
         }
     }
 }

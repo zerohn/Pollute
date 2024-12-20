@@ -22,7 +22,6 @@ void UHHR_PlayerHUD::NativeConstruct()
 
 void UHHR_PlayerHUD::SetItemDialogVisibility(bool Visible)
 {
-
 	if(!ItemDialog)
 	{
 		P_LOG(PolluteLog, Warning, TEXT("widget 바인드가 안됨"));
