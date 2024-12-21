@@ -63,6 +63,20 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Ladder")
     bool bPlayerIsNear = false;
 
+    // 서버에서 사다리 설치 후 모든 클라이언트에 설치 상태를 알림
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastInstallLadder(ALCU_PlayerCharacter* Player);
+
+    // 사다리 설치 여부 동기화
+    UPROPERTY(ReplicatedUsing = OnRep_LadderInstalled)
+    bool bLadderInstalled;
+
+    // 사다리 설치 여부 변경 시 호출
+    UFUNCTION()
+    void OnRep_LadderInstalled();
+
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
 
     // 설치 가능 여부

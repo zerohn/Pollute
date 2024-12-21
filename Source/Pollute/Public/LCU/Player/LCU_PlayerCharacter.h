@@ -256,6 +256,18 @@ public:
     UFUNCTION()
     void InteractWithLadder(const FInputActionValue& Value);
 
+    // 사다리 설치 서버 RPC
+    UFUNCTION(Server, Reliable)
+    void ServerInstallLadder(ANSK_LadderInstallPoint* InstallPoint);
+
+    // 상호작용 서버 RPC
+    UFUNCTION(Server, Reliable)
+    void Server_InteractWithLadder();
+
+    // 상호작용 멀티캐스트 RPC
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_InteractWithLadder(const FVector& TopLocation);
+
     // NSK Parachute
     UFUNCTION()
     void InteractWithParachute();

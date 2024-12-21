@@ -5,6 +5,7 @@
 #include <Kismet/GameplayStatics.h>
 #include "Engine/World.h"
 #include "NSK/NSK_Ladder.h"
+#include <Net/UnrealNetwork.h>
 
 ANSK_LadderInstallPoint::ANSK_LadderInstallPoint()
 {
@@ -23,6 +24,8 @@ ANSK_LadderInstallPoint::ANSK_LadderInstallPoint()
     InstallMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InstallMesh"));
     InstallMesh->SetupAttachment(RootComponent);
     InstallMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    bReplicates = true; // 이 액터가 복제를 지원하도록 설정
 }
 
 void ANSK_LadderInstallPoint::BeginPlay()
@@ -82,7 +85,7 @@ void ANSK_LadderInstallPoint::OnOverlapEnd(
 // 사다리 설치 함수
 void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
 {
-    if (bPlayerIsNear)
+    if (bPlayerIsNear && !bLadderInstalled) // 설치되지 않은 상태에서 설치 가능
     {
         UClass* BP_LadderClass = LoadObject<UClass>(nullptr, TEXT("Blueprint'/Game/NSK/BP/BP_NSK_Ladder.BP_NSK_Ladder_C'"));
 
@@ -105,33 +108,32 @@ void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
             {
                 P_LOG(PolluteLog, Warning, TEXT("사다리 생성 성공!"));
 
-                if (Player)
+                /*if (Player)
                 {
                     Player->InstallAndDeleteItem();
-                }
+                }*/
 
                 ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(SpawnedActor);
                 if (Ladder)
                 {
                     Ladder->bIsInstalled = true; // 설치 상태
                     Ladder->EnableCollisionAfterInstall(); // 설치된 사다리의 충돌 활성화
-                    P_LOG(PolluteLog, Warning, TEXT("사다리 설치 성공"));
+                    //P_LOG(PolluteLog, Warning, TEXT("사다리 설치 성공"));
                 }
 
                 // 설치 후 인스톨 포인트 삭제
-                Destroy();
+                //Destroy();
 
                 // 설치 후 더 이상 설치 지점 사용 불가능
-                bPlayerIsNear = false;
+                //bPlayerIsNear = false;
+
+                bLadderInstalled = true;
+                MulticastInstallLadder(Player);
             }
             else
             {
                 P_LOG(PolluteLog, Warning, TEXT("사다리 생성 실패!"));
             }
-        }
-        else
-        {
-            P_LOG(PolluteLog, Warning, TEXT("플레이어가 유효하지 않습니다"));
         }
     }
 }
@@ -155,4 +157,36 @@ void ANSK_LadderInstallPoint::SetupInteraction()
     {
         P_LOG(PolluteLog, Warning, TEXT("플레이어가 인스톨 포인트 근처에 없습니다"));
     }
+}
+
+void ANSK_LadderInstallPoint::MulticastInstallLadder_Implementation(ALCU_PlayerCharacter* Player)
+{
+    if (Player)
+    {
+        Player->InstallAndDeleteItem(); // 플레이어의 아이템 제거
+        Destroy(); // 설치 지점 제거
+        P_LOG(PolluteLog, Warning, TEXT("사다리 설치 상태가 모든 클라이언트에 동기화되었습니다."));
+    }
+}
+
+void ANSK_LadderInstallPoint::OnRep_LadderInstalled()
+{
+    if (bLadderInstalled)
+    {
+        P_LOG(PolluteLog, Warning, TEXT("사다리 설치 상태가 클라이언트에서 업데이트되었습니다."));
+
+        // 추가 클라 동작 로직 ex) UI 업데이트
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("사다리가 제거되었습니다! 클라이언트에서 동기화됨."));
+    }
+}
+
+void ANSK_LadderInstallPoint::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    // bLadderInstalled를 복제
+    DOREPLIFETIME(ANSK_LadderInstallPoint, bLadderInstalled);
 }

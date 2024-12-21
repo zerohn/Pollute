@@ -1039,14 +1039,24 @@ void ALCU_PlayerCharacter::OnInstallLadder()
             if (InstallPoint && InstallPoint->bPlayerIsNear)
             {
                 // 인스톨 포인트에 사다리 액터 생성 추가 로직
-                InstallPoint->SetupInteraction();
+                //InstallPoint->SetupInteraction();
 
-                InstallAndDeleteItem();
+                //InstallAndDeleteItem();
 
-                P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되었습니다."));
+                //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되었습니다."));
+
+                ServerInstallLadder(InstallPoint);
                 break;
             }
         }
+    }
+}
+
+void ALCU_PlayerCharacter::ServerInstallLadder_Implementation(ANSK_LadderInstallPoint* InstallPoint)
+{
+    if (InstallPoint)
+    {
+        InstallPoint->InstallLadder(this);
     }
 }
 
@@ -1073,36 +1083,54 @@ void ALCU_PlayerCharacter::InteractWithLadder(const FInputActionValue& Value)
 
     if (bIsPressed)
     {
-        // 플레이어가 설치된 사다리와 상호작용
-        FVector PlayerLocation = GetActorLocation();
-        float ClosestDistance = 200.f; // 상호작용 거리
-        ANSK_Ladder* ClosestLadder = nullptr;
-
-        for (TActorIterator<ANSK_Ladder> It(GetWorld()); It; ++It)
+        if (HasAuthority()) // 서버에서 처리
         {
-            ANSK_Ladder* Ladder = *It;
-            if (Ladder && Ladder->bIsInstalled) // 설치된 사다리만 필터링
-            {
-                float Distance = FVector::Dist(PlayerLocation, Ladder->GetActorLocation());
-                if (Distance < ClosestDistance)
-                {
-                    ClosestLadder = Ladder;
-                    ClosestDistance = Distance;
-                }
-            }
-        }
-
-        if (ClosestLadder && ClosestLadder->TopPosition)
-        {
-            FVector TopLocation = ClosestLadder->TopPosition->GetComponentLocation();
-            SetActorLocation(TopLocation + FVector(0.f, 0.f, 50.f)); // 사다리 상단으로 이동
-            P_LOG(PolluteLog, Warning, TEXT("사다리 맨 위로 이동 완료"));
+            Server_InteractWithLadder();
         }
         else
         {
-            P_LOG(PolluteLog, Warning, TEXT("근처에 설치된 사다리가 없습니다."));
+            // 클라이언트가 서버에 요청
+            Server_InteractWithLadder();
         }
     }
+}
+
+void ALCU_PlayerCharacter::Server_InteractWithLadder_Implementation()
+{
+    // 플레이어가 설치된 사다리와 상호작용
+    FVector PlayerLocation = GetActorLocation();
+    float ClosestDistance = 200.f; // 상호작용 거리
+    ANSK_Ladder* ClosestLadder = nullptr;
+
+    for (TActorIterator<ANSK_Ladder> It(GetWorld()); It; ++It)
+    {
+        ANSK_Ladder* Ladder = *It;
+        if (Ladder && Ladder->bIsInstalled) // 설치된 사다리만 필터링
+        {
+            float Distance = FVector::Dist(PlayerLocation, Ladder->GetActorLocation());
+            if (Distance < ClosestDistance)
+            {
+                ClosestLadder = Ladder;
+                ClosestDistance = Distance;
+            }
+        }
+    }
+
+    if (ClosestLadder && ClosestLadder->TopPosition)
+    {
+        FVector TopLocation = ClosestLadder->TopPosition->GetComponentLocation();
+        Multicast_InteractWithLadder(TopLocation); // 모든 클라이언트에 전파
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("근처에 설치된 사다리가 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::Multicast_InteractWithLadder_Implementation(const FVector& TopLocation)
+{
+    SetActorLocation(TopLocation + FVector(0.f, 0.f, 50.f)); // 사다리 상단으로 이동
+    P_LOG(PolluteLog, Warning, TEXT("사다리 맨 위로 이동 완료"));
 }
 
 // NSK 낙하산 인터렉션 함수
