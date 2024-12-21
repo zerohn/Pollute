@@ -73,8 +73,9 @@ protected:
     void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-// * player 델리게이트에 바인딩 될 함수
+// *델리게이트에 바인딩 될 함수
 protected:
+    // Player가 G키 누르면 호출
     UFUNCTION()
     void OnAttachItem(class AHHR_Item* Item);
 

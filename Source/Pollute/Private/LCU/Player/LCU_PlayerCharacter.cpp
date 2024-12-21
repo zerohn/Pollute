@@ -905,6 +905,12 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
     SelectedSlotIndex = INDEX_NONE;
 }
 
+void ALCU_PlayerCharacter::ServerRPC_DetatchItem_Implementation()
+{
+    P_LOG(PolluteLog, Warning, TEXT("ServerRPC DetatchITem In pc"));
+    NetMulticast_DetachItem();
+}
+
 void ALCU_PlayerCharacter::PutItemOnAltar()
 {
     // G 클릭시
@@ -915,7 +921,7 @@ void ALCU_PlayerCharacter::PutItemOnAltar()
         // ItemInHand 손에서 Detatch
         // TODO : Detatch 동기화 처리 필요
         AHHR_Item* tempItem = ItemInHand;
-        DetachItem();
+        ServerRPC_DetatchItem();
 
         // 델리게이트 실행 -> Attach Item On Altar
         if(OnAttachItemOnAltar.IsBound())

@@ -69,9 +69,9 @@ void AHHR_Altar::BeginPlay()
     FTimerHandle timerHandle;
     GetWorld()->GetTimerManager().SetTimer(timerHandle, FTimerDelegate::CreateLambda([&]()
     {
-        ACharacter* cha = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-        //SetOwner(GetWorld()->GetFirstPlayerController());
-        SetOwner(cha);
+        //ACharacter* cha = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+        //SetOwner(cha);
+        SetOwner(GetWorld()->GetFirstPlayerController());
         P_LOG(PolluteLog, Warning, TEXT("owner 설정 : %s"), *GetOwner()->GetName());
     }), 4.0f, false);
 
@@ -90,14 +90,14 @@ void AHHR_Altar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    if(GetOwner())
+    /*if(GetOwner())
     {
         P_LOG(PolluteLog, Warning, TEXT("%s"), *GetOwner()->GetName());
     }
     else
     {
         P_LOG(PolluteLog, Warning, TEXT("NoOwner"));
-    }
+    }*/
     
 }
 
@@ -141,16 +141,7 @@ void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
         {
             P_LOG(PolluteLog, Warning, TEXT("owner 없음 "));
         }
-
-        if (IsValid(this))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Valid actor reference on client."));
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Invalid actor reference on client."));
-        }
-
+        
         
         if(!HasAuthority())
         {

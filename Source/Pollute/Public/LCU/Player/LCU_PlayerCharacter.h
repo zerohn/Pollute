@@ -270,16 +270,22 @@ private:
     // 
     bool bNearByAltar = false;
 
-    
-    
-protected:
-    // Input system에 바인딩될 함수
-    void PutItemOnAltar();
 
 public:
     // Get, Set
     FORCEINLINE bool GetNearByAltar() const {return bNearByAltar;}
     FORCEINLINE void SetNearByAltar(bool InNearByAltar){bNearByAltar = InNearByAltar;}
+
+//*RPC*
+public:
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_DetatchItem();
+    
+protected:
+    // Input system에 바인딩될 함수
+    void PutItemOnAltar();
+
+
 // ** hhr
     
 
