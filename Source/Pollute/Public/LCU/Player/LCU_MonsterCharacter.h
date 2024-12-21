@@ -44,6 +44,12 @@ public:
     UFUNCTION()
     void OnNotifyAttack();
 
+    void DashSkill();
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_DashSkill();
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_DashSkill();
+
     // 공격 받기
     void DieProcess();
     void ApplyStun();
@@ -63,6 +69,13 @@ public:
     FTimerHandle StunTimerHandle;
     UPROPERTY(EditAnywhere)
     float StunTime = 5.f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float DashStrength = 5000.f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float DashCooldown = 10.f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float MaxDashTime = 10.f;
+    
     UPROPERTY()
     bool bIsStunned = false;
     
@@ -71,6 +84,9 @@ public:
 
     UPROPERTY()
     bool AttackStart = false;
+
+    UPROPERTY()
+    bool bCanSkill = true;
 
   
 };

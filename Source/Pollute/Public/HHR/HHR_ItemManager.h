@@ -23,13 +23,6 @@ protected:
     virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
-    /*UPROPERTY(Replicated)
-    class AHHR_Item* GeneratedItem;*/
-    /*UPROPERTY(Replicated)
-    TArray<class AHHR_Item*> GeneratedItems;
-    UPROPERTY(Replicated)
-    TArray<int32> ItemsDataIdx;*/
-    
 
 public:
 	// 아이템 데이터 저장
