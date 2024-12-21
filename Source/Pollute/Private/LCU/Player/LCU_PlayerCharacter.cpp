@@ -21,6 +21,7 @@
 #include "Components/WidgetComponent.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "HHR/UI/HHR_ItemDialog.h"
 #include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
 #include "LCU/Player/LCU_PlayerController.h"
@@ -64,7 +65,6 @@ void ALCU_PlayerCharacter::BeginPlay()
     {
         LCU_Pc = Cast<ALCU_PlayerController>(GetController());
     }
-	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
 
 void ALCU_PlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -100,8 +100,24 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	UpdateCameraTransform();
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
-    RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
+    if(IsValid(FinalOverapItem) && IsLocallyControlled() && !ItemInHand)
+    {
+        AHHR_Item* item = Cast<AHHR_Item>(FinalOverapItem);
+        if(item)
+        {
+            LCU_Pc->UIManager->PlayerHUD->ItemDialog->SetText(item->ItemData.ItemName);
+            LCU_Pc->UIManager->PlayerHUD->SetItemDialogVisibility(true);
+        }
+    }
+    else if(!IsValid(FinalOverapItem) && IsLocallyControlled() || ItemInHand && IsLocallyControlled())
+    {
+       LCU_Pc->UIManager->PlayerHUD->SetItemDialogVisibility(false);
+    }
 
+    if(FinalOverapItem)
+    {
+        RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
+    }
     if(StartCurseCool)
     {
         if(IsLocallyControlled())
@@ -235,7 +251,10 @@ void ALCU_PlayerCharacter::Interact()
 AActor* ALCU_PlayerCharacter::GetClosestActorToCamera(const TSet<AActor*>& Actors)
 {
 	// 자료구조 안에 데이터가 없으면 반환
-	if (Actors.Num() == 0) return nullptr;
+	if (Actors.Num() == 0)
+	{
+	    return nullptr;
+	}
 
 	FVector CameraLocation = FollowCamera->GetComponentLocation();
 
@@ -331,7 +350,7 @@ void ALCU_PlayerCharacter::AddOverlappingItem(AActor* otherActor)
 	if(!OverlappingItems.Contains(otherActor))
 	{
 		OverlappingItems.Add(otherActor);
-	}
+	} 
 }
 
 void ALCU_PlayerCharacter::RemoveOverlappingItem(AActor* otherActor)
@@ -403,81 +422,11 @@ void ALCU_PlayerCharacter::DropDown()
 
     // Drop 후에 핸드에 있는 아이템 null 초기화
     ItemInHand = nullptr;
+    
 }
 
 void ALCU_PlayerCharacter::PickUpDropDown()
-{
-    /*if (!RetrievedItem) // Null 수정
-    {
-        P_LOG(PolluteLog, Error, TEXT("픽업할 아이템이 없습니다."));
-        return;
-    }
-
-    if (!bHasItem) // 아이템이 없는 경우 픽업
-    {
-        USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-        if (!SkeletalMeshComp)
-        {
-            P_LOG(PolluteLog, Error, TEXT("스켈레탈 메시가 없습니다."));
-            return;
-        }
-
-        // 아이템 손에 부착
-        ItemInHand = RetrievedItem;
-        ItemInHand->AttachToComponent(
-            SkeletalMeshComp,
-            FAttachmentTransformRules::SnapToTargetIncludingScale,
-            FName("PickUpSocket")
-        );
-
-        P_SCREEN(1.f, FColor::Black, TEXT("아이템 픽업 성공"));
-        bHasItem = true;
-
-        // 아이템 위치 및 회전 설정
-        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
-        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
-        ItemInHand->SetOwner(this);
-
-        // 상태 초기화
-        RetrievedItem = nullptr;
-    }
-    else // 아이템이 있는 경우 드랍
-    {
-        FVector CharacterLocation = GetActorLocation();
-        FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
-        FRotator DropRotation = GetActorRotation();
-
-        // 아이템 부모-자식 관계 해제 및 위치 설정
-        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-        ItemInHand->SetActorLocation(DropLocation);
-        ItemInHand->SetActorRotation(DropRotation);
-
-        P_SCREEN(1.f, FColor::Black, TEXT("아이템 드랍 완료"));
-
-        // 상태 초기화
-        ItemInHand = nullptr;
-        bHasItem = false;
-    }
-
-
-    //주울 수 있는 아이템이 없으면 나가야함
-    if (!FinalOverapItem) return;
-	
-	// 현재 아이템이 없으니 픽업
-
-	if(!bHasItem)
-	{		
-		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-		if (!SkeletalMeshComp)
-		{
-			return;
-		}
-*/
-
-
-    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
-    //ServerRPC_PickUpDropDown();
-    
+{   
     ServerRPC_PickUpDropDown();
 }
 
@@ -508,7 +457,6 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 
 void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 {
-    // multi에서 할 일을 최대한 줄여야할 듯 
     ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
     AttachItem();
 }
@@ -516,12 +464,6 @@ void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 
 void ALCU_PlayerCharacter::AttachItem()
 {
-    // Item의 Interactive 허용
-    if(IsLocallyControlled())
-    {
-        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(false);
-    }
-
     USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
     if (!SkeletalMeshComp)
     {
@@ -544,7 +486,7 @@ void ALCU_PlayerCharacter::AttachItem()
         // Item의 Owner 설정
         ItemInHand->SetOwner(this);
         
-        if(LCU_Pc && LCU_Pc->UIManager)
+        if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
         {
             LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
         }
@@ -560,12 +502,6 @@ void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
 void ALCU_PlayerCharacter::DetachItem()
 {
     if (!ItemInHand) return;
-    // Item의 Interactive 허용
-    if(IsLocallyControlled())
-    {
-        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(true);
-    }
-    
     FVector CharacterLocation = GetActorLocation();
     // 캐릭터 발 아래 위치
     FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
@@ -586,64 +522,12 @@ void ALCU_PlayerCharacter::DetachItem()
     ItemInHand = nullptr;
     bHasItem = false;
 
-    // Drop 후에 핸드에 있는 아이템 null 초기화
-    ItemInHand = nullptr;
-
-    if(LCU_Pc && LCU_Pc->UIManager)
+    if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
     {
         LCU_Pc->UIManager->PlayerHUD->ChangeItemImageNull();
+        
     }
 }
-
-
-void ALCU_PlayerCharacter::ShootTrace()
-{
-	if(!IsLocallyControlled()) return;
-	// 카메라 위치와 방향 가져오기
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
-
-	// 트레이스 시작점과 끝점 계산
-	FVector Start = CameraLocation;
-	FVector End = Start + CameraRotation.Vector() * 1000.0f; // 카메라 방향으로 1000 단위 거리
-    //DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.2f);
-
-	//  박스 크기 설정
-	FVector BoxHalfSize = FVector(10.0f, 10.0f, 50.0f); // 박스 크기 (너비 20, 높이 100)
-
-	//  트레이스할 객체 유형 설정
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel1)); 
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));        // Pawn (캐릭터)
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));        // Pawn (캐릭터)
-	
-	//  무시할 액터 설정
-	TArray<AActor*> IgnoredActors;
-	IgnoredActors.Add(this); // 자신 제외
-
-	FHitResult HitResult;
-
-	//  BoxTraceSingleForObjects 호출
-	bool bHit = UKismetSystemLibrary::BoxTraceSingleForObjects(
-		GetWorld(),
-		Start,
-		End,
-		BoxHalfSize,
-		CameraRotation,
-		ObjectTypes,
-		false,        
-		IgnoredActors,  
-		EDrawDebugTrace::None, 
-		HitResult,
-		true,           
-		FLinearColor::Red,   
-		FLinearColor::Green, 
-		5.0f
-	);
-
-}
-
 
 void ALCU_PlayerCharacter::DieProcess()
 {
@@ -664,11 +548,6 @@ void ALCU_PlayerCharacter::Attack()
 
 void ALCU_PlayerCharacter::InitItem()
 {
-    // hud 변경
-    //if(PlayerHUD)
-    //{
-    //    PlayerHUD->ChangeItemImageNull();
-    //}
     ItemInHand = nullptr;
 }
 

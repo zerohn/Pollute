@@ -94,7 +94,6 @@ public:
     
     void DropDown();
 	void PickUpDropDown();
-	void ShootTrace();
     
     UFUNCTION(Server, Reliable)
     void ServerRPC_PickUpDropDown();
