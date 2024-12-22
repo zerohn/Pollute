@@ -28,15 +28,6 @@ void AHHR_ItemSpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-    // Combine Item만 임시 생성
-    //TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
-    //TestPlayerHUDIns->AddToViewport();
-    //// character에서 임시로 hud 생성
-    //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    //player->PlayerHUD = TestPlayerHUDIns;
-
-
     if(!HasAuthority())
     {
         return;
@@ -268,6 +259,5 @@ void AHHR_ItemSpawnManager::NetMuulticast_SetData_Implementation(class AHHR_Item
     
     Item->ItemSpawnManager = this;
     Item->DataIdx = idx;
-    
 }
 

@@ -137,7 +137,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
             {
                 // AHHR_Item 클래스의 인스턴스 생성
                 AHHR_Item* SpawnedItem = GetWorld()->SpawnActor<AHHR_Item>(ItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
-                SpawnedItem->PlayerHUD = TestPlayerHUDIns;
+                //SpawnedItem->PlayerHUD = TestPlayerHUDIns;
                 NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
                 if (SpawnedItem)
                 {
@@ -153,7 +153,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
                 {
                     // AHHR_Item 클래스의 인스턴스 생성
                     AHHR_Knife* SpawnedItem = GetWorld()->SpawnActor<AHHR_Knife>(KnifeItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
-                    SpawnedItem->PlayerHUD = TestPlayerHUDIns;
+                    //SpawnedItem->PlayerHUD = TestPlayerHUDIns;
                     NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
                     if (SpawnedItem)
                     {
@@ -167,7 +167,7 @@ void ANSK_SpawnManager::SpawnRandomItems()
                 {
                     // AHHR_Item 클래스의 인스턴스 생성
                     AHHR_Gun* SpawnedItem = GetWorld()->SpawnActor<AHHR_Gun>(GunItemClass, SpawnPoint->GetActorTransform(), SpawnParams);
-                    SpawnedItem->PlayerHUD = TestPlayerHUDIns;
+                    //SpawnedItem->PlayerHUD = TestPlayerHUDIns;
                     NetMulticast_SetData(SpawnedItem, SelectedItem->ItemID);
                     if (SpawnedItem)
                     {
@@ -294,7 +294,7 @@ void ANSK_SpawnManager::SpawnAltarHint()
 void ANSK_SpawnManager::NetMulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
 {
     //Item->ItemSpawnManager = this;
-    Item->PlayerHUD = TestPlayerHUDIns;
+    //Item->PlayerHUD = TestPlayerHUDIns;
     Item->DataIdx = idx;
 }
 

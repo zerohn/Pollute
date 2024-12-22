@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "LCU/Player/LCU_PlayerController.h"
+#include "LCU/UI/LCU_UIManager.h"
 #include "Net/UnrealNetwork.h"
 #include "P_Settings/P_GameState.h"
 
@@ -40,10 +41,7 @@ void ALCU_Curse::BeginPlay()
 		Instance = nullptr; // 포인터 초기화
 		Destroy();
 	}
-	else
-	{
-		Instance = this;
-	}
+    Instance = this;    
 }
 
 void ALCU_Curse::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -74,8 +72,8 @@ void ALCU_Curse::Tick(float DeltaTime)
 			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
 			if(P_pc)
 			{
-			    OwnerCharacter->ClientRPC_HasCurseWidget(false);
 				P_pc->ChangeToMonster();
+			    P_pc->ClientRPC_CurseUISet(false);
 			}
 			
 			AP_GameState* P_GS =  Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
@@ -113,8 +111,12 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 
 	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
-    OwnerCharacter->ClientRPC_HasCurseWidget(true);
-		
+    ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
+    if(P_pc)
+    {
+        P_pc->ClientRPC_CurseUISet(true);
+    }
+	
 	// 저주 시작
 	bStartCurseTime = true;
 }

@@ -59,10 +59,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Item")
 	FItemData ItemData;
     
-    // Item Interaction Widget Data
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item")
-    TSubclassOf<class UUserWidget> ItemWidgetClass;
-
 private:
     // 제단 아이템 확인
     //UPROPERTY(Replicated)
@@ -78,31 +74,9 @@ public:
     FORCEINLINE bool GetIsAltarItem() {return bIsAltarItem;}
     // 
 
-    
 	// Item Data Sets
 	void SetItemData(const FItemData& data);
 	
-    // UI
-	virtual void SetVisibilityUI(bool Visible) override;
+    virtual void Interact() override;
 
-    virtual void Interact() override;;
-
-protected:
-	// 충돌 처리 함수
-	UFUNCTION()
-	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-
-// 임시 Player HUD
-// TODO : UI Player Controller 혹은 다른 UI 관리자로부터 가져와서 변경
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
-	class UHHR_PlayerHUD* PlayerHUD;
-
-
-
-    
 };
