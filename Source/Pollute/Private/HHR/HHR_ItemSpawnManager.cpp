@@ -8,6 +8,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/StaticMeshComponent.h"
 #include "HHR/HHR_Gun.h"
+#include "HHR/HHR_Hint.h"
 #include "HHR/HHR_ItemSpawnPoint.h"
 #include "HHR/HHR_Knife.h"
 #include "Kismet/GameplayStatics.h"
@@ -27,15 +28,6 @@ void AHHR_ItemSpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-    // Combine Item만 임시 생성
-    //TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
-    //TestPlayerHUDIns->AddToViewport();
-    //// character에서 임시로 hud 생성
-    //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    //player->PlayerHUD = TestPlayerHUDIns;
-
-
     if(!HasAuthority())
     {
         return;
@@ -45,6 +37,9 @@ void AHHR_ItemSpawnManager::BeginPlay()
     FindSpawnPoints();
     // 게임 시작시 아이템 랜덤 생성, 아이템 힌트 생성
     SpawnRandomItem();
+    // 힌트 생성
+    SpawnHint();
+    // TODO : 저주 아이템 선택 
 	
 }
 
@@ -109,11 +104,10 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
     // 랜덤 위치 뽑아줌 
     TArray<int32> RandomSpawnPointIdx;
     // SpawnPoint에서 스폰되는 아이템 만큼 랜덤 indx 뽑아줌
-    // TODO : 나중에 상수에서 MaxSpawnItem 으로 수정 
+    // TODO : 나중에 탈출 아이템 클래스 만들어지면 상수에서 MaxSpawnItem 으로 수정 
     ShuffleIdx(RandomSpawnPointIdx, SpawnPoints.Num(),14 );
 
     int32 spawnPointIdx = 0;
-    int32 altarCnt = 0;
     // 아이템 생성 
     for(const TPair<int32, FItemData> &itemPair : ItemDataMap)
     {
@@ -125,9 +119,10 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             // 조합 아이템 생성
             item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
             ++spawnPointIdx;
-            ItemArray.Add(item);
-            // TODO : 데이터 세팅 동기화
+            ItemInsArray.Add(item);
+            
             item->SetItemData(itemPair.Value);
+            // TODO : 그냥 OnReplicated 되어 있는 변수만 변경해주면 됨... Multicast 쏠 필요 없음 
             NetMuulticast_SetData(item, itemPair.Key);
         }
         else if(itemPair.Value.ItemType == EItemType::WeaponItem)
@@ -139,7 +134,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                 {
                     item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                     ++spawnPointIdx;
-                    ItemArray.Add(item);
+                    ItemInsArray.Add(item);
                     item->SetItemData(itemPair.Value);
                     NetMuulticast_SetData(item, itemPair.Key);
                 }
@@ -150,7 +145,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                 {
                     item = GetWorld()->SpawnActor<AHHR_Gun>(GunClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                     ++spawnPointIdx;
-                    ItemArray.Add(item);
+                    ItemInsArray.Add(item);
                     item->SetItemData(itemPair.Value);
                     NetMuulticast_SetData(item, itemPair.Key);
                 }
@@ -163,36 +158,11 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
             // TODO : 탈출 아이템 클래스로 생성, 개수 중복해서 생성 
             item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
             ++spawnPointIdx;
-            ItemArray.Add(item);
+            ItemInsArray.Add(item);
             item->SetItemData(itemPair.Value);
             NetMuulticast_SetData(item, itemPair.Key);
         }
-
     }
-
-    // TODO : 임시
-    for(AHHR_ItemSpawnPoint* point : SpawnPoints)
-    {
-        point->Destroy();
-    }
-
-    // 2. 제단 아이템 선택
-    // TODO : 제단 세팅 동기화 필요
-    TArray<int32> AltarItemIdx;
-    ShuffleIdx(AltarItemIdx, ItemArray.Num(), MaxAltarItem );
-    for(int32 idx : AltarItemIdx)
-    {
-        ItemArray[idx]->SetIsAltarItem(true);
-        // TODO : 임시
-        P_LOG(PolluteLog, Warning, TEXT("%s"), *(ItemArray[idx]->ItemData.ItemName.ToString()) )
-    }
-    
-
-
-    
-
-    // TODO: 4. 힌트 아이템 생성
-    
     
 }
 
@@ -202,6 +172,61 @@ void AHHR_ItemSpawnManager::FindSpawnPoints()
     {
         SpawnPoints.Add(*it);
     }
+}
+
+void AHHR_ItemSpawnManager::SpawnHint()
+{
+    
+    // 제단 세팅 동기화 -> Replicated 변수 이용
+    // ! 조합 아이템만 제단 아이템으로 선택해줘야 함
+
+    // 2. 제단 아이템 선택
+    // 2-1) 생성된 아이템들 중에 조합 아이템만 뽑기
+    TArray<AHHR_Item*> CombineItems;
+    for(AHHR_Item* item: ItemInsArray)
+    {
+        if(item->ItemData.ItemType == EItemType::CombineItem)
+        {
+            CombineItems.Add(item);
+        }
+    }
+    // 2-2) 랜덤 인덱스로 제단 아이템 선택
+    TArray<int32> AltarItemIdx;
+    ShuffleIdx(AltarItemIdx, CombineItems.Num(), MaxAltarItem );
+    for(int32 idx : AltarItemIdx)
+    {
+        CombineItems[idx]->SetIsAltarItem(true);
+        //P_LOG(PolluteLog, Warning, TEXT("%s"), *(ItemArray[idx]->ItemData.ItemName.ToString()));
+    }
+
+    // 3. 힌트 생성 
+    for(AHHR_Item* cItem : CombineItems)
+    {
+        // key 값에 대응하는 hint 생성
+        AHHR_Hint* hint = GetWorld()->SpawnActor<AHHR_Hint>(Hints[cItem->ItemData.ItemID], cItem->GetActorLocation(), cItem->GetActorRotation());
+        hint->SetActorLocation(hint->GetHintSpawnTransform()->GetLocation());
+        hint->SetActorRotation(hint->GetHintSpawnTransform()->GetRotation());
+        hint->SetActorScale3D(hint->GetHintSpawnTransform()->GetScale3D());
+
+        // 제단 아이템 아니면 
+        if(!cItem->GetIsAltarItem())
+        {
+            if(hint->GetIsHideHint())
+            {
+                // hint가 숨겨줘야 하면 삭제
+                hint->Destroy();
+            }
+            else
+            {
+                // mesh 꺼주는 거 동기화 필요 -> 이것도 OnRep 함수 사용해서 나중에 동기화 처리
+                hint->InvisiblePicture();
+                // ReplicatedUsing 변수를 바꿔서 동기화 
+                hint->SetInvisiblePicture(true);
+            }
+        }
+    }
+    
+    
 }
 
 void AHHR_ItemSpawnManager::ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum, int32 RandomNum)
@@ -227,13 +252,12 @@ void AHHR_ItemSpawnManager::ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum
     
 }
 
+// TODO : 별로 의미 있는 함수 아님 -> Refactoring 필요할듯 
 void AHHR_ItemSpawnManager::NetMuulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
 {
     //Item->SetItemData(ItemDataMap[idx]);
     
     Item->ItemSpawnManager = this;
-    Item->PlayerHUD = TestPlayerHUDIns;
     Item->DataIdx = idx;
-    
 }
 

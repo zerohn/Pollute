@@ -3,12 +3,12 @@
 
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
-#include "DrawDebugHelpers.h"
 #include "EnhancedInputComponent.h"
 #include "TimerManager.h"
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
@@ -20,12 +20,19 @@
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimInstance.h"
 #include "Components/WidgetComponent.h"
-#include "Engine/SkeletalMesh.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HHR/UI/HHR_TestPlayerHUD.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
+#include "LCU/Player/LCU_TestWidget.h"
+#include "NSK/NSK_LadderInstallPoint.h"
+#include "EngineUtils.h"
+#include <NSK/NSK_Ladder.h>
+#include "NSK/NSK_Parachute.h"
+#include "HHR/UI/HHR_ItemDialog.h"
 #include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
+#include "LCU/Player/LCU_PlayerController.h"
+#include "LCU/UI/LCU_UIManager.h"
 
 
 // Sets default values
@@ -60,19 +67,11 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 // Called when the game starts or when spawned
 void ALCU_PlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay();
-
-    if(LCU_TestWidgetFactory && IsLocallyControlled())
+    Super::BeginPlay();
+    if(IsLocallyControlled())
     {
-        LCU_TestWidget = CreateWidget<ULCU_TestWidget>(GetWorld()->GetFirstPlayerController(),LCU_TestWidgetFactory);
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->AddToViewport();
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
+        LCU_Pc = Cast<ALCU_PlayerController>(GetController());
     }
-
-	GetWorld()->GetTimerManager().SetTimer(TraceHandle, this, &ALCU_PlayerCharacter::ShootTrace, 0.2f, true);
 }
 
 void ALCU_PlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -98,18 +97,6 @@ void ALCU_PlayerCharacter::UpdateCameraTransform()
 		BoxComponent->SetWorldLocation(BoxLocation);
 		BoxComponent->SetWorldRotation(CameraRotation);
 	}
-
-	//DrawDebugBox(
-	//	GetWorld(),
-	//	BoxComponent->GetComponentLocation(),
-	//	BoxComponent->GetScaledBoxExtent(),
-	//	BoxComponent->GetComponentQuat(), // 박스 회전
-	//	FColor::Blue,
-	//	false,  // 지속 표시 (Tick마다 새로 그림)
-	//	1.f, // 1초 동안 유지
-	//	0,     // 디버그 선 우선순위
-	//	5.0f   // 선 두께
-	//);
 }
 
 // Called every frame
@@ -120,8 +107,24 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
 	UpdateCameraTransform();
 	FinalOverapPlayer = Cast<ALCU_PlayerCharacter>(GetClosestActorToCamera(OverlappingPlayers));
 	FinalOverapItem = GetClosestActorToCamera(OverlappingItems);
-    RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
+    if(IsValid(FinalOverapItem) && IsLocallyControlled() && !ItemInHand)
+    {
+        AHHR_Item* item = Cast<AHHR_Item>(FinalOverapItem);
+        if(item)
+        {
+            LCU_Pc->UIManager->PlayerHUD->ItemDialog->SetText(item->ItemData.ItemName);
+            LCU_Pc->UIManager->PlayerHUD->SetItemDialogVisibility(true);
+        }
+    }
+    else if(!IsValid(FinalOverapItem) && IsLocallyControlled() || ItemInHand && IsLocallyControlled())
+    {
+       LCU_Pc->UIManager->PlayerHUD->SetItemDialogVisibility(false);
+    }
 
+    if(FinalOverapItem)
+    {
+        RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
+    }
     if(StartCurseCool)
     {
         if(IsLocallyControlled())
@@ -147,8 +150,12 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_CarryCurse, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::CarryCurse);
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
-        EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+        //EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+	    EnhancedInputComponent->BindAction(IA_PutItemOnAltar, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PutItemOnAltar);
 	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
+        EnhancedInputComponent->BindAction(IA_Ladder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInstallLadder);
+        EnhancedInputComponent->BindAction(IA_ClimingLadder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithLadder);
+        EnhancedInputComponent->BindAction(IA_Parachute, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithParachute);
 	}
 }
 
@@ -160,6 +167,11 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
+
+    // hr altar
+    DOREPLIFETIME(ALCU_PlayerCharacter, bNearByAltar);
+    DOREPLIFETIME(ALCU_PlayerCharacter, LCU_Pc);
+
     
 }
 
@@ -196,8 +208,6 @@ void ALCU_PlayerCharacter::RunShiftToggle()
 {
    if(IsLocallyControlled())
    {
-       FString aa = bIsRunning ? "true" : "false";
-       P_SCREEN(1.f, FColor::Black, TEXT("%s"), *aa);
        ServerRPC_SetRunning(!bIsRunning);
    }
 }
@@ -256,7 +266,10 @@ void ALCU_PlayerCharacter::Interact()
 AActor* ALCU_PlayerCharacter::GetClosestActorToCamera(const TSet<AActor*>& Actors)
 {
 	// 자료구조 안에 데이터가 없으면 반환
-	if (Actors.Num() == 0) return nullptr;
+	if (Actors.Num() == 0)
+	{
+	    return nullptr;
+	}
 
 	FVector CameraLocation = FollowCamera->GetComponentLocation();
 
@@ -352,7 +365,7 @@ void ALCU_PlayerCharacter::AddOverlappingItem(AActor* otherActor)
 	if(!OverlappingItems.Contains(otherActor))
 	{
 		OverlappingItems.Add(otherActor);
-	}
+	} 
 }
 
 void ALCU_PlayerCharacter::RemoveOverlappingItem(AActor* otherActor)
@@ -381,12 +394,15 @@ void ALCU_PlayerCharacter::CarryCurse()
 
 void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
 {
-	// NetMulticast_CarryCurse();
     // 저주를 옮겨요
     FinalOverapPlayer->SetHasCurse(true);
-    FinalOverapPlayer->ClientRPC_HasCurseWidget(true);
+    ALCU_PlayerController* localPc = Cast<ALCU_PlayerController>(FinalOverapPlayer->GetController());
+    if(localPc)
+    {
+       localPc->ClientRPC_CurseUISet(true);
+    }
     bHasCurse = false;
-    ClientRPC_HasCurseWidget(false);
+    LCU_Pc->CurseUISet(false);
     ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
 
     // 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
@@ -395,21 +411,6 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
     {
         OverlappingPlayers.Empty();
     }
-}
-
-void ALCU_PlayerCharacter::NetMulticast_CarryCurse_Implementation()
-{
-	// 저주를 옮겨요
-	FinalOverapPlayer->SetHasCurse(true);
-	bHasCurse = false;
-	ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
-
-	// 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
-	FinalOverapPlayer = nullptr;
-	if(!OverlappingPlayers.IsEmpty())
-	{
-		OverlappingPlayers.Empty();
-	}
 }
 
 void ALCU_PlayerCharacter::DropDown()
@@ -436,6 +437,7 @@ void ALCU_PlayerCharacter::DropDown()
 
     // Drop 후에 핸드에 있는 아이템 null 초기화
     ItemInHand = nullptr;
+    
 }
 
 void ALCU_PlayerCharacter::PickUpDropDown()
@@ -510,12 +512,14 @@ void ALCU_PlayerCharacter::PickUpDropDown()
 
     //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
     //ServerRPC_PickUpDropDown();
-    
+
+
     ServerRPC_PickUpDropDown();
 }
 
 void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 {
+    
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
     
@@ -523,8 +527,19 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
     // 현재 아이템이 없으니 픽업
     if(!ItemInHand)
     {
-
-        //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PickUpDropDown executed on Server"));
+        // 근처에 제단 있으면 제단으로부터 아이템 얻었는지 확인
+        // 델리게이트 호출
+        // TODO : 모든 경우에 다 확인하는 거 에바임... 근데 bNearByAltar만으로는 예외 상황이 존재 -> 주울 수 있는 범위랑 bNearByAltar 설정 범위가 달라서 발생하는 문제
+        //if(bNearByAltar)
+        //{
+            if(OnDettachItemOnAltar.IsBound())
+            {
+                if(Cast<AHHR_Item>(FinalOverapItem))
+                {
+                    OnDettachItemOnAltar.Execute(Cast<AHHR_Item>(FinalOverapItem));
+                }
+            }
+        //}
         
         NetMulticast_AttachItem();
 
@@ -541,14 +556,28 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 
 void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 {
-    // multi에서 할 일을 최대한 줄여야할 듯 
     ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+    /*if(ItemInHand)
+    {
+        ItemInHand->SetOwner(this);
+    }*/
     AttachItem();
 }
 
 
 void ALCU_PlayerCharacter::AttachItem()
 {
+
+    if (ItemInHand && ItemInHand->IsA<ANSK_Ladder>())
+    {
+        ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(ItemInHand);
+        if (Ladder && Ladder->bIsInstalled) // 사다리가 설치 됐다면
+        {
+            P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
+            return;
+        }
+    }
+
     // Item의 Interactive 허용
     if(IsLocallyControlled())
     {
@@ -564,7 +593,6 @@ void ALCU_PlayerCharacter::AttachItem()
     // HHR 수정 
     if(ItemInHand)
     {
-        //P_LOG(PolluteLog, Warning, TEXT("Item In Hand!"))s
         // TODO : Attach를 Multicast로 싸줘야 함 
         ItemInHand->AttachToComponent(
             SkeletalMeshComp,                      
@@ -578,74 +606,27 @@ void ALCU_PlayerCharacter::AttachItem()
         // Item의 Owner 설정
         ItemInHand->SetOwner(this);
         
-        // UI 변경
-        if(PlayerHUD)
+        if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
         {
-            PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
+            LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
         }
-        
     }
 }
 
 void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
 {
     DetachItem();
-    /*if(ItemInHand)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, (TEXT("%s Item 있음"), *this->GetName()));
-    }
-    else
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, (TEXT("%s Item 없음"), *this->GetName()));
-        return;
-    }
-    
-
-    if(!ItemInHand) return;
-    FVector CharacterLocation = GetActorLocation();
-    // 캐릭터 발 아래 위치
-    FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
-    // 아이템이 캐릭터 방향을 따라 회전하도록 설정
-    FRotator DropRotation = GetActorRotation(); 
-
-    // FinalOverlapItem을 월드에 분리
-		
-    // 아이템의 부모-자식 관계 해제
-    // TODO : Detach를 Multicast로 싸줘야 함 
-    ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
-    // 위치 및 회전 설정
-    ItemInHand->SetActorLocation(DropLocation);
-    ItemInHand->SetActorRotation(DropRotation);
-
-    // 드롭 이후 초기화
-    FinalOverapItem = nullptr;
-    bHasItem = false;
-
-    // Drop 후에 핸드에 있는 아이템 null 초기화
-    ItemInHand = nullptr;
-
-    // UI 변경
-    if(PlayerHUD)
-    {
-        PlayerHUD->ChangeItemImageNull();
-    }*/
+   
 }
 
 void ALCU_PlayerCharacter::DetachItem()
 {
     if (!ItemInHand) return;
-    // Item의 Interactive 허용
-    if(IsLocallyControlled())
-    {
-        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(true);
-    }
-    
     FVector CharacterLocation = GetActorLocation();
     // 캐릭터 발 아래 위치
     FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
     // 아이템이 캐릭터 방향을 따라 회전하도록 설정
-    FRotator DropRotation = GetActorRotation(); 
+    FRotator DropRotation = GetActorRotation();
 
     // FinalOverlapItem을 월드에 분리
 		
@@ -661,136 +642,19 @@ void ALCU_PlayerCharacter::DetachItem()
     ItemInHand = nullptr;
     bHasItem = false;
 
-    // Drop 후에 핸드에 있는 아이템 null 초기화
-    ItemInHand = nullptr;
-
-    // UI 변경 
-    if(PlayerHUD)
+    if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
     {
-        PlayerHUD->ChangeItemImageNull();
+        LCU_Pc->UIManager->PlayerHUD->ChangeItemImageNull();
+        
     }
-    
-    /*
-	    // HHR 수정 
-	    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
-	    if(ItemInHand)
-	    {
-	        ItemInHand->AttachToComponent(
-
-                SkeletalMeshComp,
-                FAttachmentTransformRules::SnapToTargetIncludingScale,
-                FName("PickUpSocket")
-            );
-	        bHasItem = true;
-	        // 각 아이템 마다 위치 수정
-	        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
-	        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
-	        // Item의 Owner 설정
-	        ItemInHand->SetOwner(this);
-	    }
-	}
-	// 아이템을 가지고 있으니 드랍다운
-	else
-	{
-
-		FVector CharacterLocation = GetActorLocation();
-		// 캐릭터 발 아래 위치
-		FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
-		// 아이템이 캐릭터 방향을 따라 회전하도록 설정
-		FRotator DropRotation = GetActorRotation(); 
-
-		// FinalOverlapItem을 월드에 분리
-		
-			// 아이템의 부모-자식 관계 해제
-		FinalOverapItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
-		// 위치 및 회전 설정
-		FinalOverapItem->SetActorLocation(DropLocation);
-		FinalOverapItem->SetActorRotation(DropRotation);
-
-		// 드롭 이후 초기화
-		FinalOverapItem = nullptr;
-		bHasItem = false;
-
-	    // Drop 후에 핸드에 있는 아이템 null 초기화
-	    ItemInHand = nullptr;
-	}	
 }
-
-		DropDown();
-	}
-  */
-}
-
-
-void ALCU_PlayerCharacter::ShootTrace()
-{
-	if(!IsLocallyControlled()) return;
-	// 카메라 위치와 방향 가져오기
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
-
-	// 트레이스 시작점과 끝점 계산
-	FVector Start = CameraLocation;
-	FVector End = Start + CameraRotation.Vector() * 1000.0f; // 카메라 방향으로 1000 단위 거리
-    //DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.2f);
-
-	//  박스 크기 설정
-	FVector BoxHalfSize = FVector(10.0f, 10.0f, 50.0f); // 박스 크기 (너비 20, 높이 100)
-
-	//  트레이스할 객체 유형 설정
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel1)); 
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));        // Pawn (캐릭터)
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));        // Pawn (캐릭터)
-	
-	//  무시할 액터 설정
-	TArray<AActor*> IgnoredActors;
-	IgnoredActors.Add(this); // 자신 제외
-
-	FHitResult HitResult;
-
-	//  BoxTraceSingleForObjects 호출
-	bool bHit = UKismetSystemLibrary::BoxTraceSingleForObjects(
-		GetWorld(),
-		Start,
-		End,
-		BoxHalfSize,
-		CameraRotation,
-		ObjectTypes,
-		false,        
-		IgnoredActors,  
-		EDrawDebugTrace::None, 
-		HitResult,
-		true,           
-		FLinearColor::Red,   
-		FLinearColor::Green, 
-		5.0f
-	);
-
-	if(bHit)
-	{
-		AActor* HitActor = HitResult.GetActor();
-
-
-		//ILCU_InteractInterface* InteractInterface = Cast<ILCU_InteractInterface>(HitActor);
-		//if(InteractInterface)
-		//{
-		//	InteractInterface->Interact();
-		//}
-
-	}
-}
-
 
 void ALCU_PlayerCharacter::DieProcess()
 {
-    ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(GetController());
-    if(pc && IsLocallyControlled())
+    if(LCU_Pc && IsLocallyControlled())
     {
-        HasCurseWidget(false);
-        pc->ServerRPC_ChangeToSpector();
+        LCU_Pc->CurseUISet(false);
+        LCU_Pc->ServerRPC_ChangeToSpector();
     }
 }
 
@@ -802,54 +666,9 @@ void ALCU_PlayerCharacter::Attack()
     }
 }
 
-
 void ALCU_PlayerCharacter::InitItem()
 {
-    // hud 변경
-    if(PlayerHUD)
-    {
-        PlayerHUD->ChangeItemImageNull();
-    }
     ItemInHand = nullptr;
-}
-
-void ALCU_PlayerCharacter::HasCurseWidget(bool bShow)
-{
-    if(!IsLocallyControlled()) return;
-
-
-    if(bShow)
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Visible);
-        }
-    }
-    else
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
-}
-
-void ALCU_PlayerCharacter::ClientRPC_HasCurseWidget_Implementation(bool bShow)
-{
-    if(bShow)
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Visible);
-        }
-    }
-    else
-    {
-        if(LCU_TestWidget)
-        {
-            LCU_TestWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
 }
 
 void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
@@ -879,7 +698,7 @@ void ALCU_PlayerCharacter::NetMulticast_Attack_Implementation()
             }
 
         }
-
+        
     }
 }
 
@@ -901,6 +720,42 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
 {
     NearbyAltar = nullptr;
     SelectedSlotIndex = INDEX_NONE;
+}
+
+void ALCU_PlayerCharacter::ServerRPC_DetatchItem_Implementation()
+{
+    P_LOG(PolluteLog, Warning, TEXT("ServerRPC DetatchITem In pc"));
+    NetMulticast_DetachItem();
+}
+
+void ALCU_PlayerCharacter::ServerRPC_PutItemOnAltar_Implementation()
+{
+    // ItemInHand 손에서 Detatch
+    // TODO : 바로 attach 해서 사실 detatch 안해줘도 됨. ㅇㅅㅇ
+    AHHR_Item* tempItem = ItemInHand;
+    //ServerRPC_DetatchItem();
+    NetMulticast_DetachItem();
+
+    // 델리게이트 실행 -> Attach Item On Altar
+    // TODO : NetMulitcast로 
+    if(OnAttachItemOnAltar.IsBound())
+    {
+        OnAttachItemOnAltar.Execute(tempItem);
+    }
+}
+
+
+// G키
+void ALCU_PlayerCharacter::PutItemOnAltar()
+{
+    // G 클릭시
+    // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면(+그 아이템이 조합 아이템이여야함) Delegate broadcast
+    P_SCREEN(1.0f, FColor::Red, TEXT("G!"));
+
+    if(bNearByAltar && ItemInHand && ItemInHand->ItemData.ItemType == EItemType::CombineItem)
+    {
+        ServerRPC_PutItemOnAltar();
+    }
 }
 
 
@@ -928,7 +783,7 @@ void ALCU_PlayerCharacter::ClearCurrentSlotIndex()
 }
 
 // NSK 캐릭터 제단 상호작용 로직
-void ALCU_PlayerCharacter::OnInteract()
+/*void ALCU_PlayerCharacter::OnInteract()
 {
     if (NearbyAltar && ItemInHand)
     {
@@ -973,10 +828,160 @@ void ALCU_PlayerCharacter::OnInteract()
             P_LOG(PolluteLog, Error, TEXT("유효하지 않은 슬롯 인덱스입니다."));
         }
     }
-}
+}*/
 
 void ALCU_PlayerCharacter::ServerRPC_Attack_Implementation()
 {
     NetMulticast_Attack();
 }
 
+// NSK 사다리 설치 함수
+void ALCU_PlayerCharacter::OnInstallLadder()
+{
+    if (bHasItem && ItemInHand)
+    {
+        // 설치 지점 확인
+        for (TActorIterator<ANSK_LadderInstallPoint> It(GetWorld()); It; ++It)
+        {
+            ANSK_LadderInstallPoint* InstallPoint = *It;
+            if (InstallPoint && InstallPoint->bPlayerIsNear)
+            {
+                // 인스톨 포인트에 사다리 액터 생성 추가 로직
+                //InstallPoint->SetupInteraction();
+
+                //InstallAndDeleteItem();
+
+                //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되었습니다."));
+
+                ServerInstallLadder(InstallPoint);
+                break;
+            }
+        }
+    }
+}
+
+void ALCU_PlayerCharacter::ServerInstallLadder_Implementation(ANSK_LadderInstallPoint* InstallPoint)
+{
+    if (InstallPoint)
+    {
+        InstallPoint->InstallLadder(this);
+    }
+}
+
+// NSK 인스톨->드랍,삭제 함수
+void ALCU_PlayerCharacter::InstallAndDeleteItem()
+{
+    // 아이템이 손에 있을 때만 드랍 처리
+    if (bHasItem && ItemInHand)
+    {
+        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        ItemInHand->Destroy();
+        ItemInHand = nullptr;
+        bHasItem = false;
+
+        P_LOG(PolluteLog, Warning, TEXT("아이템을 손에서 해제했습니다."));
+    }
+}
+
+// NSK 사다리 인터렉션 함수
+void ALCU_PlayerCharacter::InteractWithLadder(const FInputActionValue& Value)
+{
+    // 입력 값을 불리언으로 가져옴 (Pressed 상태 확인)
+    bool bIsPressed = Value.Get<bool>();
+
+    if (bIsPressed)
+    {
+        if (HasAuthority()) // 서버에서 처리
+        {
+            Server_InteractWithLadder();
+        }
+        else
+        {
+            // 클라이언트가 서버에 요청
+            Server_InteractWithLadder();
+        }
+    }
+}
+
+void ALCU_PlayerCharacter::Server_InteractWithLadder_Implementation()
+{
+    // 플레이어가 설치된 사다리와 상호작용
+    FVector PlayerLocation = GetActorLocation();
+    float ClosestDistance = 200.f; // 상호작용 거리
+    ANSK_Ladder* ClosestLadder = nullptr;
+
+    for (TActorIterator<ANSK_Ladder> It(GetWorld()); It; ++It)
+    {
+        ANSK_Ladder* Ladder = *It;
+        if (Ladder && Ladder->bIsInstalled) // 설치된 사다리만 필터링
+        {
+            float Distance = FVector::Dist(PlayerLocation, Ladder->GetActorLocation());
+            if (Distance < ClosestDistance)
+            {
+                ClosestLadder = Ladder;
+                ClosestDistance = Distance;
+            }
+        }
+    }
+
+    if (ClosestLadder && ClosestLadder->TopPosition)
+    {
+        FVector TopLocation = ClosestLadder->TopPosition->GetComponentLocation();
+        Multicast_InteractWithLadder(TopLocation); // 모든 클라이언트에 전파
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("근처에 설치된 사다리가 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::Multicast_InteractWithLadder_Implementation(const FVector& TopLocation)
+{
+    SetActorLocation(TopLocation + FVector(0.f, 0.f, 50.f)); // 사다리 상단으로 이동
+    P_LOG(PolluteLog, Warning, TEXT("사다리 맨 위로 이동 완료"));
+}
+
+// NSK 낙하산 인터렉션 함수
+void ALCU_PlayerCharacter::InteractWithParachute()
+{
+    P_LOG(PolluteLog, Warning, TEXT("낙하산 탈출 호출"));
+
+    if (bCanUseParachute && ItemInHand && ItemInHand->IsA<ANSK_Parachute>())
+    {
+        // 낙하산 액터를 사용 시 스펙터 모드로 전환
+
+        // 캐릭터를 탈출 처리 상태로 설정
+        if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
+        {
+            if (IsValid(ItemInHand))
+            {
+                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
+                ItemInHand->Destroy();  // 낙하산 액터 제거
+                ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
+                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
+            }
+
+            if (PlayerController->IsLocalController())
+            {
+                PlayerController->ServerRPC_ChangeToSpector();
+            }
+        }
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
+{
+    bCanUseParachute = bCanUse; // 낙하산 사용 가능 여부
+    if (bCanUseParachute)
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 있습니다."));
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}

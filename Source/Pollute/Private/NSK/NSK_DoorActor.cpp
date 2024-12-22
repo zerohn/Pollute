@@ -30,7 +30,7 @@ void ANSK_DoorActor::SetTargetPositionAndRotation()
 {
     // 왼쪽 문인 경우: 문이 안에서 바깥으로 열리도록
     if (bIsLeftDoor)
-    {
+    {        
         // 왼쪽 문: 문이 -X 방향으로 열림 (피벗 기준으로 이동)
         TargetPosition = GetActorLocation();
         TargetRotation = FRotator(0.f, -90.f, 0.f);  // 90도 회전 (왼쪽으로 열림)
