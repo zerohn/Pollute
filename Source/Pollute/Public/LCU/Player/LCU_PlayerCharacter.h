@@ -14,6 +14,7 @@ enum class EPlayerType : uint8;
 
 // Delegates by hhr
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnAttachItemOnAltar, class AHHR_Item*, Item);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnDettachItemOnAltar, class AHHR_Item*, Item);
 
 UCLASS()
 class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , public ILCU_InteractInterface
@@ -261,13 +262,15 @@ public:
     // Delegates
 public:
     FOnAttachItemOnAltar OnAttachItemOnAltar;
+    FOnDettachItemOnAltar OnDettachItemOnAltar;
     
 private:
     // IA
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_PutItemOnAltar;
 
-    // 
+    //
+    UPROPERTY(Replicated)
     bool bNearByAltar = false;
 
 
@@ -280,6 +283,10 @@ public:
 public:
     UFUNCTION(Server, Reliable)
     void ServerRPC_DetatchItem();
+
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_PutItemOnAltar();
+
     
 protected:
     // Input system에 바인딩될 함수

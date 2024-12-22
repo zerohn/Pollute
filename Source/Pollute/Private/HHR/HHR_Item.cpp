@@ -53,6 +53,9 @@ void AHHR_Item::BeginPlay()
 
     ItemInteractWidgetComp->SetWidgetClass(ItemWidgetClass);
     ItemInteractWidgetComp->SetVisibility(false);
+
+    //
+    //SetOwner(GetWorld()->GetFirstPlayerController());
 }
 
 void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "HHR_Altar.generated.h"
 
-
+class AHHR_Item;
 
 UCLASS()
 class POLLUTE_API AHHR_Altar : public AActor
@@ -42,13 +42,13 @@ private:
     TArray<FVector> ItemAttachPos;
     
     // 배치되어 있는 Item ins들
-    TArray<class AHHR_Item*> AttachedItems;
-
+    TArray<AHHR_Item*> AttachedItems;
+ 
 // *아이템 배치에 사용할 변수들*
 private:
     int32 MaxItemCnt;
     // 현재 Item cnt는 동기화 되어야 하는 변수
-    UPROPERTY(Replicated)
+    UPROPERTY()
     int32 CurrentItemCnt;
 
     
@@ -58,10 +58,11 @@ private:
 public:
     // multicast 함수
     UFUNCTION(NetMulticast, Reliable)
-    void NetMulticast_AttachToAltar(class AHHR_Item* Item);
-    // 서버 호출 함수
-    UFUNCTION(Server, Reliable)
-    void ServerRPC_AttachToAltar(class AHHR_Item* Item);
+    void NetMulticast_AttachToAltar(AHHR_Item* Item);
+
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticast_Update(int32 idx);
+    
     
 // *충돌 처리 함수*
 protected:
@@ -77,7 +78,17 @@ protected:
 protected:
     // Player가 G키 누르면 호출
     UFUNCTION()
-    void OnAttachItem(class AHHR_Item* Item);
+    void OnAttachItem(AHHR_Item* Item);
+    // Player가 Detatch 하면 델리게이트 실행
+    UFUNCTION()
+    void OnDetatchITem(AHHR_Item* Item);
+
+
+// *걍 내부 함수*
+private:
+    int32 FindItemIdx(AHHR_Item* Item);
+
+    int32 FindAttachIdx();
 
 };
 

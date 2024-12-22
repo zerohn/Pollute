@@ -3,6 +3,7 @@
 
 #include "HHR/HHR_Altar.h"
 
+#include "EngineUtils.h"
 #include "TimerManager.h"
 #include "HHR/HHR_Item.h"
 #include "Components/SphereComponent.h"
@@ -13,6 +14,7 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "LCU/Player/LCU_PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -52,28 +54,44 @@ void AHHR_Altar::BeginPlay()
 {
 	Super::BeginPlay();
 
-    // PlayerCharacter에 바인딩
-    ALCU_PlayerCharacter* player =  Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-    if(player)
-    {
-        player->OnAttachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnAttachItem);
-    }
-
     // 변수 세팅
     MaxItemCnt = ItemAttachPos.Num();
+    AttachedItems.Init(nullptr, MaxItemCnt);
 
     // owner 설정 -> 딜레이 안주면 안되는듯... 레벨에 배치되어 있어서 contorller 생성보다 빠른듯
-    //SetOwner(GetWorld()->GetFirstPlayerController());
-    //P_LOG(PolluteLog, Warning, TEXT("owner 설정 : %s"), *GetOwner()->GetName());
+
+    // 서버에서만 해줌
+    if(!HasAuthority())
+    {
+        return;
+    }
     
     FTimerHandle timerHandle;
     GetWorld()->GetTimerManager().SetTimer(timerHandle, FTimerDelegate::CreateLambda([&]()
     {
-        //ACharacter* cha = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-        //SetOwner(cha);
-        SetOwner(GetWorld()->GetFirstPlayerController());
-        P_LOG(PolluteLog, Warning, TEXT("owner 설정 : %s"), *GetOwner()->GetName());
-    }), 4.0f, false);
+        //SetOwner(GetWorld()->GetFirstPlayerController());
+        //P_LOG(PolluteLog, Warning, TEXT("owner 설정 : %s"), *GetOwner()->GetName());
+
+        // PlayerCharacter에 바인딩
+        // 서버에서 모든 캐릭터 바인딩
+        for (AActor* Actor : TActorRange<ALCU_PlayerCharacter>(GetWorld()))
+        {
+            ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(Actor);
+            if (PlayerCharacter)
+            {
+                // Delegate 바인딩
+                PlayerCharacter->OnAttachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnAttachItem);
+                PlayerCharacter->OnDettachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnDetatchITem);
+                UE_LOG(LogTemp, Log, TEXT("Bound delegate to PlayerCharacter: %s"), *PlayerCharacter->GetName());
+            }
+        }
+        /*ALCU_PlayerCharacter* player =  Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+        if(player)
+        {
+            player->OnAttachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnAttachItem);
+        }*/
+        
+    }), 3.0f, false);
 
 
 }
@@ -82,7 +100,7 @@ void AHHR_Altar::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Out
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(AHHR_Altar, CurrentItemCnt);
+    //DOREPLIFETIME(AHHR_Altar, CurrentItemCnt);
 }
 
 // Called every frame
@@ -100,7 +118,6 @@ void AHHR_Altar::Tick(float DeltaTime)
     }*/
     
 }
-
 
 void AHHR_Altar::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                          UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -126,33 +143,17 @@ void AHHR_Altar::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent,
     }
 }
 
-// 델리게이트에 바인딩 되는 함수 
+// 델리게이트에 바인딩 되는 함수
+// 캐릭터를 통해 서버에서 호출 
 void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
 {
     // Item Attach
     // TODO : Item 부착 동기화 필요
     if(CurrentItemCnt < MaxItemCnt)
     {
-        if(GetOwner())
-        {
-            P_LOG(PolluteLog, Warning, TEXT("OnAttachItem : %s"), *GetOwner()->GetName());
-        }
-        else
-        {
-            P_LOG(PolluteLog, Warning, TEXT("owner 없음 "));
-        }
-        
-        
-        if(!HasAuthority())
-        {
-            P_LOG(PolluteLog, Warning, TEXT("슈벌2"));
-            ServerRPC_AttachToAltar(Item);
-        }
-        else
-        {
-            P_LOG(PolluteLog, Warning, TEXT("슈벌"));
-            ServerRPC_AttachToAltar(Item);
-        }
+        // !!!!! 클라에서는 Pawn이랑 Controller만 소유권 가짐.. 
+        NetMulticast_AttachToAltar(Item);
+
         // TODO : Attach 해주면 그 Item의 collision 어떻게 해줄지 정해줘야 함 
     }
     else
@@ -162,18 +163,82 @@ void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
     }
 }
 
+// 서버에서 무조건 실행
+// altar에서 detatch update
+void AHHR_Altar::OnDetatchITem(AHHR_Item* Item)
+{
+    // altar에 올려져 있는 아이템인지 확인
+    // 틀리면 무시
+    // 맞으면 arrary에 제거, 변수 update,
+    int32 idx = FindItemIdx(Item);
+    if(idx >= 0)
+    {
+        // 찾으면 attachedItem에서 제거
+        // TODO : 변수 update도 동기화 해줘야 함 
+        NetMulticast_Update(idx);
+    }
+    else
+    {
+        // 못찾으면
+        // altar 위에 있는 item이 아닌 거
+        return;
+    }
+    
+}
+
 void AHHR_Altar::NetMulticast_AttachToAltar_Implementation(AHHR_Item* Item)
 {
     // Attach 가능
-    P_LOG(PolluteLog, Warning, TEXT("multicast attach"));
-    Item->AttachToComponent(SphereCollisionComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-    Item->SetActorRelativeLocation(ItemAttachPos[CurrentItemCnt++]);
+    // TODO : attach 할 수 있는 인덱스 찾고 해당 위치에 attach + attached item에 넣기
+    int32 idx = FindAttachIdx();
+    if(idx >= 0)
+    {
+        // Attach 가능한 인덱스에 attach
+        Item->AttachToComponent(SphereCollisionComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        //Item->SetOwner(this);
+        Item->SetActorRelativeLocation(ItemAttachPos[idx]);
+        // 정보 업뎃
+        AttachedItems[idx] = Item;
+        ++CurrentItemCnt;
+        P_LOG(PolluteLog, Warning, TEXT("CurrentItemCnt : %d"), CurrentItemCnt);
+    }
+    
+
 }
 
-void AHHR_Altar::ServerRPC_AttachToAltar_Implementation(AHHR_Item* Item)
+void AHHR_Altar::NetMulticast_Update_Implementation(int32 idx)
 {
-    P_LOG(PolluteLog, Warning, TEXT("ServerRpc attach"));
-    NetMulticast_AttachToAltar(Item);
+    AttachedItems[idx] = nullptr;
+    --CurrentItemCnt;
+    P_LOG(PolluteLog, Warning, TEXT("CurrentItemCnt : %d"), CurrentItemCnt);
 }
+
+//*private 함수
+int32 AHHR_Altar::FindItemIdx(AHHR_Item* Item)
+{
+    // 값에 해당하는 Item Index 찾기
+    // 없으면 -1 반환
+    for(int32 i = 0; i < AttachedItems.Num(); i++)
+    {
+        if(Item == AttachedItems[i])
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int32 AHHR_Altar::FindAttachIdx()
+{
+    for(int32 i = 0; i < AttachedItems.Num(); i++)
+    {
+        if(AttachedItems[i] == nullptr)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 
 

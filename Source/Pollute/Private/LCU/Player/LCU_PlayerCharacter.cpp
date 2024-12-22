@@ -161,6 +161,8 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
+    // hr altar
+    DOREPLIFETIME(ALCU_PlayerCharacter, bNearByAltar);
     
 }
 
@@ -525,8 +527,19 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
     // 현재 아이템이 없으니 픽업
     if(!ItemInHand)
     {
-
-        //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PickUpDropDown executed on Server"));
+        // 근처에 제단 있으면 제단으로부터 아이템 얻었는지 확인
+        // 델리게이트 호출
+        // TODO : 모든 경우에 다 확인하는 거 에바임... 근데 bNearByAltar만으로는 예외 상황이 존재 -> 주울 수 있는 범위랑 bNearByAltar 설정 범위가 달라서 발생하는 문제
+        //if(bNearByAltar)
+        //{
+            if(OnDettachItemOnAltar.IsBound())
+            {
+                if(Cast<AHHR_Item>(FinalOverapItem))
+                {
+                    OnDettachItemOnAltar.Execute(Cast<AHHR_Item>(FinalOverapItem));
+                }
+            }
+        //}
         
         NetMulticast_AttachItem();
 
@@ -545,6 +558,10 @@ void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 {
     // multi에서 할 일을 최대한 줄여야할 듯 
     ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+    /*if(ItemInHand)
+    {
+        ItemInHand->SetOwner(this);
+    }*/
     AttachItem();
 }
 
@@ -911,23 +928,33 @@ void ALCU_PlayerCharacter::ServerRPC_DetatchItem_Implementation()
     NetMulticast_DetachItem();
 }
 
+void ALCU_PlayerCharacter::ServerRPC_PutItemOnAltar_Implementation()
+{
+    // ItemInHand 손에서 Detatch
+    // TODO : 바로 attach 해서 사실 detatch 안해줘도 됨. ㅇㅅㅇ
+    AHHR_Item* tempItem = ItemInHand;
+    //ServerRPC_DetatchItem();
+    NetMulticast_DetachItem();
+
+    // 델리게이트 실행 -> Attach Item On Altar
+    // TODO : NetMulitcast로 
+    if(OnAttachItemOnAltar.IsBound())
+    {
+        OnAttachItemOnAltar.Execute(tempItem);
+    }
+}
+
+
+// G키
 void ALCU_PlayerCharacter::PutItemOnAltar()
 {
     // G 클릭시
     // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면(+그 아이템이 조합 아이템이여야함) Delegate broadcast
     P_SCREEN(1.0f, FColor::Red, TEXT("G!"));
+
     if(bNearByAltar && ItemInHand && ItemInHand->ItemData.ItemType == EItemType::CombineItem)
     {
-        // ItemInHand 손에서 Detatch
-        // TODO : Detatch 동기화 처리 필요
-        AHHR_Item* tempItem = ItemInHand;
-        ServerRPC_DetatchItem();
-
-        // 델리게이트 실행 -> Attach Item On Altar
-        if(OnAttachItemOnAltar.IsBound())
-        {
-            OnAttachItemOnAltar.Execute(tempItem);
-        }
+        ServerRPC_PutItemOnAltar();
     }
 }
 
