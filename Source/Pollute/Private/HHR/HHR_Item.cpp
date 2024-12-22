@@ -46,6 +46,14 @@ AHHR_Item::AHHR_Item()
 void AHHR_Item::BeginPlay()
 {
 	Super::BeginPlay();
+
+
+    ItemInteractWidgetComp->SetWidgetClass(ItemWidgetClass);
+    ItemInteractWidgetComp->SetVisibility(false);
+
+    //
+    //SetOwner(GetWorld()->GetFirstPlayerController());
+
 }
 
 void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -56,6 +64,8 @@ void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutL
     DOREPLIFETIME(AHHR_Item, ItemManager);
     // REplicated 무조건 해줘야 함 
     DOREPLIFETIME(AHHR_Item, ItemSpawnManager);
+
+    DOREPLIFETIME(AHHR_Item, bIsAltarItem);
 }
 
 // Called every frame
@@ -77,6 +87,7 @@ void AHHR_Item::OnRep_ChangeIdx()
         SetItemData(ItemSpawnManager->ItemDataMap[DataIdx]);
     }
 }
+
 
 // ItemSpawnManager에서 넣어주는 게 나을듯 
 void AHHR_Item::SetItemData(const FItemData& data)

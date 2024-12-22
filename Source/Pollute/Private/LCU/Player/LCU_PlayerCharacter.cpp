@@ -21,6 +21,7 @@
 #include "Components/WidgetComponent.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "HHR/UI/HHR_ItemDialog.h"
 #include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
@@ -143,7 +144,8 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_CarryCurse, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::CarryCurse);
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
-        EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+        //EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
+	    EnhancedInputComponent->BindAction(IA_PutItemOnAltar, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PutItemOnAltar);
 	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
 	}
 }
@@ -156,7 +158,11 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
+
+    // hr altar
+    DOREPLIFETIME(ALCU_PlayerCharacter, bNearByAltar);
     DOREPLIFETIME(ALCU_PlayerCharacter, LCU_Pc);
+
     
 }
 
@@ -426,12 +432,85 @@ void ALCU_PlayerCharacter::DropDown()
 }
 
 void ALCU_PlayerCharacter::PickUpDropDown()
-{   
+{
+    /*if (!RetrievedItem) // Null 수정
+    {
+        P_LOG(PolluteLog, Error, TEXT("픽업할 아이템이 없습니다."));
+        return;
+    }
+
+    if (!bHasItem) // 아이템이 없는 경우 픽업
+    {
+        USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
+        if (!SkeletalMeshComp)
+        {
+            P_LOG(PolluteLog, Error, TEXT("스켈레탈 메시가 없습니다."));
+            return;
+        }
+
+        // 아이템 손에 부착
+        ItemInHand = RetrievedItem;
+        ItemInHand->AttachToComponent(
+            SkeletalMeshComp,
+            FAttachmentTransformRules::SnapToTargetIncludingScale,
+            FName("PickUpSocket")
+        );
+
+        P_SCREEN(1.f, FColor::Black, TEXT("아이템 픽업 성공"));
+        bHasItem = true;
+
+        // 아이템 위치 및 회전 설정
+        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
+        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+        ItemInHand->SetOwner(this);
+
+        // 상태 초기화
+        RetrievedItem = nullptr;
+    }
+    else // 아이템이 있는 경우 드랍
+    {
+        FVector CharacterLocation = GetActorLocation();
+        FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
+        FRotator DropRotation = GetActorRotation();
+
+        // 아이템 부모-자식 관계 해제 및 위치 설정
+        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        ItemInHand->SetActorLocation(DropLocation);
+        ItemInHand->SetActorRotation(DropRotation);
+
+        P_SCREEN(1.f, FColor::Black, TEXT("아이템 드랍 완료"));
+
+        // 상태 초기화
+        ItemInHand = nullptr;
+        bHasItem = false;
+    }
+
+
+    //주울 수 있는 아이템이 없으면 나가야함
+    if (!FinalOverapItem) return;
+	
+	// 현재 아이템이 없으니 픽업
+
+	if(!bHasItem)
+	{		
+		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
+		if (!SkeletalMeshComp)
+		{
+			return;
+		}
+*/
+
+
+    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
+    //ServerRPC_PickUpDropDown();
+
+
     ServerRPC_PickUpDropDown();
 }
 
 void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 {
+    
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
     
@@ -439,8 +518,19 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
     // 현재 아이템이 없으니 픽업
     if(!ItemInHand)
     {
-
-        //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PickUpDropDown executed on Server"));
+        // 근처에 제단 있으면 제단으로부터 아이템 얻었는지 확인
+        // 델리게이트 호출
+        // TODO : 모든 경우에 다 확인하는 거 에바임... 근데 bNearByAltar만으로는 예외 상황이 존재 -> 주울 수 있는 범위랑 bNearByAltar 설정 범위가 달라서 발생하는 문제
+        //if(bNearByAltar)
+        //{
+            if(OnDettachItemOnAltar.IsBound())
+            {
+                if(Cast<AHHR_Item>(FinalOverapItem))
+                {
+                    OnDettachItemOnAltar.Execute(Cast<AHHR_Item>(FinalOverapItem));
+                }
+            }
+        //}
         
         NetMulticast_AttachItem();
 
@@ -458,6 +548,10 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 {
     ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+    /*if(ItemInHand)
+    {
+        ItemInHand->SetOwner(this);
+    }*/
     AttachItem();
 }
 
@@ -602,6 +696,42 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
     SelectedSlotIndex = INDEX_NONE;
 }
 
+void ALCU_PlayerCharacter::ServerRPC_DetatchItem_Implementation()
+{
+    P_LOG(PolluteLog, Warning, TEXT("ServerRPC DetatchITem In pc"));
+    NetMulticast_DetachItem();
+}
+
+void ALCU_PlayerCharacter::ServerRPC_PutItemOnAltar_Implementation()
+{
+    // ItemInHand 손에서 Detatch
+    // TODO : 바로 attach 해서 사실 detatch 안해줘도 됨. ㅇㅅㅇ
+    AHHR_Item* tempItem = ItemInHand;
+    //ServerRPC_DetatchItem();
+    NetMulticast_DetachItem();
+
+    // 델리게이트 실행 -> Attach Item On Altar
+    // TODO : NetMulitcast로 
+    if(OnAttachItemOnAltar.IsBound())
+    {
+        OnAttachItemOnAltar.Execute(tempItem);
+    }
+}
+
+
+// G키
+void ALCU_PlayerCharacter::PutItemOnAltar()
+{
+    // G 클릭시
+    // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면(+그 아이템이 조합 아이템이여야함) Delegate broadcast
+    P_SCREEN(1.0f, FColor::Red, TEXT("G!"));
+
+    if(bNearByAltar && ItemInHand && ItemInHand->ItemData.ItemType == EItemType::CombineItem)
+    {
+        ServerRPC_PutItemOnAltar();
+    }
+}
+
 
 void ALCU_PlayerCharacter::ServerRPC_SetPlayerType_Implementation(EPlayerType InPlayerType)
 {
@@ -627,7 +757,7 @@ void ALCU_PlayerCharacter::ClearCurrentSlotIndex()
 }
 
 // NSK 캐릭터 제단 상호작용 로직
-void ALCU_PlayerCharacter::OnInteract()
+/*void ALCU_PlayerCharacter::OnInteract()
 {
     if (NearbyAltar && ItemInHand)
     {
@@ -672,7 +802,7 @@ void ALCU_PlayerCharacter::OnInteract()
             P_LOG(PolluteLog, Error, TEXT("유효하지 않은 슬롯 인덱스입니다."));
         }
     }
-}
+}*/
 
 void ALCU_PlayerCharacter::ServerRPC_Attack_Implementation()
 {

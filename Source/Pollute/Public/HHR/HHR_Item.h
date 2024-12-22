@@ -61,6 +61,8 @@ public:
     
 private:
     // 제단 아이템 확인
+    //UPROPERTY(Replicated)
+    UPROPERTY(Replicated)
     bool bIsAltarItem = false;
     
     
