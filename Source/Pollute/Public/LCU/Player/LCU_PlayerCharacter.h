@@ -154,6 +154,15 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_RunToggle;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_Ladder;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_ClimingLadder;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_Parachute;
     
     // Montage
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Anim")
@@ -226,6 +235,37 @@ public:
 
     // 플레이어가 들고 있는 아이템 반환 함수
     FItemData GetHeldItem() const;
+    
+    
+
+    // NSK Ladder
+    void OnInstallLadder();
+
+    void InstallAndDeleteItem();
+
+    UFUNCTION()
+    void InteractWithLadder(const FInputActionValue& Value);
+
+    // 사다리 설치 서버 RPC
+    UFUNCTION(Server, Reliable)
+    void ServerInstallLadder(ANSK_LadderInstallPoint* InstallPoint);
+
+    // 상호작용 서버 RPC
+    UFUNCTION(Server, Reliable)
+    void Server_InteractWithLadder();
+
+    // 상호작용 멀티캐스트 RPC
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_InteractWithLadder(const FVector& TopLocation);
+
+    // NSK Parachute
+    UFUNCTION()
+    void InteractWithParachute();
+
+    UFUNCTION()
+    void CanUseParachute(bool bCanUse);
+
+    bool bCanUseParachute;
 
 public:
 

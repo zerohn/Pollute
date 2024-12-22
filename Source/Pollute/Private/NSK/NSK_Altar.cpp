@@ -74,7 +74,7 @@ ANSK_Altar::ANSK_Altar()
         SlotCollisionBoxes.Add(SlotBox);
 
         // 로그 출력
-        P_LOG(PolluteLog, Warning, TEXT("Slot %d initialized at: %s"), i + 1, *SlotLocation.ToString());
+        //P_LOG(PolluteLog, Warning, TEXT("Slot %d initialized at: %s"), i + 1, *SlotLocation.ToString());
     }
 
     CurrentSlotIndex = -1;

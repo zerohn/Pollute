@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
@@ -22,6 +23,11 @@
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
+#include "LCU/Player/LCU_TestWidget.h"
+#include "NSK/NSK_LadderInstallPoint.h"
+#include "EngineUtils.h"
+#include <NSK/NSK_Ladder.h>
+#include "NSK/NSK_Parachute.h"
 #include "HHR/UI/HHR_ItemDialog.h"
 #include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
@@ -147,6 +153,9 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
         //EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
 	    EnhancedInputComponent->BindAction(IA_PutItemOnAltar, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PutItemOnAltar);
 	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
+        EnhancedInputComponent->BindAction(IA_Ladder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInstallLadder);
+        EnhancedInputComponent->BindAction(IA_ClimingLadder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithLadder);
+        EnhancedInputComponent->BindAction(IA_Parachute, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithParachute);
 	}
 }
 
@@ -558,6 +567,23 @@ void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
 
 void ALCU_PlayerCharacter::AttachItem()
 {
+
+    if (ItemInHand && ItemInHand->IsA<ANSK_Ladder>())
+    {
+        ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(ItemInHand);
+        if (Ladder && Ladder->bIsInstalled) // 사다리가 설치 됐다면
+        {
+            P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
+            return;
+        }
+    }
+
+    // Item의 Interactive 허용
+    if(IsLocallyControlled())
+    {
+        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(false);
+    }
+
     USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
     if (!SkeletalMeshComp)
     {
@@ -600,7 +626,7 @@ void ALCU_PlayerCharacter::DetachItem()
     // 캐릭터 발 아래 위치
     FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
     // 아이템이 캐릭터 방향을 따라 회전하도록 설정
-    FRotator DropRotation = GetActorRotation(); 
+    FRotator DropRotation = GetActorRotation();
 
     // FinalOverlapItem을 월드에 분리
 		
@@ -809,3 +835,153 @@ void ALCU_PlayerCharacter::ServerRPC_Attack_Implementation()
     NetMulticast_Attack();
 }
 
+// NSK 사다리 설치 함수
+void ALCU_PlayerCharacter::OnInstallLadder()
+{
+    if (bHasItem && ItemInHand)
+    {
+        // 설치 지점 확인
+        for (TActorIterator<ANSK_LadderInstallPoint> It(GetWorld()); It; ++It)
+        {
+            ANSK_LadderInstallPoint* InstallPoint = *It;
+            if (InstallPoint && InstallPoint->bPlayerIsNear)
+            {
+                // 인스톨 포인트에 사다리 액터 생성 추가 로직
+                //InstallPoint->SetupInteraction();
+
+                //InstallAndDeleteItem();
+
+                //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되었습니다."));
+
+                ServerInstallLadder(InstallPoint);
+                break;
+            }
+        }
+    }
+}
+
+void ALCU_PlayerCharacter::ServerInstallLadder_Implementation(ANSK_LadderInstallPoint* InstallPoint)
+{
+    if (InstallPoint)
+    {
+        InstallPoint->InstallLadder(this);
+    }
+}
+
+// NSK 인스톨->드랍,삭제 함수
+void ALCU_PlayerCharacter::InstallAndDeleteItem()
+{
+    // 아이템이 손에 있을 때만 드랍 처리
+    if (bHasItem && ItemInHand)
+    {
+        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        ItemInHand->Destroy();
+        ItemInHand = nullptr;
+        bHasItem = false;
+
+        P_LOG(PolluteLog, Warning, TEXT("아이템을 손에서 해제했습니다."));
+    }
+}
+
+// NSK 사다리 인터렉션 함수
+void ALCU_PlayerCharacter::InteractWithLadder(const FInputActionValue& Value)
+{
+    // 입력 값을 불리언으로 가져옴 (Pressed 상태 확인)
+    bool bIsPressed = Value.Get<bool>();
+
+    if (bIsPressed)
+    {
+        if (HasAuthority()) // 서버에서 처리
+        {
+            Server_InteractWithLadder();
+        }
+        else
+        {
+            // 클라이언트가 서버에 요청
+            Server_InteractWithLadder();
+        }
+    }
+}
+
+void ALCU_PlayerCharacter::Server_InteractWithLadder_Implementation()
+{
+    // 플레이어가 설치된 사다리와 상호작용
+    FVector PlayerLocation = GetActorLocation();
+    float ClosestDistance = 200.f; // 상호작용 거리
+    ANSK_Ladder* ClosestLadder = nullptr;
+
+    for (TActorIterator<ANSK_Ladder> It(GetWorld()); It; ++It)
+    {
+        ANSK_Ladder* Ladder = *It;
+        if (Ladder && Ladder->bIsInstalled) // 설치된 사다리만 필터링
+        {
+            float Distance = FVector::Dist(PlayerLocation, Ladder->GetActorLocation());
+            if (Distance < ClosestDistance)
+            {
+                ClosestLadder = Ladder;
+                ClosestDistance = Distance;
+            }
+        }
+    }
+
+    if (ClosestLadder && ClosestLadder->TopPosition)
+    {
+        FVector TopLocation = ClosestLadder->TopPosition->GetComponentLocation();
+        Multicast_InteractWithLadder(TopLocation); // 모든 클라이언트에 전파
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("근처에 설치된 사다리가 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::Multicast_InteractWithLadder_Implementation(const FVector& TopLocation)
+{
+    SetActorLocation(TopLocation + FVector(0.f, 0.f, 50.f)); // 사다리 상단으로 이동
+    P_LOG(PolluteLog, Warning, TEXT("사다리 맨 위로 이동 완료"));
+}
+
+// NSK 낙하산 인터렉션 함수
+void ALCU_PlayerCharacter::InteractWithParachute()
+{
+    P_LOG(PolluteLog, Warning, TEXT("낙하산 탈출 호출"));
+
+    if (bCanUseParachute && ItemInHand && ItemInHand->IsA<ANSK_Parachute>())
+    {
+        // 낙하산 액터를 사용 시 스펙터 모드로 전환
+
+        // 캐릭터를 탈출 처리 상태로 설정
+        if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
+        {
+            if (IsValid(ItemInHand))
+            {
+                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
+                ItemInHand->Destroy();  // 낙하산 액터 제거
+                ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
+                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
+            }
+
+            if (PlayerController->IsLocalController())
+            {
+                PlayerController->ServerRPC_ChangeToSpector();
+            }
+        }
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
+{
+    bCanUseParachute = bCanUse; // 낙하산 사용 가능 여부
+    if (bCanUseParachute)
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 있습니다."));
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}
