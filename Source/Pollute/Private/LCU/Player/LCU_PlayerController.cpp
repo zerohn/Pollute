@@ -39,13 +39,13 @@ void ALCU_PlayerController::BeginPlay()
     if (PlayerMode == EPlayerMode::Monster)
     {
         CurrentVoiceChannel = EVoiceChannel::MonsterChannel;
+    }
     if(!IsLocalController()) return;
     if(UIManagerFactory)
     {
         UIManager = GetWorld()->SpawnActor<ALCU_UIManager>(UIManagerFactory);
         UIManager->SetOwner(this);
         UIManager->Init();
-
     }
 }
 

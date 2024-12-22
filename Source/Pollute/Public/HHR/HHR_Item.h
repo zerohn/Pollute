@@ -52,7 +52,9 @@ protected:
     // Item Interaction Widget Component
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
     class UWidgetComponent* ItemInteractWidgetComp;
-    
+
+    UPROPERTY(EditDefaultsOnly, Category = "Component")
+    TSubclassOf<class UUserWidget> ItemWidgetClass;
 public:
     
 	// Item Data
