@@ -3,6 +3,7 @@
 
 #include "LCU/Player/LCU_PlayerController.h"
 
+#include "OnlineSubsystemUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/SpectatorPawn.h"
@@ -11,7 +12,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_MonsterCharacter.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
-#include "NSK/NSK_SpawnManager.h"
 #include "P_Settings/P_GameState.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
@@ -21,6 +21,21 @@ ALCU_PlayerController::ALCU_PlayerController()
 void ALCU_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+    IOnlineVoicePtr VoiceInterface = Online::GetVoiceInterface(GetWorld());
+
+    if (PlayerMode == EPlayerMode::Human)
+    {
+        CurrentVoiceChannel = EVoiceChannel::PlayerChannel;
+    }
+    if (PlayerMode == EPlayerMode::Spector)
+    {
+        CurrentVoiceChannel = EVoiceChannel::SpectatorChannel;
+    }
+    if (PlayerMode == EPlayerMode::Monster)
+    {
+        CurrentVoiceChannel = EVoiceChannel::MonsterChannel;
+    }
 }
 
 void ALCU_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)

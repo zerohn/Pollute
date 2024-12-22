@@ -7,6 +7,7 @@
 #include "LCU/LCU_Properties/LCU_Property.h"
 #include "LCU_PlayerController.generated.h"
 
+enum class EVoiceChannel : uint8;
 /**
  * 
  */
@@ -38,4 +39,7 @@ public:
 	// 몬스터 클래스 TSubclassOf 로 생성하기
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
     TSubclassOf<class ALCU_MonsterCharacter> MonChar;
+
+    // 음성 채팅
+    EVoiceChannel CurrentVoiceChannel;
 };
