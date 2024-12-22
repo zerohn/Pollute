@@ -7,7 +7,9 @@
 #include "LCU/LCU_Properties/LCU_Property.h"
 #include "LCU_PlayerController.generated.h"
 
+enum class EVoiceChannel : uint8;
 class ALCU_UIManager;
+
 /**
  * 
  */
@@ -41,6 +43,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
     TSubclassOf<class ALCU_MonsterCharacter> MonChar;
 
+    // 음성 채팅
+    EVoiceChannel CurrentVoiceChannel;
 
     // UI 관련 작업
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UIManager")

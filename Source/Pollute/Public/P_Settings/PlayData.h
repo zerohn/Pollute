@@ -17,9 +17,18 @@ enum class EPlayerType : uint8
     Count UMETA(CLASS_Hidden)
 };
 
+UENUM(BlueprintType)
+enum class EVoiceChannel : uint8
+{
+    PlayerChannel UMETA(DisplayName = "PlayerVoiceChannel"),
+    MonsterChannel UMETA(DisplayName = "MonsterVoiceChannel"),
+    SpectatorChannel UMETA(DisplayName = "SpectatorVoiceChannel")
+};
+
 /**
  * 
  */
+
 class POLLUTE_API PlayData
 {
 public:

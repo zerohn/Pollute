@@ -3,6 +3,7 @@
 
 #include "LCU/Player/LCU_PlayerController.h"
 
+#include "OnlineSubsystemUtils.h"
 #include "NavigationSystemTypes.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
@@ -24,12 +25,27 @@ ALCU_PlayerController::ALCU_PlayerController()
 void ALCU_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+    IOnlineVoicePtr VoiceInterface = Online::GetVoiceInterface(GetWorld());
+
+    if (PlayerMode == EPlayerMode::Human)
+    {
+        CurrentVoiceChannel = EVoiceChannel::PlayerChannel;
+    }
+    if (PlayerMode == EPlayerMode::Spector)
+    {
+        CurrentVoiceChannel = EVoiceChannel::SpectatorChannel;
+    }
+    if (PlayerMode == EPlayerMode::Monster)
+    {
+        CurrentVoiceChannel = EVoiceChannel::MonsterChannel;
     if(!IsLocalController()) return;
     if(UIManagerFactory)
     {
         UIManager = GetWorld()->SpawnActor<ALCU_UIManager>(UIManagerFactory);
         UIManager->SetOwner(this);
         UIManager->Init();
+
     }
 }
 
