@@ -7,6 +7,7 @@
 #include "LCU/LCU_Properties/LCU_Property.h"
 #include "LCU_PlayerController.generated.h"
 
+class ALCU_UIManager;
 /**
  * 
  */
@@ -22,14 +23,15 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ChangeToSpector();
 
 	UFUNCTION()
 	void ChangeToMonster();
 
-    UFUNCTION(Client, Reliable)
-    void ClientRPC_ItemUIOff();
+     
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
@@ -38,4 +40,22 @@ public:
 	// 몬스터 클래스 TSubclassOf 로 생성하기
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
     TSubclassOf<class ALCU_MonsterCharacter> MonChar;
+
+
+    // UI 관련 작업
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UIManager")
+    TSubclassOf<ALCU_UIManager> UIManagerFactory;
+    
+    UPROPERTY()
+    ALCU_UIManager* UIManager;
+
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_ItemUIOff();
+
+    UFUNCTION()
+    void CurseUISet(bool bShow);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_CurseUISet(bool bShow);
+    
+    // UI 관련 작업 END
 };

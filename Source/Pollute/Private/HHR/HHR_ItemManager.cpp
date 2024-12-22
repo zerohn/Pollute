@@ -35,15 +35,6 @@ void AHHR_ItemManager::BeginPlay()
 {
     Super::BeginPlay();
 
-	
-    // Combine Item만 임시 생성
-    TestPlayerHUDIns = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(), PlayerHUDClass);
-    TestPlayerHUDIns->AddToViewport();
-
-    // character에서 임시로 hud 생성
-    ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    player->PlayerHUD = TestPlayerHUDIns;
-    
     //if(!HasAuthority()) return;
     //ServerRPC_GenerateItem();
     FVector pivot = GetActorLocation();
@@ -63,7 +54,6 @@ void AHHR_ItemManager::BeginPlay()
                     pivot.Y += loc;
                     item = GetWorld()->SpawnActor<AHHR_Item>(ItemClass, pivot, GetActorRotation());
                     item->SetItemData(Pair.Value);
-                    item->PlayerHUD = TestPlayerHUDIns;
                     NetMulticast_SetData(item, Pair.Key);
                     
                     /*GeneratedItems.Add(item);
@@ -76,7 +66,6 @@ void AHHR_ItemManager::BeginPlay()
                         pivot.Y += loc;
                         item = GetWorld()->SpawnActor<AHHR_Knife>(KnifeItemClass, pivot, GetActorRotation());
                         item->SetItemData(Pair.Value);
-                        item->PlayerHUD = TestPlayerHUDIns;
                         NetMulticast_SetData(item, Pair.Key);
                         /*GeneratedItems.Add(item);
                         ItemsDataIdx.Add(Pair.Key);*/
@@ -86,7 +75,6 @@ void AHHR_ItemManager::BeginPlay()
                         pivot.Y += loc;
                         item = GetWorld()->SpawnActor<AHHR_Gun>(GunItemClass, pivot, GetActorRotation());
                         item->SetItemData(Pair.Value);
-                        item->PlayerHUD = TestPlayerHUDIns;
                         NetMulticast_SetData(item, Pair.Key);
                         /*GeneratedItems.Add(item);
                         ItemsDataIdx.Add(Pair.Key);*/
@@ -203,7 +191,6 @@ FItemData& AHHR_ItemManager::GetItemDataByID(int32 ItemID)
 void AHHR_ItemManager::NetMulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
 {
     Item->ItemManager = this;
-    Item->PlayerHUD = TestPlayerHUDIns;
     Item->DataIdx = idx;
     
 }

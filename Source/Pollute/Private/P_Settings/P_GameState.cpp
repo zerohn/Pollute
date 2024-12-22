@@ -5,6 +5,7 @@
 
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "LCU/InteractActors/LCU_Curse.h"
@@ -31,6 +32,9 @@ void AP_GameState::BeginPlay()
     
     GetWorld()->GetFirstPlayerController()->SetInputMode(FInputModeGameOnly());
     GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(false);
+
+    FTimerHandle SetMeshHandle;
+    GetWorldTimerManager().SetTimer(SetMeshHandle, this, &AP_GameState::InitPlayerMesh, 1.f, false);
 }
 
 void AP_GameState::Tick(float DeltaSeconds)
@@ -125,6 +129,16 @@ void AP_GameState::RestartCurse()
 {
 	ALCU_Curse::GetInstance(GetWorld())->InitCurseTime();
 	SelectPlayer();
+}
+
+void AP_GameState::InitPlayerMesh()
+{
+    for (int i = 0; i < PlayerArray.Num(); i++)
+    {
+        ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(PlayerArray[i]->GetPawn());
+        if (!PlayerCharacter || GetGameInstance<UP_GameInstance>()->PlayerTypes.Num() <= i) continue;
+        PlayerCharacter->ServerRPC_SetPlayerType(GetGameInstance<UP_GameInstance>()->PlayerTypes[i]);
+    }
 }
 
 //void AP_GameState::StartCurse_Implementation(ALCU_PlayerCharacter* selectedPlayer)

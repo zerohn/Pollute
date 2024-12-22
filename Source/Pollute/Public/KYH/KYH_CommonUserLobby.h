@@ -39,9 +39,9 @@ public:
     UPROPERTY(meta = (BindWidget))
     UVerticalBox* VerticalBox;
     UFUNCTION()
-    void InitLobbyUI(const FText& SessionName, const TArray<FName>& PlayerNames);
+    void InitLobbyUI(const FText& SessionName);
     UFUNCTION()
-    void AddPlayerSlotUI(const TArray<FName>& PlayerNames);
+    void AddPlayerSlotUI(const FName PlayerName, const EPlayerType PlayerType);
     UPROPERTY(EditDefaultsOnly, Category = "Session")
     TSubclassOf<UKYH_PlayerSlot> PlayerSlotClass;
     UPROPERTY()

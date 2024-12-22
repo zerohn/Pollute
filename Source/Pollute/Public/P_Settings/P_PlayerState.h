@@ -20,23 +20,22 @@ protected:
     
 	virtual void BeginPlay() override;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Session")
-    TSubclassOf<UKYH_CommonUserLobby> LobbyWidgetClass;
-
-    UPROPERTY()
-    UKYH_CommonUserLobby* LobbyWidget;
+    // UPROPERTY(EditDefaultsOnly, Category = "Session")
+    // TSubclassOf<UKYH_CommonUserLobby> LobbyWidgetClass;
+    //
+    // UPROPERTY()
+    // UKYH_CommonUserLobby* LobbyWidget;
     
 public:
     
-	virtual void Tick(float DeltaSeconds) override;    
-
-    UFUNCTION(Server, Reliable)
-    void ServerRPC_SendChat(const FString& Message);
-
-    UFUNCTION(NetMulticast, Reliable)
-    void MulticastRPC_Chat(const FString& Message);
-    
-    void ServerRPC_UpdateLobbyUI();
-    UFUNCTION(Client, Reliable)
-    void MakeUI(const TArray<FName>& PlayerNames);
+ //
+ //    UFUNCTION(Server, Reliable)
+ //    void ServerRPC_SendChat(const FString& Message);
+ //
+ //    UFUNCTION(NetMulticast, Reliable)
+ //    void MulticastRPC_Chat(const FString& Message);
+ //    
+ //    void ServerRPC_UpdateLobbyUI();
+ //    UFUNCTION(Client, Reliable)
+ //    void MakeUI(const TArray<FName>& PlayerNames);
 };

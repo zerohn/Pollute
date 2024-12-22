@@ -9,7 +9,13 @@
 #include "P_Settings/PlayData.h"
 #include "LCU_PlayerCharacter.generated.h"
 
+class ALCU_PlayerController;
 enum class EPlayerType : uint8;
+
+
+// Delegates by hhr
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnAttachItemOnAltar, class AHHR_Item*, Item);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnDettachItemOnAltar, class AHHR_Item*, Item);
 
 UCLASS()
 class POLLUTE_API ALCU_PlayerCharacter : public ATP_ThirdPersonCharacter , public ILCU_InteractInterface
@@ -82,8 +88,6 @@ public:
 	void CarryCurse();
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_CarryCurse();
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticast_CarryCurse();
 
     
     UFUNCTION(NetMulticast, Reliable)
@@ -93,10 +97,8 @@ public:
     void NetMulticast_DetachItem();
     void DetachItem();
     
-
     void DropDown();
 	void PickUpDropDown();
-	void ShootTrace();
     
     UFUNCTION(Server, Reliable)
     void ServerRPC_PickUpDropDown();
@@ -111,24 +113,12 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_Attack();
 
-
     void InitItem();
-
-    // 저주 관련 TEST 위젯
-    UFUNCTION()
-    void HasCurseWidget(bool bShow);
-    UFUNCTION(Client, Reliable)
-    void ClientRPC_HasCurseWidget(bool bShow);
-
-
 private:
 
-    //  이철의
-    // 임시 저주 확인하는 위젯
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
-    TSubclassOf<class ULCU_TestWidget> LCU_TestWidgetFactory;
-
-    ULCU_TestWidget* LCU_TestWidget;
+    // 플레이어 컨트롤러
+    UPROPERTY(Replicated)
+    ALCU_PlayerController* LCU_Pc;
     
 	// 아이템 및 캐릭터와의 충돌처리하는 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
@@ -211,17 +201,17 @@ public:
 
 
     // NSK
-    public:
+public:
 
     bool bHasItem = false;
 
     // 제단 상호작용 키
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    /*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputAction* IA_G;
 
     // NSK G키 상호작용 처리 함수
     UFUNCTION()
-    void OnInteract();
+    void OnInteract();*/
 
     // 현재 근처 제단
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
@@ -284,15 +274,58 @@ public:
     EPlayerType PlayerType = EPlayerType::Eric;
     UPROPERTY(EditDefaultsOnly)
     TArray<USkeletalMesh*> PlayerMeshType;
+
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_SetPlayerType(EPlayerType InPlayerType);
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastRPC_UpdatePlayerMesh(EPlayerType InPlayerType);
+
+
+
+ 
+// ** 제단 ** by HHR
+    // Delegates
+public:
+    FOnAttachItemOnAltar OnAttachItemOnAltar;
+    FOnDettachItemOnAltar OnDettachItemOnAltar;
     
-    void SetPlayerType(EPlayerType InPlayerType) { PlayerType = InPlayerType; }
-    void UpdatePlayerMesh();
+private:
+    // IA
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
+    UInputAction* IA_PutItemOnAltar;
+
+    //
+    UPROPERTY(Replicated)
+    bool bNearByAltar = false;
+
+
+public:
+    // Get, Set
+    FORCEINLINE bool GetNearByAltar() const {return bNearByAltar;}
+    FORCEINLINE void SetNearByAltar(bool InNearByAltar){bNearByAltar = InNearByAltar;}
+
+//*RPC*
+public:
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_DetatchItem();
+
+    UFUNCTION(Server, Reliable)
+    void ServerRPC_PutItemOnAltar();
+
+    
+protected:
+    // Input system에 바인딩될 함수
+    void PutItemOnAltar();
+
+
+// ** hhr
+    
 
 // 임시 playerhud
 public:
     class UHHR_PlayerHUD* PlayerHUD;
 
-    // 픽업 대상 아이템
+    // 픽업 대상 아이템 by lcu
     class AHHR_Item* RetrievedItem;
 
 };
