@@ -4,6 +4,7 @@
 #include "LCU/Player/LCU_PlayerController.h"
 
 #include "OnlineSubsystemUtils.h"
+#include "NavigationSystemTypes.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/SpectatorPawn.h"
@@ -12,10 +13,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_MonsterCharacter.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "LCU/UI/LCU_UIManager.h"
+#include "Net/UnrealNetwork.h"
 #include "P_Settings/P_GameState.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
 {
+    bReplicates = true;
 }
 
 void ALCU_PlayerController::BeginPlay()
@@ -35,6 +39,13 @@ void ALCU_PlayerController::BeginPlay()
     if (PlayerMode == EPlayerMode::Monster)
     {
         CurrentVoiceChannel = EVoiceChannel::MonsterChannel;
+    if(!IsLocalController()) return;
+    if(UIManagerFactory)
+    {
+        UIManager = GetWorld()->SpawnActor<ALCU_UIManager>(UIManagerFactory);
+        UIManager->SetOwner(this);
+        UIManager->Init();
+
     }
 }
 
@@ -46,6 +57,12 @@ void ALCU_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ALCU_PlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ALCU_PlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
 }
 
 void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
@@ -115,22 +132,23 @@ void ALCU_PlayerController::ChangeToMonster()
     }
 }
 
+void ALCU_PlayerController::CurseUISet(bool bShow)
+{
+    if(!UIManager) return;
+
+    UIManager->ShowCurseWidget(bShow);
+}
+
+void ALCU_PlayerController::ClientRPC_CurseUISet_Implementation(bool bShow)
+{
+    if(!UIManager) return;
+
+    UIManager->ShowCurseWidget(bShow);
+}
+
 void ALCU_PlayerController::ClientRPC_ItemUIOff_Implementation()
 {
-    AActor* IM = UGameplayStatics::GetActorOfClass(GetWorld(), AHHR_ItemManager::StaticClass());
-    if(IM)
-    {
-        AHHR_ItemManager* ItemManager = Cast<AHHR_ItemManager>(IM);
-        if(ItemManager)
-        {
-            //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetPawn());
-            //if (player)
-            //{
-            //    player->PlayerHUD->SetVisibility(ESlateVisibility::Hidden);
-            //}
-            ItemManager->TestPlayerHUDIns->SetVisibility(ESlateVisibility::Hidden);
-            //ItemManager->TestPlayerHUDIns->SetItemDialogVisibility(false);
-            //ItemManager->TestPlayerHUDIns->SetItemDialogText(FText());
-        }
-    }
+    if(!UIManager) return;
+    if(!UIManager->PlayerHUD) return;
+    UIManager->PlayerHUD->SetVisibility(ESlateVisibility::Hidden);
 }

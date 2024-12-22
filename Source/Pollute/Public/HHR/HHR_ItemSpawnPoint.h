@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "HHR_ItemSpawnPoint.generated.h"
 
+
 UCLASS()
 class POLLUTE_API AHHR_ItemSpawnPoint : public AActor
 {
@@ -22,4 +23,8 @@ protected:
 public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
+
+
+
+    
 };

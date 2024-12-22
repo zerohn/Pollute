@@ -37,6 +37,16 @@ void ALCU_MonsterCharacter::Tick(float DeltaTime)
     {
         OnNotifyAttack();
     }
+
+    if(!bCanSkill)
+    {
+        DashCooldown -= DeltaTime;
+        if(DashCooldown <= 0.f)
+        {
+            bCanSkill = true;
+            DashCooldown = MaxDashTime;
+        }
+    }
 }
 
 // Called to bind functionality to input
@@ -48,6 +58,7 @@ void ALCU_MonsterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
     if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
         EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_MonsterCharacter::Attack);
+        EnhancedInputComponent->BindAction(IA_Skill1, ETriggerEvent::Started, this, &ALCU_MonsterCharacter::DashSkill);
     }
 }
 
@@ -150,6 +161,31 @@ void ALCU_MonsterCharacter::OnNotifyAttack()
     );
 
     ServerRPC_OnSuccessHit(HitResult, bHit);
+}
+
+void ALCU_MonsterCharacter::DashSkill()
+{
+    if(bCanSkill)
+    {
+        bCanSkill= false;
+        ServerRPC_DashSkill();
+    }
+}
+
+void ALCU_MonsterCharacter::ServerRPC_DashSkill_Implementation()
+{
+    Multicast_DashSkill();
+}
+
+void ALCU_MonsterCharacter::Multicast_DashSkill_Implementation()
+{
+    // 대쉬 방향 계산 (Z 축 제거)
+    FVector DashDirection = GetActorForwardVector();
+    DashDirection.Z = 0; // Z 축 제거
+    DashDirection = DashDirection.GetSafeNormal() * DashStrength; // 크기 정규화 후 스케일 적용
+
+    // LaunchCharacter 호출 (Z 축 없음)
+    LaunchCharacter(DashDirection, false, false);
 }
 
 void ALCU_MonsterCharacter::DieProcess()

@@ -9,6 +9,8 @@
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
+#include "LCU/Player/LCU_PlayerController.h"
+#include "LCU/UI/LCU_UIManager.h"
 #include "Slate/SGameLayerManager.h"
 
 
@@ -59,13 +61,13 @@ void AHHR_WeaponItem::DelegateDestroy(class ALCU_PlayerCharacter* player)
     //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
     if(player)
     {
-        // 임시 UI
-        // Controller 가지고 있어야 삭제해야함
-        if(player->PlayerHUD && player->IsLocallyControlled())
-        {
-            player->PlayerHUD->ChangeItemImageNull();
-        }
         player->InitItem();
+    }
+
+    ALCU_PlayerController* pc =Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController());
+    if(pc && player->IsLocallyControlled())
+    {
+        pc->UIManager->PlayerHUD->ChangeItemImageNull();
     }
     Destroy();
 }

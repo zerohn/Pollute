@@ -8,6 +8,8 @@
 #include "LCU_PlayerController.generated.h"
 
 enum class EVoiceChannel : uint8;
+class ALCU_UIManager;
+
 /**
  * 
  */
@@ -23,14 +25,15 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ChangeToSpector();
 
 	UFUNCTION()
 	void ChangeToMonster();
 
-    UFUNCTION(Client, Reliable)
-    void ClientRPC_ItemUIOff();
+     
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
@@ -42,4 +45,21 @@ public:
 
     // 음성 채팅
     EVoiceChannel CurrentVoiceChannel;
+
+    // UI 관련 작업
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UIManager")
+    TSubclassOf<ALCU_UIManager> UIManagerFactory;
+    
+    UPROPERTY()
+    ALCU_UIManager* UIManager;
+
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_ItemUIOff();
+
+    UFUNCTION()
+    void CurseUISet(bool bShow);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_CurseUISet(bool bShow);
+    
+    // UI 관련 작업 END
 };

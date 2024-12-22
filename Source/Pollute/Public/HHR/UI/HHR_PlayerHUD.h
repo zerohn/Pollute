@@ -37,6 +37,8 @@ public:
 	//UPROPERTY()
 	class UHHR_ItemDialog* ItemDialog;
 
+    bool CanShowDialog = true;
+
 // Functions
 public:
 	// Item Dialog visibility 설정

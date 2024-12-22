@@ -4,6 +4,7 @@
 #include "HHR/AnimNotify/HHR_ANS_KnifeAttack.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/World.h"
 #include "HHR/HHR_Knife.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 
@@ -29,7 +30,8 @@ void UHHR_ANS_KnifeAttack::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSeq
 	
 	// Character가 가지고 있는 아이템 가져오기
 	// knife Attack 호출
-
+   
+    
     ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(MeshComp->GetOwner());
     if(player)
     {
