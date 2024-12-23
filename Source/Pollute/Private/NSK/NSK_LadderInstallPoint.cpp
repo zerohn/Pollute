@@ -87,7 +87,8 @@ void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
 {
     if (bPlayerIsNear && !bLadderInstalled) // 설치되지 않은 상태에서 설치 가능
     {
-        UClass* BP_LadderClass = LoadObject<UClass>(nullptr, TEXT("Blueprint'/Game/NSK/BP/BP_NSK_Ladder.BP_NSK_Ladder_C'"));
+        //UClass* BP_LadderClass = LoadObject<UClass>(nullptr, TEXT("Blueprint'/Game/NSK/BP/BP_NSK_Ladder.BP_NSK_Ladder_C'")); // 픽업 사다리
+        UClass* BP_LadderClass = LoadObject<UClass>(nullptr, TEXT("Blueprint'/Game/NSK/BP/BP_NSK_InstallLadder.BP_NSK_InstallLadder_C'")); // 설치용 사다리
 
         if (BP_LadderClass)
         {
