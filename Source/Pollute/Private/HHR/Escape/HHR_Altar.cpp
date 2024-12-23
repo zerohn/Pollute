@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HHR/HHR_Altar.h"
+#include "HHR/Escape/HHR_Altar.h"
 
 #include "EngineUtils.h"
 #include "TimerManager.h"
@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "LCU/InteractActors/LCU_Curse.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "LCU/Player/LCU_PlayerController.h"
 #include "Net/UnrealNetwork.h"
@@ -81,15 +82,10 @@ void AHHR_Altar::BeginPlay()
             {
                 // Delegate 바인딩
                 PlayerCharacter->OnAttachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnAttachItem);
-                PlayerCharacter->OnDettachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnDetatchITem);
+                PlayerCharacter->OnDettachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnDetatchItem);
                 UE_LOG(LogTemp, Log, TEXT("Bound delegate to PlayerCharacter: %s"), *PlayerCharacter->GetName());
             }
         }
-        /*ALCU_PlayerCharacter* player =  Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-        if(player)
-        {
-            player->OnAttachItemOnAltar.BindDynamic(this, &AHHR_Altar::OnAttachItem);
-        }*/
         
     }), 3.0f, false);
 
@@ -107,15 +103,6 @@ void AHHR_Altar::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Out
 void AHHR_Altar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-    /*if(GetOwner())
-    {
-        P_LOG(PolluteLog, Warning, TEXT("%s"), *GetOwner()->GetName());
-    }
-    else
-    {
-        P_LOG(PolluteLog, Warning, TEXT("NoOwner"));
-    }*/
     
 }
 
@@ -153,19 +140,21 @@ void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
     {
         // !!!!! 클라에서는 Pawn이랑 Controller만 소유권 가짐.. 
         NetMulticast_AttachToAltar(Item);
+        // TODO : Attach 해주면 그 Item의 collision 어떻게 해줄지 정해줘야 함 -> 일단 지금 구현으로는 안해도 됨
 
-        // TODO : Attach 해주면 그 Item의 collision 어떻게 해줄지 정해줘야 함 
+        // 만약 CurrentItemCnt가 MaxItemCnt이면 Altar 아이템 체크
+        // ! 이거 체크는 서버에서만 해주면 됨
+        if(CurrentItemCnt >= MaxItemCnt)
+        {
+            CheckAltar();
+        }
     }
-    else
-    {
-        // max일때 NearByAltar를 변경 안해주면 호출될 일 없긴 함 
-        return;
-    }
+
 }
 
 // 서버에서 무조건 실행
 // altar에서 detatch update
-void AHHR_Altar::OnDetatchITem(AHHR_Item* Item)
+void AHHR_Altar::OnDetatchItem(AHHR_Item* Item)
 {
     // altar에 올려져 있는 아이템인지 확인
     // 틀리면 무시
@@ -176,6 +165,7 @@ void AHHR_Altar::OnDetatchITem(AHHR_Item* Item)
         // 찾으면 attachedItem에서 제거
         // TODO : 변수 update도 동기화 해줘야 함 
         NetMulticast_Update(idx);
+
     }
     else
     {
@@ -194,13 +184,12 @@ void AHHR_Altar::NetMulticast_AttachToAltar_Implementation(AHHR_Item* Item)
     if(idx >= 0)
     {
         // Attach 가능한 인덱스에 attach
-        Item->AttachToComponent(SphereCollisionComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         //Item->SetOwner(this);
+        Item->AttachToComponent(SphereCollisionComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         Item->SetActorRelativeLocation(ItemAttachPos[idx]);
         // 정보 업뎃
         AttachedItems[idx] = Item;
         ++CurrentItemCnt;
-        P_LOG(PolluteLog, Warning, TEXT("CurrentItemCnt : %d"), CurrentItemCnt);
     }
     
 
@@ -210,7 +199,6 @@ void AHHR_Altar::NetMulticast_Update_Implementation(int32 idx)
 {
     AttachedItems[idx] = nullptr;
     --CurrentItemCnt;
-    P_LOG(PolluteLog, Warning, TEXT("CurrentItemCnt : %d"), CurrentItemCnt);
 }
 
 //*private 함수
@@ -238,6 +226,46 @@ int32 AHHR_Altar::FindAttachIdx()
         }
     }
     return -1;
+}
+
+bool AHHR_Altar::CheckAltarItems()
+{
+    // 모든 아이테밍 altar item인지 체크 
+    if(CurrentItemCnt >= MaxItemCnt)
+    {
+        for(AHHR_Item* item : AttachedItems)
+        {
+            if(!item->GetIsAltarItem())
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+void AHHR_Altar::CheckAltar()
+{
+    // 만약 CurrentItemCnt가 MaxItemCnt이면 Altar 아이템 체크
+    // > altar 아이템들이 맞으면 탈출 로직 수행
+    // > 아니면 패널티 적용 
+    // ! 이거 체크는 서버에서만 해주면 됨
+    if(CheckAltarItems())
+    {
+        // TODO : 탈출 로직 수행
+        // 델리게이트로 처리할까...
+        if(OnOpenDoor.IsBound())
+        {
+            OnOpenDoor.Execute();
+        }
+    }
+    else
+    {
+        // 패널티 적용
+        P_LOG(PolluteLog, Warning, TEXT("삑! 틀림 ~ Penalty"));
+        ALCU_Curse::GetInstance(GetWorld())->GetPenalty();
+    }
 }
 
 

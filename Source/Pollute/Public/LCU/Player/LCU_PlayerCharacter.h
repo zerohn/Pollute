@@ -294,30 +294,23 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "Input")
     UInputAction* IA_PutItemOnAltar;
 
-    //
+    // altar 근처에 있는지 체크 
     UPROPERTY(Replicated)
     bool bNearByAltar = false;
 
-
+// *Get, Set*
 public:
-    // Get, Set
+
     FORCEINLINE bool GetNearByAltar() const {return bNearByAltar;}
     FORCEINLINE void SetNearByAltar(bool InNearByAltar){bNearByAltar = InNearByAltar;}
-
 //*RPC*
 public:
     UFUNCTION(Server, Reliable)
-    void ServerRPC_DetatchItem();
-
-    UFUNCTION(Server, Reliable)
     void ServerRPC_PutItemOnAltar();
-
     
 protected:
     // Input system에 바인딩될 함수
     void PutItemOnAltar();
-
-
 // ** hhr
     
 
