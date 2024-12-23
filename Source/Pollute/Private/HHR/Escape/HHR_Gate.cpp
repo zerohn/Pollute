@@ -9,6 +9,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
 #include "HHR/Escape/HHR_Altar.h"
+// Timeline
+#include "Components/TimelineComponent.h"
 
 // Sets default values
 AHHR_Gate::AHHR_Gate()
@@ -73,6 +75,13 @@ void AHHR_Gate::BeginPlay()
             }
         }
     }
+
+    FOnTimelineFloat TImelineCallback;
+    FOnTimelineEvent TimelineFinishedCallback;
+    FTimeline OpenDoorTimeline;
+    // 델리게이트 설정 
+    OpenDoorTimeline.SetTimelineFinishedFunc(TimelineFinishedCallback);
+    
 	
 }
 
