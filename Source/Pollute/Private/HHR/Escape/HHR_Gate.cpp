@@ -11,6 +11,8 @@
 #include "HHR/Escape/HHR_Altar.h"
 // Timeline
 #include "Components/TimelineComponent.h"
+#include "Engine/Engine.h"
+#include "GameFramework/Pawn.h"
 
 // Sets default values
 AHHR_Gate::AHHR_Gate()
@@ -28,29 +30,41 @@ AHHR_Gate::AHHR_Gate()
         FenceMeshComp->SetStaticMesh(fenceMesh.Object);
     }
     //
-    RightDoorMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Right Door Mesh Comp"));
-    RightDoorMeshComp->SetupAttachment(FenceMeshComp);
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> rDoorMesh(TEXT("/Script/Engine.StaticMesh'/Game/Horror_Mansion/Models/Environment/SM_Gate_Door_02.SM_Gate_Door_02'"));
-    if(rDoorMesh.Succeeded())
-    {
-        RightDoorMeshComp->SetStaticMesh(rDoorMesh.Object);
-    }
-    RightDoorMeshComp->SetRelativeLocation(FVector(115.f, 0, 0));
-    //
     LeftDoorMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Left Door Mesh Comp"));
     LeftDoorMeshComp->SetupAttachment(FenceMeshComp);
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> lDoorMesh(TEXT("/Script/Engine.StaticMesh'/Game/Horror_Mansion/Models/Environment/SM_Gate_Door_01.SM_Gate_Door_01'"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> lDoorMesh(TEXT("/Script/Engine.StaticMesh'/Game/Horror_Mansion/Models/Environment/SM_Gate_Door_02.SM_Gate_Door_02'"));
     if(lDoorMesh.Succeeded())
     {
         LeftDoorMeshComp->SetStaticMesh(lDoorMesh.Object);
     }
-    LeftDoorMeshComp->SetRelativeLocation(FVector(-115.f, 0, 0));
+    LeftDoorMeshComp->SetRelativeLocation(FVector(115.f, 0, 0));
+    //
+    RightDoorMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Right Door Mesh Comp"));
+    RightDoorMeshComp->SetupAttachment(FenceMeshComp);
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> rDoorMesh(TEXT("/Script/Engine.StaticMesh'/Game/Horror_Mansion/Models/Environment/SM_Gate_Door_01.SM_Gate_Door_01'"));
+    if(rDoorMesh.Succeeded())
+    {
+        RightDoorMeshComp->SetStaticMesh(rDoorMesh.Object);
+    }
+    RightDoorMeshComp->SetRelativeLocation(FVector(-115.f, 0, 0));
     //
     BoxColliderComp = CreateDefaultSubobject<UBoxComponent>(TEXT("Box Collider Comp"));
     BoxColliderComp->SetupAttachment(FenceMeshComp);
     BoxColliderComp->SetRelativeLocation(FVector(0, 80.f, 100.f));
     BoxColliderComp->SetBoxExtent(FVector(200.f, 32.f, 100.f));
+    // 충돌 함수 바인딩
+    BoxColliderComp->OnComponentBeginOverlap.AddDynamic(this, &AHHR_Gate::OnComponentBeginOverlap);
 
+    // Timeline Component 생성
+    TimelineComp = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline Comp"));
+    // Curve Asset 찾아서 넣어주기
+    static ConstructorHelpers::FObjectFinder<UCurveFloat> curveFloat(TEXT("/Script/Engine.CurveFloat'/Game/HHR/Miscellaneous/Cur_OpenDoor.Cur_OpenDoor'"));
+    if(curveFloat.Succeeded())
+    {
+        OpenDoorCurve = curveFloat.Object;
+    }
+
+    
     // 복제 허용
     bReplicates = true;
 
@@ -76,12 +90,20 @@ void AHHR_Gate::BeginPlay()
         }
     }
 
-    FOnTimelineFloat TImelineCallback;
-    FOnTimelineEvent TimelineFinishedCallback;
-    FTimeline OpenDoorTimeline;
-    // 델리게이트 설정 
-    OpenDoorTimeline.SetTimelineFinishedFunc(TimelineFinishedCallback);
-    
+
+    // Timeline Setting
+    //FTimeline OpenDoorTimeline;
+    FOnTimelineFloat TimelineCallback;
+    TimelineCallback.BindUFunction(this, FName("OpenDoorTimeline"));
+    //FOnTimelineEvent TimelineFinishedCallback;
+
+    if(OpenDoorCurve)
+    {
+        TimelineComp->AddInterpFloat(OpenDoorCurve, TimelineCallback);
+        TimelineComp->SetTimelineLength(1.5f);
+        TimelineComp->SetLooping(false);
+    }
+
 	
 }
 
@@ -96,14 +118,49 @@ void AHHR_Gate::Tick(float DeltaTime)
 void AHHR_Gate::OpenDoor()
 {
     P_LOG(PolluteLog, Warning, TEXT("Open Door Delegate"));
-    NetMulticast_Open();
+    // TODO : 문이 닫혀잇는지 열려 있는지 확인, 한번 열리면 왜 또 실행되지 않는걸까 
+    NetMulticast_OpenDoor();
 }
 
-void AHHR_Gate::NetMulticast_Open_Implementation()
+void AHHR_Gate::NetMulticast_OpenDoor_Implementation()
 {
     P_LOG(PolluteLog, Warning, TEXT("NetMulticast Open"));
-    // TODO : 문 열어주는 로직 수행
-    
-    
+    // OpenDoorTimeline 실행 
+    TimelineComp->Play();
 }
+
+// Timeline의 델리게이트에 바인딩 
+void AHHR_Gate::OpenDoorTimeline(float value)
+{
+    // Timeline 실행될때 매 프레임마다 호출되는 함수
+    // 회전
+    RightDoorMeshComp->SetRelativeRotation(FRotator(0, value, 0));
+    LeftDoorMeshComp->SetRelativeRotation(FRotator(0, -value, 0));
+}
+
+void AHHR_Gate::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+    // ! 가끔 충돌 처리안될때 bp 삭제하고 다시 하는 게 나음 -> 세팅 c++로 해놓는게 낫다
+    // 플레이어 충돌시 sequence 실행(자기 자신만 보이면 됨)
+    // ! 충돌한 pawn이 자기 자신 (firstController여야 함) 
+    // sequence 싫행 후 spector 모드로 전환
+
+    // 플레이어 확인
+    APawn* playerPawn = Cast<APawn>(OtherActor);
+    if(playerPawn)
+    {
+        // !pawn이여야 하고 그 pawn이 First Controller여야 Sequence 실행
+        if(playerPawn->GetController() == GetWorld()->GetFirstPlayerController())
+        {
+            P_LOG(PolluteLog, Warning, TEXT("pawn owner : %s"), *playerPawn->GetOwner()->GetName());
+            P_LOG(PolluteLog, Warning, TEXT("Sequence 호출"));
+            // TODO : Sequence 실행 
+        }
+    }
+}
+
+
+
 

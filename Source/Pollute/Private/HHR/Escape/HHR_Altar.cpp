@@ -148,6 +148,7 @@ void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
         {
             CheckAltar();
         }
+        OnOpenDoor.Execute();
     }
 
 }

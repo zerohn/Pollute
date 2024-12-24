@@ -33,14 +33,22 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
     UStaticMeshComponent* FenceMeshComp;
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
-    UStaticMeshComponent* RightDoorMeshComp;
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
     UStaticMeshComponent* LeftDoorMeshComp;
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
+    UStaticMeshComponent* RightDoorMeshComp;
 
+    // Timeline Component
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components")
+    class UTimelineComponent* TimelineComp;
 
+// *Timeline 관련 변수*
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Timeline")
+    class UCurveFloat* OpenDoorCurve;
+    
 
 // #### Functions ####
-// *문 여는 함수* (델리게이트에 바인딩)
+// *문 여는 함수* (Altar의 델리게이트에 바인딩)
 private:
     UFUNCTION()
     void OpenDoor();
@@ -48,7 +56,19 @@ private:
 // *RPC 함수*
 private:
     UFUNCTION(NetMulticast, Reliable)
-    void NetMulticast_Open();
+    void NetMulticast_OpenDoor();
+
+//*Timeline 관련된 함수*
+private:
+    UFUNCTION()
+    void OpenDoorTimeline(float value);
+
+// *충돌 처리 함수*
+protected:
+    UFUNCTION()
+    void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+                    bool bFromSweep, const FHitResult & SweepResult);
 
 
     
