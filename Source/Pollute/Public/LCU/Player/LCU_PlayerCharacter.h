@@ -259,7 +259,7 @@ public:
     void Multicast_InteractWithLadder(const FVector& TopLocation);
 
     // NSK Parachute
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void InteractWithParachute();
 
     UFUNCTION()

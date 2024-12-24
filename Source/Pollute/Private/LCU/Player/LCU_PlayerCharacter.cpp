@@ -33,7 +33,9 @@
 #include "P_Settings/P_GameState.h"
 #include "LCU/Player/LCU_PlayerController.h"
 #include "LCU/UI/LCU_UIManager.h"
-
+#include "LevelSequence.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
 
 // Sets default values
 ALCU_PlayerCharacter::ALCU_PlayerCharacter()
@@ -963,7 +965,60 @@ void ALCU_PlayerCharacter::InteractWithParachute()
 
             if (PlayerController->IsLocalController())
             {
-                PlayerController->ServerRPC_ChangeToSpector();
+                // 시퀀스 파일을 로드 (예시로 경로 설정)
+                ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/Path/To/Your/Sequence.Seq'"));
+
+                if (Sequence)
+                {
+                    // 시퀀스를 재생할 Level Sequence Actor를 생성
+                    ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>();
+
+                    if (SequenceActor)
+                    {
+                        // 시퀀스에서 ULevelSequence 객체를 추출
+                        ULevelSequence* SequenceFromActor = SequenceActor->GetSequence();
+
+                        if (SequenceFromActor)
+                        {
+                            // 시퀀스를 재생할 Level을 추출 (현재 레벨을 가져오기)
+                            ULevel* CurrentLevel = GetWorld()->GetCurrentLevel();
+
+                            if (CurrentLevel)
+                            {
+                                // Level Sequence Player를 가져옴
+                                ULevelSequencePlayer* SequencePlayer = SequenceActor->GetSequencePlayer();
+
+                                if (SequencePlayer)
+                                {
+                                    // 시퀀스를 SequencePlayer에 설정
+                                    //SequencePlayer->Initialize(SequenceFromActor, CurrentLevel, PlayerController->GetPawn());
+
+                                    // 시퀀스 재생 시작
+                                    SequencePlayer->Play();
+
+                                    // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
+                                    PlayerController->ServerRPC_ChangeToSpector();
+                                }
+                            }
+                            else
+                            {
+                                P_LOG(PolluteLog, Warning, TEXT("현재 레벨을 가져올 수 없습니다."));
+                            }
+                        }
+                        else
+                        {
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
+                        }
+                    }
+                    else
+                    {
+                        P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+                    }
+                }
+                else
+                {
+                    P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+                }
             }
         }
     }
