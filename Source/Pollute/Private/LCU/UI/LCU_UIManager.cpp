@@ -4,11 +4,13 @@
 #include "LCU/UI/LCU_UIManager.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Components/Border.h"
+#include "Components/Overlay.h"
+#include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
 #include "Engine/Engine.h"
-#include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "LCU/Player/LCU_PlayerController.h"
-#include "LCU/UI/LCU_CurseWidget.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 
 // Sets default values
@@ -26,16 +28,20 @@ void ALCU_UIManager::ShowCurseWidget(bool bShow)
     
     if(bShow)
     {
-        if(LCU_CurseWidget)
+        if(PlayerHUD)
         {
-            LCU_CurseWidget->SetVisibility(ESlateVisibility::Visible);
+            PlayerHUD->TESTCurse->SetVisibility(ESlateVisibility::Visible);
+            PlayerHUD->CurseOverlay->SetVisibility(ESlateVisibility::Visible);
+            PlayerHUD->CarryCurseCool->SetPercent(1.0f);
         }
     }
     else
     {
-        if(LCU_CurseWidget)
+        if(PlayerHUD)
         {
-            LCU_CurseWidget->SetVisibility(ESlateVisibility::Hidden);
+            PlayerHUD->TESTCurse->SetVisibility(ESlateVisibility::Hidden);
+            PlayerHUD->CurseOverlay->SetVisibility(ESlateVisibility::Hidden);
+            PlayerHUD->CarryCurseCool->SetPercent(0.0f);
         }
     }
 }
@@ -63,34 +69,13 @@ void ALCU_UIManager::Init()
     AActor* ow = GetOwner();
     // 오너 설정
     LCU_Pc = Cast<ALCU_PlayerController>(ow);
-    if(!LCU_Pc)
-    {
-        P_LOG(PolluteLog, Log, TEXT("notowner"));
-    }
-    else
-    {
-        P_LOG(PolluteLog, Log, TEXT("123123213213"));
-    }
 
     if(!LCU_Pc) return;
     
-    // 사람 전용 저주 위젯 추가하가
-    if(LCU_CurseWidgetFactory)
-    {
-        LCU_CurseWidget = CreateWidget<ULCU_CurseWidget>(LCU_Pc,LCU_CurseWidgetFactory);
-        //LCU_CurseWidget = CreateWidget<ULCU_CurseWidget>(GetWorld()->GetFirstPlayerController(),LCU_CurseWidgetFactory);
-        if(LCU_CurseWidget)
-        {
-            LCU_CurseWidget->AddToViewport();
-            LCU_CurseWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
-
     // 사람 HUD 추가하기
     if(PlayerHUDFactory)
     {
         PlayerHUD = CreateWidget<UHHR_PlayerHUD>(LCU_Pc,PlayerHUDFactory);
-        //PlayerHUD = CreateWidget<UHHR_PlayerHUD>(GetWorld()->GetFirstPlayerController(),PlayerHUDFactory);
         if(PlayerHUD)
         {
             PlayerHUD->AddToViewport();

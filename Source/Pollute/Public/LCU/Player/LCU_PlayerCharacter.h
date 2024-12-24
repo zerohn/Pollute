@@ -29,6 +29,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    virtual void PossessedBy(AController* NewController) override;
 	void UpdateCameraTransform();
 
 public:
@@ -77,6 +79,8 @@ public:
 
 	bool GetHasCurse() {return bHasCurse;}
 	void SetHasCurse(bool bCurse) {bHasCurse = bCurse;}
+
+    void SetCarryCurseCool(bool Cool) { StartCurseCool = Cool;}
 
     // ## 아이템 Get
     class AHHR_Item* GetItem() {return ItemInHand;}
@@ -182,7 +186,7 @@ private:
     float CarryCurseCool = 20.f;
     UPROPERTY()
     float MaxCurseCool = 20.f;
-    UPROPERTY()
+    UPROPERTY(Replicated)
     bool StartCurseCool = false;
     UPROPERTY(Replicated)
 	bool bHasCurse = false;

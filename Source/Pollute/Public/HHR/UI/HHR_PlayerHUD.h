@@ -16,6 +16,7 @@ class POLLUTE_API UHHR_PlayerHUD : public UUserWidget
 
 protected:
 	virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 // 캐릭터의 Hand Item의 Item Data로 이미지 할당 
 // 위젯
@@ -28,6 +29,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UBorder* BorderPanel;
 
+    UPROPERTY(meta = (BindWidget))
+    class UOverlay* CurseOverlay;
+    
 	// Image
 	UPROPERTY(meta = (BindWidget))
 	class UImage* ItemImage;
@@ -37,6 +41,15 @@ public:
 	//UPROPERTY()
 	class UHHR_ItemDialog* ItemDialog;
 
+    UPROPERTY(meta=(BindWidget))
+    class UProgressBar* CarryCurseCool;
+
+    UPROPERTY(meta=(BindWidget))
+    class UTextBlock* TESTCurse;
+    
+
+    float MaxCoolDownTime = 20.f;
+    
     bool CanShowDialog = true;
 
 // Functions
@@ -50,5 +63,7 @@ public:
     // item Image 변경
     void ChangeItemImage(class UTexture2D* Texture);
     void ChangeItemImageNull();
-	
+
+    void SetCarryCurseCool(float Value);
+
 };

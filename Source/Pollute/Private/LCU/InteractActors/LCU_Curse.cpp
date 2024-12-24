@@ -3,8 +3,10 @@
 
 #include "LCU/InteractActors/LCU_Curse.h"
 
+#include "Components/ProgressBar.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "HHR/UI/HHR_PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "LCU/Player/LCU_PlayerController.h"
@@ -111,6 +113,7 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 
 	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
+    OwnerCharacter->SetCarryCurseCool(true);
     ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
     if(P_pc)
     {
