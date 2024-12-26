@@ -75,7 +75,7 @@ void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
         PlayerCharacter->NetMulticast_DetachItem();
     }
     
-    if(PlayerCharacter->GetHasCurse())
+    if(PlayerCharacter && PlayerCharacter->GetHasCurse())
     {
         AP_GameState* GS = Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
         if (GS)

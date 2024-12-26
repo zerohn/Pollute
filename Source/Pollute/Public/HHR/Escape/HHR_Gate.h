@@ -70,7 +70,10 @@ protected:
                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
                     bool bFromSweep, const FHitResult & SweepResult);
 
-
+//*sequence 실행 함수*
+protected:
+    UFUNCTION(BlueprintImplementableEvent)
+    void PlayEnding();
     
 
 };

@@ -13,6 +13,7 @@
 #include "Components/TimelineComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
+#include "LCU/Player/LCU_PlayerController.h"
 
 // Sets default values
 AHHR_Gate::AHHR_Gate()
@@ -156,7 +157,13 @@ void AHHR_Gate::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent
         {
             P_LOG(PolluteLog, Warning, TEXT("pawn owner : %s"), *playerPawn->GetOwner()->GetName());
             P_LOG(PolluteLog, Warning, TEXT("Sequence 호출"));
-            // TODO : Sequence 실행 
+            // TODO : Sequence 실행
+            PlayEnding();
+            // player character 삭제 
+                
+            // TODO : spector 모드로 전환
+            ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(playerPawn->GetController());
+            pc->ServerRPC_ChangeToSpector();
         }
     }
 }
