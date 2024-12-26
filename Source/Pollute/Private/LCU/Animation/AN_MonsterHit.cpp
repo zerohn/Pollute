@@ -23,4 +23,5 @@ void UAN_MonsterHit::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase*
     {
         MonChar->OnNotifyAttack();
     }
+    
 }

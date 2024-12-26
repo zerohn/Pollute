@@ -5,6 +5,9 @@
 
 #include "OnlineSubsystemUtils.h"
 #include "NavigationSystemTypes.h"
+#include "ShaderPrintParameters.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/SpectatorPawn.h"
@@ -74,7 +77,7 @@ void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
         PlayerCharacter->NetMulticast_DetachItem();
     }
     
-    if(PlayerCharacter->GetHasCurse())
+    if(PlayerCharacter && PlayerCharacter->GetHasCurse())
     {
         AP_GameState* GS = Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
         if (GS)
@@ -92,10 +95,51 @@ void ALCU_PlayerController::ServerRPC_ChangeToSpector_Implementation()
 
 	// 생성된 Spector 로 Possess
 	Possess(spector);
+    
+    if (IsValid(player))
+    {
+        player->Destroy();
+    }
+    
+    AP_GameState* GS =Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
+    if (GS)
+    {
+        GS->GetAllCharacters();
+    }
+}
 
-	player->Destroy();
+void ALCU_PlayerController::ChangeToSpector()
+{
+    // 현재 Possess 하고 있는 폰 가져오기
+    APawn* player = GetPawn();
+    ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(player);
+    if(PlayerCharacter && HasAuthority())
+    {
+        PlayerCharacter->NetMulticast_DetachItem();
+    }
+    
+    if(PlayerCharacter && PlayerCharacter->GetHasCurse())
+    {
+        AP_GameState* GS = Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
+        if (GS)
+        {
+            GS->RestartCurse();
+        }
+    }
+    
+    ClientRPC_ItemUIOff();
+    UnPossess();
 
-     AP_GameState* GS =Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
+    // Spector Pawn 생성
+    AGameModeBase* gm = GetWorld()->GetAuthGameMode();
+    ASpectatorPawn* spector = GetWorld()->SpawnActor<ASpectatorPawn>(gm->SpectatorClass,player->GetActorTransform());
+
+    // 생성된 Spector 로 Possess
+    Possess(spector);
+
+    player->Destroy();
+
+    AP_GameState* GS =Cast<AP_GameState>(UGameplayStatics::GetGameState(GetWorld()));
     if (GS)
     {
         GS->GetAllCharacters();

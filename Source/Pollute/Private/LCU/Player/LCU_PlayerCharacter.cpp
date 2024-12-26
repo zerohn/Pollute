@@ -10,7 +10,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
-#include "Engine/HitResult.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "HHR/HHR_WeaponItem.h"
@@ -22,19 +21,17 @@
 #include "Components/WidgetComponent.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HHR/UI/HHR_PlayerHUD.h"
-#include "LCU/Player/LCU_TestWidget.h"
 #include "NSK/NSK_LadderInstallPoint.h"
 #include "EngineUtils.h"
 #include <NSK/NSK_Ladder.h>
-
+#include "Engine/Scene.h"
 #include "Components/ProgressBar.h"
 #include "NSK/NSK_Parachute.h"
 #include "HHR/UI/HHR_ItemDialog.h"
-#include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
-#include "LCU/Player/LCU_PlayerController.h"
 #include "LCU/UI/LCU_UIManager.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInstance.h"
 
 
 // Sets default values
@@ -72,6 +69,10 @@ void ALCU_PlayerCharacter::BeginPlay()
     Super::BeginPlay();
     
     LCU_Pc = Cast<ALCU_PlayerController>(GetController());
+    if(CurseMaterial)
+    {
+        CurseMatInstance = UMaterialInstanceDynamic::Create(CurseMaterial, this);
+    }
     
 }
 
@@ -403,6 +404,48 @@ void ALCU_PlayerCharacter::CarryCurse()
 	ServerRPC_CarryCurse();
 }
 
+bool ALCU_PlayerCharacter::IsInMatToCamera(UMaterialInstanceDynamic* DynaminMat)
+{
+    if (DynaminMat)
+    {
+        // Blendables 리스트에서 해당 머티리얼이 포함되어 있는지 확인
+        for (const auto& Blendable : FollowCamera->PostProcessSettings.WeightedBlendables.Array)
+        {
+            if (Blendable.Object == DynaminMat)
+            {
+                return true; // 머티리얼이 이미 추가됨
+            }
+        }
+    }
+    return false; // 현재 머터리얼이 없어요!
+}
+
+void ALCU_PlayerCharacter::ClientRPC_SetCurseScalar_Implementation(float scalar)
+{
+    if (CurseMatInstance)
+    {
+        CurseMatInstance->SetScalarParameterValue(FName("R_Density"), scalar);
+    }
+}
+
+void ALCU_PlayerCharacter::ClientRPC_SetCurseMat_Implementation(bool bShow)
+{
+    if(bShow)
+    {
+        if(!IsInMatToCamera(CurseMatInstance))
+        {
+            FollowCamera->PostProcessSettings.AddBlendable(CurseMatInstance, 1.0f);
+        }        
+    }
+    else
+    {
+        if(IsInMatToCamera(CurseMatInstance))
+        {
+            FollowCamera->PostProcessSettings.RemoveBlendable(CurseMatInstance);
+        }   
+    }
+}
+
 
 void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
 {
@@ -413,6 +456,7 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
     {
        localPc->ClientRPC_CurseUISet(true);
         FinalOverapPlayer->StartCurseCool = true;
+        FinalOverapPlayer->ClientRPC_SetCurseMat(true);
     }
     bHasCurse = false;
     if(LCU_Pc)
@@ -422,6 +466,7 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
     //LCU_Pc->CurseUISet(false);
     StartCurseCool = false;
     CarryCurseCool = MaxCurseCool;
+    ClientRPC_SetCurseMat(false);
     ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
 
     // 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요

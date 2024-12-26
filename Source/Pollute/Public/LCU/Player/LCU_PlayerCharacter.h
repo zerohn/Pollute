@@ -10,6 +10,8 @@
 #include "LCU_PlayerCharacter.generated.h"
 
 class ALCU_PlayerController;
+class UMaterialInstanceDynamic;
+class UMaterialInstance;
 enum class EPlayerType : uint8;
 
 
@@ -93,6 +95,13 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_CarryCurse();
 
+    bool IsInMatToCamera(UMaterialInstanceDynamic* DynaminMat);
+    
+    
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_SetCurseMat(bool bShow);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_SetCurseScalar(float scalar);
     
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_AttachItem();
@@ -181,6 +190,12 @@ private:
 
     UPROPERTY(Replicated)
     int32 HealthCount = 4;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UMaterialInstance* CurseMaterial;
+
+    UPROPERTY()
+    UMaterialInstanceDynamic* CurseMatInstance;
 
     UPROPERTY()
     float CarryCurseCool = 20.f;

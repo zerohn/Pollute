@@ -20,30 +20,8 @@ void AHHR_WeaponItem::Attack()
 
 void AHHR_WeaponItem::DestoryDelay(ALCU_PlayerCharacter* player)
 {
-    // 몇 초 후에 사라짐
-    /*
-    FTimerHandle timerHandler;
-    GetWorld()->GetTimerManager().SetTimer(timerHandler, FTimerDelegate::CreateLambda([&](ALCU_PlayerCharacter* player)
-    {
-        // Owner의 FinalItem null 설정
-        // 오브젝트 삭제
-        // item의 setowner가 Replicated 되어 있어서 이렇게 하면 안됨 
-        //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-        if(player)
-        {
-            // 임시 UI
-            // Controller 가지고 있어야 삭제해야함
-            if(player->PlayerHUD && player->IsLocallyControlled())
-            {
-                player->PlayerHUD->ChangeItemImageNull();
-            }
-            player->InitItem();
-        }
-        Destroy();
-        
-    }), 1.5f, false );
-    */
-
+    if(!HasAuthority()) return;
+    
     FTimerHandle timerHandler;
     
     FTimerDelegate timerDelegate;
@@ -53,12 +31,13 @@ void AHHR_WeaponItem::DestoryDelay(ALCU_PlayerCharacter* player)
     
 }
 
-void AHHR_WeaponItem::DelegateDestroy(class ALCU_PlayerCharacter* player)
+void AHHR_WeaponItem::DelegateDestroy(ALCU_PlayerCharacter* player)
 {
-    // Owner의 FinalItem null 설정
-    // 오브젝트 삭제
-    // item의 setowner가 Replicated 되어 있어서 이렇게 하면 안됨 
-    //ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+    Multicast_DelegateDestroy(player);
+}
+
+void AHHR_WeaponItem::Multicast_DelegateDestroy_Implementation(ALCU_PlayerCharacter* player)
+{
     if(player)
     {
         player->InitItem();
