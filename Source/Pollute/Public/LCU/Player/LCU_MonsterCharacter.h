@@ -50,8 +50,11 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_DashSkill();
 
+    UFUNCTION()
+    void CallChange(UAnimMontage* Montage, bool bInterrupted);
     // 공격 받기
     void DieProcess();
+    void DieAndChandChar();
     void ApplyStun();
     void ClearStun();
     
@@ -65,7 +68,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
     class UAnimMontage* AttackMontage;
 
-    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+    UAnimMontage* DieMontage;
+        
     FTimerHandle StunTimerHandle;
     UPROPERTY(EditAnywhere)
     float StunTime = 5.f;
@@ -87,6 +92,9 @@ public:
 
     UPROPERTY()
     bool bCanSkill = true;
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bDeath = false;
 
   
 };

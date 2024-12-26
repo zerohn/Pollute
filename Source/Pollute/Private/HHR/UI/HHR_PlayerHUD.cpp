@@ -3,33 +3,34 @@
 
 #include "HHR/UI/HHR_PlayerHUD.h"
 
+#include "Components/Border.h"
 #include "Components/Image.h"
+#include "Components/Overlay.h"
+#include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
 #include "Engine/Texture2D.h"
-#include "HHR/HHR_ItemData.h"
 #include "HHR/UI/HHR_ItemDialog.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 void UHHR_PlayerHUD::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	//ItemDialog = Cast<UUserWidget>(GetWidgetFromName("ItemDialog_Test"));
-	
-	// Item Dialog 숨기기
 	ItemDialog->SetVisibility(ESlateVisibility::Hidden);
+    CurseOverlay->SetVisibility(ESlateVisibility::Hidden);    
+    TESTCurse->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UHHR_PlayerHUD::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+    Super::NativeTick(MyGeometry, InDeltaTime);
 
 }
 
 void UHHR_PlayerHUD::SetItemDialogVisibility(bool Visible)
 {
     if(!CanShowDialog) return;
-    
-	if(!ItemDialog)
-	{
-		P_LOG(PolluteLog, Warning, TEXT("widget 바인드가 안됨"));
-		return;
-	}
-	
 	ItemDialog->SetVisibility(Visible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 	
 }
@@ -52,6 +53,12 @@ void UHHR_PlayerHUD::ChangeItemImageNull()
     CurrentColor.A = 0.0f;
     
     ItemImage->SetColorAndOpacity(CurrentColor);
+}
+
+void UHHR_PlayerHUD::SetCarryCurseCool(float Value)
+{
+    float percent = UKismetMathLibrary::NormalizeToRange(Value, 0, MaxCoolDownTime);
+    CarryCurseCool->SetPercent(percent);
 }
 
 void UHHR_PlayerHUD::ChangeItemImage(class UTexture2D* Texture)

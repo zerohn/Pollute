@@ -28,12 +28,6 @@ public:
 
 public:
     // 사람 HUD!
-    // 저주 관련 위젯
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category= "Widget")
-    TSubclassOf<class ULCU_CurseWidget> LCU_CurseWidgetFactory;
-
-    UPROPERTY()
-    ULCU_CurseWidget* LCU_CurseWidget;
 
     void ShowCurseWidget(bool bShow);
 

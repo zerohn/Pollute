@@ -11,6 +11,8 @@
 #include "LCU_PlayerCharacter.generated.h"
 
 class ALCU_PlayerController;
+class UMaterialInstanceDynamic;
+class UMaterialInstance;
 enum class EPlayerType : uint8;
 
 
@@ -30,6 +32,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    virtual void PossessedBy(AController* NewController) override;
 	void UpdateCameraTransform();
 
 public:
@@ -79,6 +83,8 @@ public:
 	bool GetHasCurse() {return bHasCurse;}
 	void SetHasCurse(bool bCurse) {bHasCurse = bCurse;}
 
+    void SetCarryCurseCool(bool Cool) { StartCurseCool = Cool;}
+
     // ## 아이템 Get
     class AHHR_Item* GetItem() {return ItemInHand;}
     // 아이템 초기화 함수
@@ -90,6 +96,13 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_CarryCurse();
 
+    bool IsInMatToCamera(UMaterialInstanceDynamic* DynaminMat);
+    
+    
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_SetCurseMat(bool bShow);
+    UFUNCTION(Client, Reliable)
+    void ClientRPC_SetCurseScalar(float scalar);
     
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_AttachItem();
@@ -179,11 +192,17 @@ private:
     UPROPERTY(Replicated)
     int32 HealthCount = 4;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UMaterialInstance* CurseMaterial;
+
+    UPROPERTY()
+    UMaterialInstanceDynamic* CurseMatInstance;
+
     UPROPERTY()
     float CarryCurseCool = 20.f;
     UPROPERTY()
     float MaxCurseCool = 20.f;
-    UPROPERTY()
+    UPROPERTY(Replicated)
     bool StartCurseCool = false;
     UPROPERTY(Replicated)
 	bool bHasCurse = false;

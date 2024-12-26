@@ -30,6 +30,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ChangeToSpector();
 
+	void ChangeToSpector();
 	UFUNCTION()
 	void ChangeToMonster();
 

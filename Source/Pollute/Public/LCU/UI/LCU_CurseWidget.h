@@ -13,7 +13,9 @@ UCLASS()
 class POLLUTE_API ULCU_CurseWidget : public UUserWidget
 {
     GENERATED_BODY()
-public:
     UPROPERTY(meta=(BindWidget))
     class UTextBlock* Text;
+    
+
+    
 };

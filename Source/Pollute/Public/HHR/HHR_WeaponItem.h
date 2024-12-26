@@ -49,6 +49,8 @@ public:
     void DelegateDestroy(class ALCU_PlayerCharacter* player);
 
     UFUNCTION(NetMulticast, Reliable)
+    void Multicast_DelegateDestroy(class ALCU_PlayerCharacter* player);
+    UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_UInull();
 
 };

@@ -10,7 +10,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
-#include "Engine/HitResult.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "HHR/HHR_WeaponItem.h"
@@ -22,17 +21,17 @@
 #include "Components/WidgetComponent.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HHR/UI/HHR_PlayerHUD.h"
-#include "LCU/Player/LCU_TestWidget.h"
 #include "NSK/NSK_LadderInstallPoint.h"
 #include "EngineUtils.h"
 #include <NSK/NSK_Ladder.h>
+#include "Engine/Scene.h"
+#include "Components/ProgressBar.h"
 #include "NSK/NSK_Parachute.h"
 #include "HHR/UI/HHR_ItemDialog.h"
-#include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
-#include "LCU/Player/LCU_PlayerController.h"
 #include "LCU/UI/LCU_UIManager.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInstance.h"
 #include "LevelSequence.h"
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
@@ -70,10 +69,13 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 void ALCU_PlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    if(IsLocallyControlled())
+    
+    LCU_Pc = Cast<ALCU_PlayerController>(GetController());
+    if(CurseMaterial)
     {
-        LCU_Pc = Cast<ALCU_PlayerController>(GetController());
+        CurseMatInstance = UMaterialInstanceDynamic::Create(CurseMaterial, this);
     }
+    
 }
 
 void ALCU_PlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -82,6 +84,12 @@ void ALCU_PlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	
 	Super::EndPlay(EndPlayReason);
 	
+}
+
+void ALCU_PlayerCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+    LCU_Pc = Cast<ALCU_PlayerController>(GetController());
 }
 
 void ALCU_PlayerCharacter::UpdateCameraTransform()
@@ -127,11 +135,14 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
     {
         RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
     }
+    
     if(StartCurseCool)
     {
         if(IsLocallyControlled())
         {
             CarryCurseCool -= DeltaTime;
+            LCU_Pc->UIManager->PlayerHUD->SetCarryCurseCool(CarryCurseCool);
+            
             if(CarryCurseCool <= 0)
             {
                 StartCurseCool = false;
@@ -169,6 +180,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
+    DOREPLIFETIME(ALCU_PlayerCharacter, StartCurseCool);
 
     // hr altar
     DOREPLIFETIME(ALCU_PlayerCharacter, bNearByAltar);
@@ -384,11 +396,54 @@ void ALCU_PlayerCharacter::CarryCurse()
     // 아직 저주 넘기기 쿨타임 상태면 나가세여
     if(StartCurseCool) return;
     StartCurseCool = true;
-
+    LCU_Pc->UIManager->PlayerHUD->CarryCurseCool->SetPercent(1.0f);
+    
 	// 현재 눈 앞에 줄 수 있는 플레이어도 없으니 나가세요.
 	if(!FinalOverapPlayer) return;
 
 	ServerRPC_CarryCurse();
+}
+
+bool ALCU_PlayerCharacter::IsInMatToCamera(UMaterialInstanceDynamic* DynaminMat)
+{
+    if (DynaminMat)
+    {
+        // Blendables 리스트에서 해당 머티리얼이 포함되어 있는지 확인
+        for (const auto& Blendable : FollowCamera->PostProcessSettings.WeightedBlendables.Array)
+        {
+            if (Blendable.Object == DynaminMat)
+            {
+                return true; // 머티리얼이 이미 추가됨
+            }
+        }
+    }
+    return false; // 현재 머터리얼이 없어요!
+}
+
+void ALCU_PlayerCharacter::ClientRPC_SetCurseScalar_Implementation(float scalar)
+{
+    if (CurseMatInstance)
+    {
+        CurseMatInstance->SetScalarParameterValue(FName("R_Density"), scalar);
+    }
+}
+
+void ALCU_PlayerCharacter::ClientRPC_SetCurseMat_Implementation(bool bShow)
+{
+    if(bShow)
+    {
+        if(!IsInMatToCamera(CurseMatInstance))
+        {
+            FollowCamera->PostProcessSettings.AddBlendable(CurseMatInstance, 1.0f);
+        }        
+    }
+    else
+    {
+        if(IsInMatToCamera(CurseMatInstance))
+        {
+            FollowCamera->PostProcessSettings.RemoveBlendable(CurseMatInstance);
+        }   
+    }
 }
 
 
@@ -400,9 +455,18 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
     if(localPc)
     {
        localPc->ClientRPC_CurseUISet(true);
+        FinalOverapPlayer->StartCurseCool = true;
+        FinalOverapPlayer->ClientRPC_SetCurseMat(true);
     }
     bHasCurse = false;
-    LCU_Pc->CurseUISet(false);
+    if(LCU_Pc)
+    {
+        LCU_Pc->ClientRPC_CurseUISet(false);
+    }
+    //LCU_Pc->CurseUISet(false);
+    StartCurseCool = false;
+    CarryCurseCool = MaxCurseCool;
+    ClientRPC_SetCurseMat(false);
     ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
 
     // 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
@@ -442,78 +506,6 @@ void ALCU_PlayerCharacter::DropDown()
 
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
-    /*if (!RetrievedItem) // Null 수정
-    {
-        P_LOG(PolluteLog, Error, TEXT("픽업할 아이템이 없습니다."));
-        return;
-    }
-
-    if (!bHasItem) // 아이템이 없는 경우 픽업
-    {
-        USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-        if (!SkeletalMeshComp)
-        {
-            P_LOG(PolluteLog, Error, TEXT("스켈레탈 메시가 없습니다."));
-            return;
-        }
-
-        // 아이템 손에 부착
-        ItemInHand = RetrievedItem;
-        ItemInHand->AttachToComponent(
-            SkeletalMeshComp,
-            FAttachmentTransformRules::SnapToTargetIncludingScale,
-            FName("PickUpSocket")
-        );
-
-        P_SCREEN(1.f, FColor::Black, TEXT("아이템 픽업 성공"));
-        bHasItem = true;
-
-        // 아이템 위치 및 회전 설정
-        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
-        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
-        ItemInHand->SetOwner(this);
-
-        // 상태 초기화
-        RetrievedItem = nullptr;
-    }
-    else // 아이템이 있는 경우 드랍
-    {
-        FVector CharacterLocation = GetActorLocation();
-        FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
-        FRotator DropRotation = GetActorRotation();
-
-        // 아이템 부모-자식 관계 해제 및 위치 설정
-        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-        ItemInHand->SetActorLocation(DropLocation);
-        ItemInHand->SetActorRotation(DropRotation);
-
-        P_SCREEN(1.f, FColor::Black, TEXT("아이템 드랍 완료"));
-
-        // 상태 초기화
-        ItemInHand = nullptr;
-        bHasItem = false;
-    }
-
-
-    //주울 수 있는 아이템이 없으면 나가야함
-    if (!FinalOverapItem) return;
-	
-	// 현재 아이템이 없으니 픽업
-
-	if(!bHasItem)
-	{		
-		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-		if (!SkeletalMeshComp)
-		{
-			return;
-		}
-*/
-
-
-    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
-    //ServerRPC_PickUpDropDown();
-
-
     ServerRPC_PickUpDropDown();
 }
 
