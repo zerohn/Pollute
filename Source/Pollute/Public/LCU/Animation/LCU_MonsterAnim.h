@@ -36,4 +36,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
     float P_Horizontal;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+    bool bDeath;
 };

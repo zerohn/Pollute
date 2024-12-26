@@ -10,7 +10,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
-#include "Engine/HitResult.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "HHR/HHR_WeaponItem.h"
@@ -22,18 +21,20 @@
 #include "Components/WidgetComponent.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HHR/UI/HHR_PlayerHUD.h"
-#include "LCU/Player/LCU_TestWidget.h"
 #include "NSK/NSK_LadderInstallPoint.h"
 #include "EngineUtils.h"
 #include <NSK/NSK_Ladder.h>
+#include "Engine/Scene.h"
+#include "Components/ProgressBar.h"
 #include "NSK/NSK_Parachute.h"
 #include "HHR/UI/HHR_ItemDialog.h"
-#include "LCU/Player/LCU_TestWidget.h"
 #include "P_Settings/P_GameState.h"
-#include "LCU/Player/LCU_PlayerController.h"
 #include "LCU/UI/LCU_UIManager.h"
-
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInstance.h"
+#include "LevelSequence.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
 
 // Sets default values
 ALCU_PlayerCharacter::ALCU_PlayerCharacter()
@@ -68,10 +69,13 @@ ALCU_PlayerCharacter::ALCU_PlayerCharacter()
 void ALCU_PlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    if(IsLocallyControlled())
+    
+    LCU_Pc = Cast<ALCU_PlayerController>(GetController());
+    if(CurseMaterial)
     {
-        LCU_Pc = Cast<ALCU_PlayerController>(GetController());
+        CurseMatInstance = UMaterialInstanceDynamic::Create(CurseMaterial, this);
     }
+    
 }
 
 void ALCU_PlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -80,6 +84,12 @@ void ALCU_PlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	
 	Super::EndPlay(EndPlayReason);
 	
+}
+
+void ALCU_PlayerCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+    LCU_Pc = Cast<ALCU_PlayerController>(GetController());
 }
 
 void ALCU_PlayerCharacter::UpdateCameraTransform()
@@ -125,11 +135,14 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
     {
         RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
     }
+    
     if(StartCurseCool)
     {
         if(IsLocallyControlled())
         {
             CarryCurseCool -= DeltaTime;
+            LCU_Pc->UIManager->PlayerHUD->SetCarryCurseCool(CarryCurseCool);
+            
             if(CarryCurseCool <= 0)
             {
                 StartCurseCool = false;
@@ -167,12 +180,11 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
+    DOREPLIFETIME(ALCU_PlayerCharacter, StartCurseCool);
 
     // hr altar
     DOREPLIFETIME(ALCU_PlayerCharacter, bNearByAltar);
     DOREPLIFETIME(ALCU_PlayerCharacter, LCU_Pc);
-
-    
 }
 
 void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
@@ -384,11 +396,54 @@ void ALCU_PlayerCharacter::CarryCurse()
     // 아직 저주 넘기기 쿨타임 상태면 나가세여
     if(StartCurseCool) return;
     StartCurseCool = true;
-
+    LCU_Pc->UIManager->PlayerHUD->CarryCurseCool->SetPercent(1.0f);
+    
 	// 현재 눈 앞에 줄 수 있는 플레이어도 없으니 나가세요.
 	if(!FinalOverapPlayer) return;
 
 	ServerRPC_CarryCurse();
+}
+
+bool ALCU_PlayerCharacter::IsInMatToCamera(UMaterialInstanceDynamic* DynaminMat)
+{
+    if (DynaminMat)
+    {
+        // Blendables 리스트에서 해당 머티리얼이 포함되어 있는지 확인
+        for (const auto& Blendable : FollowCamera->PostProcessSettings.WeightedBlendables.Array)
+        {
+            if (Blendable.Object == DynaminMat)
+            {
+                return true; // 머티리얼이 이미 추가됨
+            }
+        }
+    }
+    return false; // 현재 머터리얼이 없어요!
+}
+
+void ALCU_PlayerCharacter::ClientRPC_SetCurseScalar_Implementation(float scalar)
+{
+    if (CurseMatInstance)
+    {
+        CurseMatInstance->SetScalarParameterValue(FName("R_Density"), scalar);
+    }
+}
+
+void ALCU_PlayerCharacter::ClientRPC_SetCurseMat_Implementation(bool bShow)
+{
+    if(bShow)
+    {
+        if(!IsInMatToCamera(CurseMatInstance))
+        {
+            FollowCamera->PostProcessSettings.AddBlendable(CurseMatInstance, 1.0f);
+        }        
+    }
+    else
+    {
+        if(IsInMatToCamera(CurseMatInstance))
+        {
+            FollowCamera->PostProcessSettings.RemoveBlendable(CurseMatInstance);
+        }   
+    }
 }
 
 
@@ -400,9 +455,18 @@ void ALCU_PlayerCharacter::ServerRPC_CarryCurse_Implementation()
     if(localPc)
     {
        localPc->ClientRPC_CurseUISet(true);
+        FinalOverapPlayer->StartCurseCool = true;
+        FinalOverapPlayer->ClientRPC_SetCurseMat(true);
     }
     bHasCurse = false;
-    LCU_Pc->CurseUISet(false);
+    if(LCU_Pc)
+    {
+        LCU_Pc->ClientRPC_CurseUISet(false);
+    }
+    //LCU_Pc->CurseUISet(false);
+    StartCurseCool = false;
+    CarryCurseCool = MaxCurseCool;
+    ClientRPC_SetCurseMat(false);
     ALCU_Curse::GetInstance(GetWorld())->SetCharacter(FinalOverapPlayer);
 
     // 이제 본인이 가지고 있던 FinalOverap 후보들을 전부 삭제해요
@@ -442,78 +506,6 @@ void ALCU_PlayerCharacter::DropDown()
 
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
-    /*if (!RetrievedItem) // Null 수정
-    {
-        P_LOG(PolluteLog, Error, TEXT("픽업할 아이템이 없습니다."));
-        return;
-    }
-
-    if (!bHasItem) // 아이템이 없는 경우 픽업
-    {
-        USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-        if (!SkeletalMeshComp)
-        {
-            P_LOG(PolluteLog, Error, TEXT("스켈레탈 메시가 없습니다."));
-            return;
-        }
-
-        // 아이템 손에 부착
-        ItemInHand = RetrievedItem;
-        ItemInHand->AttachToComponent(
-            SkeletalMeshComp,
-            FAttachmentTransformRules::SnapToTargetIncludingScale,
-            FName("PickUpSocket")
-        );
-
-        P_SCREEN(1.f, FColor::Black, TEXT("아이템 픽업 성공"));
-        bHasItem = true;
-
-        // 아이템 위치 및 회전 설정
-        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
-        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
-        ItemInHand->SetOwner(this);
-
-        // 상태 초기화
-        RetrievedItem = nullptr;
-    }
-    else // 아이템이 있는 경우 드랍
-    {
-        FVector CharacterLocation = GetActorLocation();
-        FVector DropLocation = CharacterLocation - FVector(0.0f, 0.0f, 90.0f);
-        FRotator DropRotation = GetActorRotation();
-
-        // 아이템 부모-자식 관계 해제 및 위치 설정
-        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-        ItemInHand->SetActorLocation(DropLocation);
-        ItemInHand->SetActorRotation(DropRotation);
-
-        P_SCREEN(1.f, FColor::Black, TEXT("아이템 드랍 완료"));
-
-        // 상태 초기화
-        ItemInHand = nullptr;
-        bHasItem = false;
-    }
-
-
-    //주울 수 있는 아이템이 없으면 나가야함
-    if (!FinalOverapItem) return;
-	
-	// 현재 아이템이 없으니 픽업
-
-	if(!bHasItem)
-	{		
-		USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
-		if (!SkeletalMeshComp)
-		{
-			return;
-		}
-*/
-
-
-    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Picked up Drop down"));
-    //ServerRPC_PickUpDropDown();
-
-
     ServerRPC_PickUpDropDown();
 }
 
@@ -523,7 +515,6 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
     
-    //P_LOG(PolluteLog, Warning, TEXT("PickUp"))
     // 현재 아이템이 없으니 픽업
     if(!ItemInHand)
     {
@@ -532,15 +523,14 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
         // TODO : 모든 경우에 다 확인하는 거 에바임... 근데 bNearByAltar만으로는 예외 상황이 존재 -> 주울 수 있는 범위랑 bNearByAltar 설정 범위가 달라서 발생하는 문제
         //if(bNearByAltar)
         //{
-            if(OnDettachItemOnAltar.IsBound())
+        if(OnDettachItemOnAltar.IsBound())
+        {
+            if(Cast<AHHR_Item>(FinalOverapItem))
             {
-                if(Cast<AHHR_Item>(FinalOverapItem))
-                {
-                    OnDettachItemOnAltar.Execute(Cast<AHHR_Item>(FinalOverapItem));
-                }
+                OnDettachItemOnAltar.Execute(Cast<AHHR_Item>(FinalOverapItem));
             }
+        }
         //}
-        
         NetMulticast_AttachItem();
 
     }
@@ -722,11 +712,6 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
     SelectedSlotIndex = INDEX_NONE;
 }
 
-void ALCU_PlayerCharacter::ServerRPC_DetatchItem_Implementation()
-{
-    P_LOG(PolluteLog, Warning, TEXT("ServerRPC DetatchITem In pc"));
-    NetMulticast_DetachItem();
-}
 
 void ALCU_PlayerCharacter::ServerRPC_PutItemOnAltar_Implementation()
 {
@@ -750,8 +735,6 @@ void ALCU_PlayerCharacter::PutItemOnAltar()
 {
     // G 클릭시
     // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면(+그 아이템이 조합 아이템이여야함) Delegate broadcast
-    P_SCREEN(1.0f, FColor::Red, TEXT("G!"));
-
     if(bNearByAltar && ItemInHand && ItemInHand->ItemData.ItemType == EItemType::CombineItem)
     {
         ServerRPC_PutItemOnAltar();
@@ -955,15 +938,80 @@ void ALCU_PlayerCharacter::InteractWithParachute()
         {
             if (IsValid(ItemInHand))
             {
-                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
-                ItemInHand->Destroy();  // 낙하산 액터 제거
-                ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
-                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
+                //// 타입 확인
+                //ANSK_Parachute* Parachute = Cast<ANSK_Parachute>(ItemInHand);
+
+                //if (Parachute)
+                //{
+                //    P_LOG(PolluteLog, Warning, TEXT("낙하산 객체가 유효하고 타입도 맞음"));
+
+                //    // 서버에서 낙하산 제거
+                //    if (!HasAuthority())
+                //    {
+                //        P_LOG(PolluteLog, Warning, TEXT("클라에서 서버로 낙하산 제거 요청!!"));
+                //        ServerDestroyParachute(Parachute); // 서버로 낙하산 제거 요청
+                //    }
+                //}
+
+                if (HasAuthority())
+                {
+                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
+                    
+                    ItemInHand->Destroy();  // 낙하산 액터 제거
+                    ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
+                    //ForceNetUpdate(); // 동기화 강제 업데이트
+
+                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
+                }
             }
 
             if (PlayerController->IsLocalController())
             {
-                PlayerController->ServerRPC_ChangeToSpector();
+                // 시퀀스 파일을 로드 (경로 설정)
+                ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_Parachute.Seq_Parachute'"));
+
+                if (Sequence)
+                {
+                    // 시퀀스를 재생할 Level Sequence Actor를 생성
+                    FActorSpawnParameters SpawnParams;
+                    SpawnParams.Owner = this;
+                    ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
+
+                    if (SequenceActor)
+                    {
+                        // 시퀀스를 Actor에 설정
+                        SequenceActor->SetSequence(Sequence);
+
+                        // Level Sequence Player 생성
+                        FMovieSceneSequencePlaybackSettings PlaybackSettings;
+                        ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
+
+                        if (SequencePlayer)
+                        {
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스 실행 전 ItemInHand: %s"), *GetNameSafe(ItemInHand));
+
+                            // 시퀀스 재생 시작
+                            SequencePlayer->Play();
+                            
+                            // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
+                            PlayerController->ServerRPC_ChangeToSpector();
+
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스 실행 후 ItemInHand: %s"), *GetNameSafe(ItemInHand));
+                        }
+                        else
+                        {
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
+                        }
+                    }
+                    else
+                    {
+                        P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+                    }
+                }
+                else
+                {
+                    P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+                }
             }
         }
     }
@@ -983,5 +1031,37 @@ void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
     else
     {
         P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(ANSK_Parachute* Parachute)
+{
+    P_LOG(PolluteLog, Warning, TEXT("서버에서 낙하산 제거 요청"));
+
+    if (IsValid(Parachute))
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산 유효, 삭제 진행"));
+        Parachute->Destroy();
+
+        // 모든 클라에게 낙하산 삭제를 얼려주는 멀티 캐스트
+        MulticastDestroyParachute(Parachute);
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산이 유효하지 않음"));
+    }
+}
+
+bool ALCU_PlayerCharacter::ServerDestroyParachute_Validate(ANSK_Parachute* Parachute)
+{
+    return true; // 간단한 유효성 검사를 추가할 수 있음.
+}
+
+void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(ANSK_Parachute* Parachute)
+{
+    if (IsValid(Parachute))
+    {
+        // 클라에서 낙하산 객체 삭제
+        Parachute->Destroy();
     }
 }

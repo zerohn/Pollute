@@ -32,15 +32,28 @@ public:
     UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
     void Multicast_SpawnPortSelected(ANSK_SpawnPortPoint* SelectedSpawnPoint);
 
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_DestroyPort();
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Port")
     UStaticMeshComponent* SpawnPortMesh;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
     UBoxComponent* OverlapBox;
 
+    // 서버에서 클라로 삭제를 알리는 RPC 함수
+    UFUNCTION(Server, Reliable)
+    void ServerNotifyPortDestruction();
+
+    // 클라에서 서버로 포트 삭제 요청 함수
+    UFUNCTION(Client, Reliable)
+    void ClientNotifyPortDestruction();
+
 private:
 
     bool bHasOverlapped;
+
+    bool bIsPendingDestroy = false;
 
     UFUNCTION()
     void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

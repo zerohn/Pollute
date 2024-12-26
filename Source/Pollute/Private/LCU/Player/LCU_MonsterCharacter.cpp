@@ -9,6 +9,7 @@
 #include "HHR/HHR_WeaponItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "LCU/Animation/LCU_MonsterAnim.h"
 #include "LCU/Interfaces/LCU_InteractInterface.h"
 #include "LCU/Player/LCU_PlayerController.h"
 #include "Net/UnrealNetwork.h"
@@ -74,7 +75,7 @@ float ALCU_MonsterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent 
 
     AHHR_WeaponItem* item = Cast<AHHR_WeaponItem>(DamageCauser);
     if(item->GetWeaponType() == EWeaponType::Knife)
-    {
+    {        
         DieProcess();
     }
     else if(item->GetWeaponType() == EWeaponType::TaserGun)
@@ -188,12 +189,50 @@ void ALCU_MonsterCharacter::Multicast_DashSkill_Implementation()
     LaunchCharacter(DashDirection, false, false);
 }
 
+void ALCU_MonsterCharacter::CallChange(UAnimMontage* Montage, bool bInterrupted)
+{
+    if(Montage != DieMontage) return;
+    ALCU_PlayerController* MonController = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController());
+   
+    if(IsLocallyControlled() && MonController)
+    {
+        EnableInput(MonController);
+        MonController->ServerRPC_ChangeToSpector();
+    }
+}
+
 void ALCU_MonsterCharacter::DieProcess()
 {
-    ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(GetController());
-    if(pc)
+    if(!DieMontage) return;
+    ALCU_PlayerController* MonController = Cast<ALCU_PlayerController>(GetController());
+    if(IsLocallyControlled() && MonController)
     {
-        pc->ServerRPC_ChangeToSpector();
+        DisableInput(MonController);
+    }
+    UAnimInstance* animInstance = GetMesh()->GetAnimInstance();
+    if(animInstance && animInstance->IsAnyMontagePlaying())
+    {
+        
+        
+        animInstance->StopAllMontages(0.f);
+    }
+    ULCU_MonsterAnim* monAnim = Cast<ULCU_MonsterAnim>(animInstance);
+    monAnim->bDeath = true;
+    animInstance->Montage_Play(DieMontage);
+
+    if(IsLocallyControlled())
+    {
+        animInstance->OnMontageEnded.AddDynamic(this, &ALCU_MonsterCharacter::CallChange);
+    }
+}
+
+void ALCU_MonsterCharacter::DieAndChandChar()
+{
+    ALCU_PlayerController* MonController = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController());
+   
+    if(IsLocallyControlled() && MonController)
+    {
+        EnableInput(MonController);
     }
 }
 
@@ -222,5 +261,6 @@ void ALCU_MonsterCharacter::ServerRPC_Attack_Implementation()
 void ALCU_MonsterCharacter::Multicast_Attack_Implementation()
 {
     if(!AttackMontage) return;
-    PlayAnimMontage(AttackMontage);
+    DieProcess();
+    //PlayAnimMontage(AttackMontage);
 }

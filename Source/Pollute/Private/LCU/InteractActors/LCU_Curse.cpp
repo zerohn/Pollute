@@ -3,6 +3,7 @@
 
 #include "LCU/InteractActors/LCU_Curse.h"
 
+#include "Components/ProgressBar.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -56,18 +57,22 @@ void ALCU_Curse::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+
 	if(!HasAuthority()) return;
 	
 	// 저주의 카운트 다운을 시작
 	if(bStartCurseTime && OwnerCharacter)
 	{
 		CurrentCurseTime -= DeltaTime;
-		
+		float scalar = FMath::Lerp(2.f, 10.f, CurrentCurseTime/EndCurseTime);
+	    OwnerCharacter->ClientRPC_SetCurseScalar(scalar);
 		// 시간이 0이 되면 변신
 		if(CurrentCurseTime <= 0.f)
 		{
 			CurrentCurseTime = EndCurseTime;
 			bStartCurseTime = false;
+
+		    OwnerCharacter->ClientRPC_SetCurseMat(false);
 			
 			ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
 			if(P_pc)
@@ -111,12 +116,26 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 
 	OwnerCharacter = player;
 	OwnerCharacter->SetHasCurse(true);
+    OwnerCharacter->SetCarryCurseCool(true);
     ALCU_PlayerController* P_pc =  Cast<ALCU_PlayerController>(OwnerCharacter->GetController());
     if(P_pc)
     {
         P_pc->ClientRPC_CurseUISet(true);
+        OwnerCharacter->ClientRPC_SetCurseMat(true);
     }
 	
 	// 저주 시작
 	bStartCurseTime = true;
+}
+
+// 서버에서 실행됨 
+void ALCU_Curse::GetPenalty()
+{
+    // 시간 줄여줌 & multicast
+    NetMulticast_GetPenalty();
+}
+
+void ALCU_Curse::NetMulticast_GetPenalty_Implementation()
+{
+    CurrentCurseTime -= PenaltyTime;
 }
