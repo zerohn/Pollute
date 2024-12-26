@@ -6,6 +6,7 @@
 #include "Pollute/Public/LCU/LCU_Properties/LCU_Property.h"
 
 #include "NSK/NSK_Altar.h"
+#include "NSK/NSK_Parachute.h"
 #include "P_Settings/PlayData.h"
 #include "LCU_PlayerCharacter.generated.h"
 
@@ -259,11 +260,17 @@ public:
     void Multicast_InteractWithLadder(const FVector& TopLocation);
 
     // NSK Parachute
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void InteractWithParachute();
 
     UFUNCTION()
     void CanUseParachute(bool bCanUse);
+
+    UFUNCTION(Server, Reliable, WithValidation)
+    void ServerDestroyParachute(ANSK_Parachute* Parachute);
+
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastDestroyParachute(ANSK_Parachute* Parachute);
 
     bool bCanUseParachute;
 

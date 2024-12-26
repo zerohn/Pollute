@@ -33,7 +33,9 @@
 #include "P_Settings/P_GameState.h"
 #include "LCU/Player/LCU_PlayerController.h"
 #include "LCU/UI/LCU_UIManager.h"
-
+#include "LevelSequence.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
 
 // Sets default values
 ALCU_PlayerCharacter::ALCU_PlayerCharacter()
@@ -171,8 +173,6 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
     // hr altar
     DOREPLIFETIME(ALCU_PlayerCharacter, bNearByAltar);
     DOREPLIFETIME(ALCU_PlayerCharacter, LCU_Pc);
-
-    
 }
 
 void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
@@ -946,15 +946,80 @@ void ALCU_PlayerCharacter::InteractWithParachute()
         {
             if (IsValid(ItemInHand))
             {
-                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
-                ItemInHand->Destroy();  // 낙하산 액터 제거
-                ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
-                P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
+                //// 타입 확인
+                //ANSK_Parachute* Parachute = Cast<ANSK_Parachute>(ItemInHand);
+
+                //if (Parachute)
+                //{
+                //    P_LOG(PolluteLog, Warning, TEXT("낙하산 객체가 유효하고 타입도 맞음"));
+
+                //    // 서버에서 낙하산 제거
+                //    if (!HasAuthority())
+                //    {
+                //        P_LOG(PolluteLog, Warning, TEXT("클라에서 서버로 낙하산 제거 요청!!"));
+                //        ServerDestroyParachute(Parachute); // 서버로 낙하산 제거 요청
+                //    }
+                //}
+
+                if (HasAuthority())
+                {
+                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
+                    
+                    ItemInHand->Destroy();  // 낙하산 액터 제거
+                    ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
+                    //ForceNetUpdate(); // 동기화 강제 업데이트
+
+                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
+                }
             }
 
             if (PlayerController->IsLocalController())
             {
-                PlayerController->ServerRPC_ChangeToSpector();
+                // 시퀀스 파일을 로드 (경로 설정)
+                ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_Parachute.Seq_Parachute'"));
+
+                if (Sequence)
+                {
+                    // 시퀀스를 재생할 Level Sequence Actor를 생성
+                    FActorSpawnParameters SpawnParams;
+                    SpawnParams.Owner = this;
+                    ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
+
+                    if (SequenceActor)
+                    {
+                        // 시퀀스를 Actor에 설정
+                        SequenceActor->SetSequence(Sequence);
+
+                        // Level Sequence Player 생성
+                        FMovieSceneSequencePlaybackSettings PlaybackSettings;
+                        ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
+
+                        if (SequencePlayer)
+                        {
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스 실행 전 ItemInHand: %s"), *GetNameSafe(ItemInHand));
+
+                            // 시퀀스 재생 시작
+                            SequencePlayer->Play();
+                            
+                            // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
+                            PlayerController->ServerRPC_ChangeToSpector();
+
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스 실행 후 ItemInHand: %s"), *GetNameSafe(ItemInHand));
+                        }
+                        else
+                        {
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
+                        }
+                    }
+                    else
+                    {
+                        P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+                    }
+                }
+                else
+                {
+                    P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+                }
             }
         }
     }
@@ -974,5 +1039,37 @@ void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
     else
     {
         P_LOG(PolluteLog, Warning, TEXT("낙하산을 사용할 수 없습니다."));
+    }
+}
+
+void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(ANSK_Parachute* Parachute)
+{
+    P_LOG(PolluteLog, Warning, TEXT("서버에서 낙하산 제거 요청"));
+
+    if (IsValid(Parachute))
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산 유효, 삭제 진행"));
+        Parachute->Destroy();
+
+        // 모든 클라에게 낙하산 삭제를 얼려주는 멀티 캐스트
+        MulticastDestroyParachute(Parachute);
+    }
+    else
+    {
+        P_LOG(PolluteLog, Warning, TEXT("낙하산이 유효하지 않음"));
+    }
+}
+
+bool ALCU_PlayerCharacter::ServerDestroyParachute_Validate(ANSK_Parachute* Parachute)
+{
+    return true; // 간단한 유효성 검사를 추가할 수 있음.
+}
+
+void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(ANSK_Parachute* Parachute)
+{
+    if (IsValid(Parachute))
+    {
+        // 클라에서 낙하산 객체 삭제
+        Parachute->Destroy();
     }
 }

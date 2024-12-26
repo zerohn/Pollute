@@ -23,6 +23,8 @@ public class Pollute : ModuleRules
             "SlateCore",
             "Json",
             "JsonUtilities",
+            "LevelSequence",
+            "MovieScene"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
