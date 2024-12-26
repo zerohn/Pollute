@@ -523,7 +523,6 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
     
-    //P_LOG(PolluteLog, Warning, TEXT("PickUp"))
     // 현재 아이템이 없으니 픽업
     if(!ItemInHand)
     {
@@ -532,15 +531,14 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
         // TODO : 모든 경우에 다 확인하는 거 에바임... 근데 bNearByAltar만으로는 예외 상황이 존재 -> 주울 수 있는 범위랑 bNearByAltar 설정 범위가 달라서 발생하는 문제
         //if(bNearByAltar)
         //{
-            if(OnDettachItemOnAltar.IsBound())
+        if(OnDettachItemOnAltar.IsBound())
+        {
+            if(Cast<AHHR_Item>(FinalOverapItem))
             {
-                if(Cast<AHHR_Item>(FinalOverapItem))
-                {
-                    OnDettachItemOnAltar.Execute(Cast<AHHR_Item>(FinalOverapItem));
-                }
+                OnDettachItemOnAltar.Execute(Cast<AHHR_Item>(FinalOverapItem));
             }
+        }
         //}
-        
         NetMulticast_AttachItem();
 
     }
@@ -722,11 +720,6 @@ void ALCU_PlayerCharacter::ClearNearbyAltar()
     SelectedSlotIndex = INDEX_NONE;
 }
 
-void ALCU_PlayerCharacter::ServerRPC_DetatchItem_Implementation()
-{
-    P_LOG(PolluteLog, Warning, TEXT("ServerRPC DetatchITem In pc"));
-    NetMulticast_DetachItem();
-}
 
 void ALCU_PlayerCharacter::ServerRPC_PutItemOnAltar_Implementation()
 {
@@ -750,8 +743,6 @@ void ALCU_PlayerCharacter::PutItemOnAltar()
 {
     // G 클릭시
     // Altar 아이템과 충돌 되어 있고, itemInHand를 가지고 있으면(+그 아이템이 조합 아이템이여야함) Delegate broadcast
-    P_SCREEN(1.0f, FColor::Red, TEXT("G!"));
-
     if(bNearByAltar && ItemInHand && ItemInHand->ItemData.ItemType == EItemType::CombineItem)
     {
         ServerRPC_PutItemOnAltar();
