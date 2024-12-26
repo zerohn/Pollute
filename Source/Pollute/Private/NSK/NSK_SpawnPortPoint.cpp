@@ -126,6 +126,9 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
             bHasOverlapped = true;
 
             P_LOG(PolluteLog, Warning, TEXT("탈출!!"));
+
+            // 포트 삭제
+            Destroy();
         }
 
         if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(OverlapCharacter->GetController()))
