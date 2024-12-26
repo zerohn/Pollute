@@ -190,13 +190,13 @@ void AHHR_ItemSpawnManager::SpawnHint()
             CombineItems.Add(item);
         }
     }
-    // 2-2) 랜덤 인덱스로 제단 아이템 선택
+    // 2-2) 랜덤 인덱스로 제단 아이템 선택(조합 아이템 중에서만 뽑기)
     TArray<int32> AltarItemIdx;
     ShuffleIdx(AltarItemIdx, CombineItems.Num(), MaxAltarItem );
     for(int32 idx : AltarItemIdx)
     {
         CombineItems[idx]->SetIsAltarItem(true);
-        //P_LOG(PolluteLog, Warning, TEXT("%s"), *(ItemArray[idx]->ItemData.ItemName.ToString()));
+        P_LOG(PolluteLog, Warning, TEXT("제단 아이템 : %s"), *(CombineItems[idx]->ItemData.ItemName.ToString()));
     }
 
     // 3. 힌트 생성 

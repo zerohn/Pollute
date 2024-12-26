@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "HHR_Altar.generated.h"
 
+// Delegates
+DECLARE_DYNAMIC_DELEGATE(FOnOpenDoor);
+
 class AHHR_Item;
 
 UCLASS()
@@ -28,6 +31,10 @@ public:
 
 
 // #### Variables ####
+// *Delegates*
+public:
+    FOnOpenDoor OnOpenDoor;
+    
 // *Components*
 protected:
     UPROPERTY(EditDefaultsOnly, Category = "Components")
@@ -35,7 +42,8 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Components")
     class USphereComponent* SphereCollisionComp;
 
-
+    
+// *아이템 배치에 사용할 변수들*
 private:
     // Item들이 배치될 pos들
     UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess), Category = "ItemsLocation")
@@ -44,18 +52,16 @@ private:
     // 배치되어 있는 Item ins들
     TArray<AHHR_Item*> AttachedItems;
  
-// *아이템 배치에 사용할 변수들*
 private:
     int32 MaxItemCnt;
     // 현재 Item cnt는 동기화 되어야 하는 변수
     UPROPERTY()
     int32 CurrentItemCnt;
 
-    
 
 // #### Functions ####
 // *RPC 함수*
-public:
+private:
     // multicast 함수
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_AttachToAltar(AHHR_Item* Item);
@@ -81,15 +87,20 @@ protected:
     void OnAttachItem(AHHR_Item* Item);
     // Player가 Detatch 하면 델리게이트 실행
     UFUNCTION()
-    void OnDetatchITem(AHHR_Item* Item);
+    void OnDetatchItem(AHHR_Item* Item);
 
 
 // *걍 내부 함수*
 private:
+    // 매개변수로 들어오는 Item의 index 찾기 
     int32 FindItemIdx(AHHR_Item* Item);
-
+    // Attach 할 수 있는 Index 찾기
     int32 FindAttachIdx();
-
+    
+    // Altar 확인 함수
+    void CheckAltar();
+    // 지금 배치되어 있는 아이템들이 altar 아이템인지 체크
+    bool CheckAltarItems();
 };
 
 

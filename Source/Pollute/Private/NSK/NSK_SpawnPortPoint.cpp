@@ -3,6 +3,10 @@
 #include "Components/BoxComponent.h"
 #include <LCU/Player/LCU_PlayerCharacter.h>
 #include <LCU/Player/LCU_PlayerController.h>
+#include "LevelSequence.h"
+#include "LevelSequenceActor.h"
+#include "LevelSequencePlayer.h"
+#include "UObject/ConstructorHelpers.h"
 
 ANSK_SpawnPortPoint::ANSK_SpawnPortPoint()
 {
@@ -30,11 +34,12 @@ void ANSK_SpawnPortPoint::BeginPlay()
     Super::BeginPlay();
 
     // 시작 시 실행 테스트
-    /*if (HasAuthority())
+    if (HasAuthority())
     {
+        P_LOG(PolluteLog, Warning, TEXT("포트 삭제 실행 파악"));
         RandomSpawnPortPoint(this);
-        Multicast_SpawnPortSelected_Implementation(this);
-    }*/
+        //Multicast_SpawnPortSelected_Implementation(this);
+    }
 }
 
 void ANSK_SpawnPortPoint::RandomSpawnPortPoint(UObject* WorldContextObject)
@@ -44,7 +49,7 @@ void ANSK_SpawnPortPoint::RandomSpawnPortPoint(UObject* WorldContextObject)
         return;
     }
 
-    // 서버에서만 실행 체크
+    // 서버에서만 실행
     if (!HasAuthority())
     {
         return;
@@ -55,41 +60,81 @@ void ANSK_SpawnPortPoint::RandomSpawnPortPoint(UObject* WorldContextObject)
 
     if (AllSpawnPoints.Num() > 0)
     {
-        // 랜덤으로 1개 선택
         int32 RandomIndex = FMath::RandRange(0, AllSpawnPoints.Num() - 1);
         ANSK_SpawnPortPoint* SelectedSpawnPoint = Cast<ANSK_SpawnPortPoint>(AllSpawnPoints[RandomIndex]);
 
         for (AActor* Actor : AllSpawnPoints)
         {
             ANSK_SpawnPortPoint* SpawnPoint = Cast<ANSK_SpawnPortPoint>(Actor);
-            if (SpawnPoint && SpawnPoint != SelectedSpawnPoint)
+            if (SpawnPoint && SpawnPoint != SelectedSpawnPoint && !SpawnPoint->bIsPendingDestroy)
             {
-                SpawnPoint->HideSpawnPortMesh();
-                SpawnPoint->Destroy();
+                SpawnPoint->bIsPendingDestroy = true; // 삭제 예정 상태 설정
+                SpawnPoint->Multicast_DestroyPort();
             }
         }
 
         if (SelectedSpawnPoint)
         {
             SelectedSpawnPoint->bSpawnPortIsUsed = true;
-
-            // 서버에서 Multicast로 호출하여 클라에게 동기화
             Multicast_SpawnPortSelected(SelectedSpawnPoint);
         }
     }
+
+    //if (!WorldContextObject || !WorldContextObject->GetWorld())
+    //{
+    //    return;
+    //}
+
+    //// 서버에서만 실행 체크
+    //if (!HasAuthority()) return;
+
+    //TArray<AActor*> AllSpawnPoints;
+    //UGameplayStatics::GetAllActorsOfClass(this, ANSK_SpawnPortPoint::StaticClass(), AllSpawnPoints);
+
+    //if (AllSpawnPoints.Num() > 0)
+    //{
+    //    // 랜덤으로 1개 선택
+    //    int32 RandomIndex = FMath::RandRange(0, AllSpawnPoints.Num() - 1);
+    //    ANSK_SpawnPortPoint* SelectedSpawnPoint = Cast<ANSK_SpawnPortPoint>(AllSpawnPoints[RandomIndex]);
+
+    //    for (AActor* Actor : AllSpawnPoints)
+    //    {
+    //        ANSK_SpawnPortPoint* SpawnPoint = Cast<ANSK_SpawnPortPoint>(Actor);
+    //        if (SpawnPoint && SpawnPoint != SelectedSpawnPoint)
+    //        {
+    //            SpawnPoint->HideSpawnPortMesh();
+    //            SpawnPoint->Destroy();
+    //        }
+    //    }
+
+    //    if (SelectedSpawnPoint)
+    //    {
+    //        SelectedSpawnPoint->bSpawnPortIsUsed = true;
+
+    //        // 서버에서 Multicast로 호출하여 클라에게 동기화
+    //        Multicast_SpawnPortSelected(SelectedSpawnPoint);
+    //    }
+    //}
+}
+
+void ANSK_SpawnPortPoint::Multicast_DestroyPort_Implementation()
+{
+    Destroy(); // 서버와 클라이언트 모두에서 삭제
 }
 
 void ANSK_SpawnPortPoint::HideSpawnPortMesh()
 {
-    if (SpawnPortMesh)
+    if (!SpawnPortMesh || bIsPendingDestroy)
     {
-        SpawnPortMesh->DestroyComponent();
+        return;
     }
+        SpawnPortMesh->DestroyComponent();
+        bIsPendingDestroy = true; // 상태 플래그 설정
 }
 
 void ANSK_SpawnPortPoint::Multicast_SpawnPortSelected_Implementation(ANSK_SpawnPortPoint* SelectedSpawnPoint)
 {
-    if (SelectedSpawnPoint)
+    if (SelectedSpawnPoint && !SelectedSpawnPoint->bIsPendingDestroy)
     {
         // 클라에서 선택된 포트의 표시를 업데이트
         SelectedSpawnPoint->bSpawnPortIsUsed = true;
@@ -104,40 +149,89 @@ void ANSK_SpawnPortPoint::Multicast_SpawnPortSelected_Implementation(ANSK_SpawnP
 
 void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (bHasOverlapped)
-    {
-        return;
-    }
-
-    if (!OtherActor && OtherActor == this)
+    if (bHasOverlapped || bIsPendingDestroy)
     {
         return;
     }
 
     // OtherActor가 플레이어 캐릭터인지 확인
     ACharacter* OverlapCharacter = Cast<ALCU_PlayerCharacter>(OtherActor);
-    if (OverlapCharacter)
+    if (OverlapCharacter && HasAuthority())
     {
         P_LOG(PolluteLog, Warning, TEXT(" 탈출자 : %s"), *OverlapCharacter->GetName());
 
-        // 서버에서만 처리
-        if (HasAuthority())
-        {
             bHasOverlapped = true;
+            bIsPendingDestroy = true;
 
             P_LOG(PolluteLog, Warning, TEXT("탈출!!"));
-        }
+
+            // 포트 삭제 동기화
+            Multicast_DestroyPort();
 
         if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(OverlapCharacter->GetController()))
         {
-            P_LOG(PolluteLog, Warning, TEXT("플레이어 컨트롤러 : %s"), *PlayerController->GetName());
-
             if (PlayerController->IsLocalController())
             {
-                PlayerController->ServerRPC_ChangeToSpector();
-            }
+                // 시퀀스 파일 로드
+                ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
+                P_LOG(PolluteLog, Warning, TEXT("Sequence 로드 상태: %s"), Sequence ? TEXT("성공") : TEXT("실패"));
 
-            // 모두 스펙터 모드 시 -> 게임 로비로 이동
+                if (Sequence)
+                {
+                    // 시퀀스를 재생할 Actor 생성
+                    FActorSpawnParameters SpawnParams;
+                    SpawnParams.Owner = this;
+                    ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
+                    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 상태: %s"), SequenceActor ? TEXT("성공") : TEXT("실패"));
+
+                    if (SequenceActor)
+                    {
+                        // 시퀀스를 Actor에 설정
+                        SequenceActor->SetSequence(Sequence);
+
+                        // Level Sequence Player 생성
+                        FMovieSceneSequencePlaybackSettings PlaybackSettings;
+                        ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
+                        P_LOG(PolluteLog, Warning, TEXT("SequencePlayer 생성 상태: %s"), SequencePlayer ? TEXT("성공") : TEXT("실패"));
+
+                        if (SequencePlayer)
+                        {
+                            // 시퀀스 재생
+                            SequencePlayer->Play();
+                            P_LOG(PolluteLog, Warning, TEXT("시퀀스 실행 시작"));
+
+                            // 시퀀스 재생 후 스펙터 모드로 전환
+                            PlayerController->ServerRPC_ChangeToSpector();
+                        }
+                        else
+                        {
+                            P_LOG(PolluteLog, Warning, TEXT("Level Sequence Player 생성 실패"));
+                        }
+                    }
+                    else
+                    {
+                        P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+                    }
+                }
+                else
+                {
+                    P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+                }
+            }
         }
     }
+}
+
+void ANSK_SpawnPortPoint::ServerNotifyPortDestruction_Implementation()
+{
+    P_LOG(PolluteLog, Warning, TEXT("서버: 포트 삭제 요청"));
+
+    // 클라에서 함수가 호출될 때 포트를 삭제
+    Destroy();
+}
+
+void ANSK_SpawnPortPoint::ClientNotifyPortDestruction_Implementation()
+{
+    //서버에서 호출된 후, 클라에서 포트 삭제
+    Destroy();
 }

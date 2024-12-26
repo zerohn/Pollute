@@ -45,6 +45,13 @@ public:
 	//  저주 카운트 시작
 	void StartCurseTimer(ALCU_PlayerCharacter* player);
 
+    // Penalty 주는 함수(서버에서 실행됨) 
+    void GetPenalty();
+    // Penalty를 multicast로 전달
+    UFUNCTION(NetMulticast, reliable)
+    void NetMulticast_GetPenalty();
+
+
 private:
 	// 폭탄을 소유하고 있는 한 사람
 	UPROPERTY(VisibleAnywhere, Replicated)
@@ -54,9 +61,12 @@ private:
 	float EndCurseTime = 30.f;
 
 	UPROPERTY()
-	float CurrentCurseTime = 10.f;
+	float CurrentCurseTime = 100.f;
 
 	bool bStartCurseTime = false;
+
+    // 패널티 주는 시간
+    float PenaltyTime = 30.f;
 	
 private:
 	static ALCU_Curse* Instance;

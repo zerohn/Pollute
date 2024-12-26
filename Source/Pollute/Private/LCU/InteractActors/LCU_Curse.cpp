@@ -57,6 +57,7 @@ void ALCU_Curse::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+
 	if(!HasAuthority()) return;
 	
 	// 저주의 카운트 다운을 시작
@@ -125,4 +126,16 @@ void ALCU_Curse::StartCurseTimer(ALCU_PlayerCharacter* player)
 	
 	// 저주 시작
 	bStartCurseTime = true;
+}
+
+// 서버에서 실행됨 
+void ALCU_Curse::GetPenalty()
+{
+    // 시간 줄여줌 & multicast
+    NetMulticast_GetPenalty();
+}
+
+void ALCU_Curse::NetMulticast_GetPenalty_Implementation()
+{
+    CurrentCurseTime -= PenaltyTime;
 }
