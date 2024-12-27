@@ -32,16 +32,20 @@ public:
     TSubclassOf<class UHHR_PlayerHUD> PlayerHUDClass;
 
 
+// *생성할 아이템들 클래스*
 protected:
-    // # 생성할 아이템들 클래스 #
     UPROPERTY(EditDefaultsOnly, Category="Items")
     TSubclassOf<class AHHR_Item> ItemBaseClass;
     UPROPERTY(EditDefaultsOnly, Category="Items")
     TSubclassOf<class AHHR_Knife> KnifeClass;
     UPROPERTY(EditDefaultsOnly, Category="Items")
     TSubclassOf<class AHHR_Gun> GunClass;
+    UPROPERTY(EditDefaultsOnly, Category="Items")
+    TSubclassOf<class ANSK_Ladder> LadderClass;
+    UPROPERTY(EditDefaultsOnly, Category="Items")
+    TSubclassOf<class ANSK_Parachute> ParachuteClass;
 
-    // # Item, Hint 저장 #
+// *Item, Hint 저장*
 public:
     // 아이템 데이터 저장
     UPROPERTY(VisibleDefaultsOnly, Category="Items")
@@ -59,8 +63,8 @@ private:
     UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess), Category="Hints")
     TMap<int32, TSubclassOf<class AHHR_Hint>> Hints;
 
-    
-    // # Setting 변수들 #
+
+// *Setting 변수들*
 private:
     // 제단 아이템 최대 개수
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
@@ -78,12 +82,12 @@ private:
     int32 MaxParachute = 2;
     // 스폰되는 아이템 수 
     UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(EditCondition="true"))
-    int32 MaxSpawnItem = MaxCombineItem + MaxKinfe + MaxGun + MaxParachute + 1;
+    int32 MaxSpawnItem = 15;
     
 
 // ###### Functions #######
+// *데이터 관련 함수들*
 public:
-    // # 데이터 관련 함수들 #
     // Data load
     void LoadItemData(UDataTable* ItemDataTable);
     void LoadItemData();
@@ -91,6 +95,7 @@ public:
     FItemData& GetItemDataByID(int32 ItemID);
     
 
+// *내부 함수*
 private:
     // Spawn Item Random 생성
     void SpawnRandomItem();

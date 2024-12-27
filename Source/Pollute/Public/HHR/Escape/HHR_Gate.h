@@ -73,7 +73,7 @@ protected:
 //*sequence 실행 함수*
 protected:
     UFUNCTION(BlueprintImplementableEvent)
-    void PlayEnding();
+    void PlayEnding(class ALCU_PlayerCharacter* PlayerCharacter);
     
 
 };
