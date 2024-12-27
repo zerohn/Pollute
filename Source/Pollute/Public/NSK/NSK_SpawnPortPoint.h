@@ -36,18 +36,6 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_DestroyPort();
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void ServerHandleEscape(ALCU_PlayerCharacter* OverlapCharacter);
-
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_PlayEscapeSequence(ALCU_PlayerCharacter* OverlapCharacter);
-
-    //UFUNCTION(NetMulticast, Reliable)
-    //void Multicast_PlayEscapeSequence(ACharacter* OverlapCharacter);
-
-    //UFUNCTION()
-    //void PlayEscapeSequence(ALCU_PlayerController* PlayerController);
-
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Port")
     UStaticMeshComponent* SpawnPortMesh;
 
@@ -60,6 +48,6 @@ private:
 
     bool bIsPendingDestroy = false;
 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

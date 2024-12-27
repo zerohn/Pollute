@@ -294,9 +294,6 @@ public:
     bool bCanUseParachute;
 
     // NSK EscpaePort
-    void PortEscape();
-
-    void PlayEscapeSequence();
 
 public:
 

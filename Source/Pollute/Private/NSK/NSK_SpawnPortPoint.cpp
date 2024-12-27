@@ -124,121 +124,60 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
         return;
     }
 
-    P_LOG(PolluteLog, Warning, TEXT("탈출자: %s"), *OverlapCharacter->GetName());
-
     // 서버에서 처리
     if (HasAuthority())
     {
         bHasOverlapped = true;
         bIsPendingDestroy = true;
 
-        P_LOG(PolluteLog, Warning, TEXT("서버에서 Multicast_DestroyPort 호출 전"));
         Multicast_DestroyPort();
-
-        P_LOG(PolluteLog, Warning, TEXT("서버에서 Multicast_PlayEscapeSequence 호출 전"));
-        Multicast_PlayEscapeSequence(OverlapCharacter);
     }
-    else
+
+    if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController()))
     {
-        // 클라이언트는 서버로 요청
-        P_LOG(PolluteLog, Warning, TEXT("클라이언트에서 서버로 Escape 요청"));
-        ServerHandleEscape(OverlapCharacter);
+        if (PlayerController->IsLocalController())
+        {
+            // 시퀀스 파일을 로드 (경로 설정)
+            ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
+            
+            if (Sequence)
+            {
+                // 시퀀스를 재생할 Level Sequence Actor를 생성
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.Owner = this;
+                ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
+
+                if (SequenceActor)
+                {
+                    // 시퀀스를 Actor에 설정
+                    SequenceActor->SetSequence(Sequence);
+
+                    // Level Sequence Player 생성
+                    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+                    ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
+
+                    if (SequencePlayer)
+                    {
+                        // 시퀀스 재생 시작
+                        SequencePlayer->Play();
+
+                        // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
+                        PlayerController->ServerRPC_ChangeToSpector();
+                    }
+                    else
+                    {
+                        P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
+                    }
+                }
+                else
+                {
+                    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+                }
+            }
+            else
+            {
+                P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+            }
+        }
     }
 }
-
-void ANSK_SpawnPortPoint::ServerHandleEscape_Implementation(ALCU_PlayerCharacter* OverlapCharacter)
-{
-    if (!HasAuthority())
-    {
-        return;
-    }
-
-    if (!OverlapCharacter)
-    {
-        P_LOG(PolluteLog, Warning, TEXT("ServerHandleEscape 실패: OverlapCharacter가 null"));
-        return;
-    }
-
-    bHasOverlapped = true;
-    bIsPendingDestroy = true;
-
-    P_LOG(PolluteLog, Warning, TEXT("서버에서 Multicast_DestroyPort 호출 전"));
-    Multicast_DestroyPort();
-
-    P_LOG(PolluteLog, Warning, TEXT("서버에서 Multicast_PlayEscapeSequence 호출 전"));
-    Multicast_PlayEscapeSequence(OverlapCharacter);
-}
-
-void ANSK_SpawnPortPoint::Multicast_PlayEscapeSequence_Implementation(ALCU_PlayerCharacter* OverlapCharacter)
-{
-    if (!OverlapCharacter)
-    {
-        P_LOG(PolluteLog, Warning, TEXT("Multicast_PlayEscapeSequence 실패: OverlapCharacter가 null"));
-        return;
-    }
-
-    P_LOG(PolluteLog, Warning, TEXT("Multicast_PlayEscapeSequence 실행 성공: OverlapCharacter = %s"), *OverlapCharacter->GetName());
-
-    ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(OverlapCharacter->GetController());
-    if (!PlayerController)
-    {
-        P_LOG(PolluteLog, Warning, TEXT("PlayerController 캐스팅 실패"));
-        return;
-    }
-
-    P_LOG(PolluteLog, Warning, TEXT("PlayerController 캐스팅 성공: %s"), *PlayerController->GetName());
-
-    OverlapCharacter->OnEscape();
-}
-
-//void ANSK_SpawnPortPoint::PlayEscapeSequence(ALCU_PlayerController* PlayerController)
-//{
-//    if (!PlayerController)
-//    {
-//        P_LOG(PolluteLog, Warning, TEXT("PlayerController is null"));
-//        return;
-//    }
-//
-//    P_LOG(PolluteLog, Warning, TEXT("PlayEscapeSequence 실행"));
-//
-//    ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
-//    P_LOG(PolluteLog, Warning, TEXT("Sequence 로드 상태: %s"), Sequence ? TEXT("성공") : TEXT("실패"));
-//
-//    if (!Sequence)
-//    {
-//        P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
-//        return;
-//    }
-//
-//    // SequenceActor 생성
-//    FActorSpawnParameters SpawnParams;
-//    SpawnParams.Owner = this;
-//    ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
-//    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 상태: %s"), SequenceActor ? TEXT("성공") : TEXT("실패"));
-//
-//    if (!SequenceActor)
-//    {
-//        P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
-//        return;
-//    }
-//
-//    // Level Sequence Player 생성
-//    SequenceActor->SetSequence(Sequence);
-//    FMovieSceneSequencePlaybackSettings PlaybackSettings;
-//    ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
-//    P_LOG(PolluteLog, Warning, TEXT("SequencePlayer 생성 상태: %s"), SequencePlayer ? TEXT("성공") : TEXT("실패"));
-//
-//    if (!SequencePlayer)
-//    {
-//        P_LOG(PolluteLog, Warning, TEXT("Level Sequence Player 생성 실패"));
-//        return;
-//    }
-//
-//    // 시퀀스 재생
-//    SequencePlayer->Play();
-//    P_LOG(PolluteLog, Warning, TEXT("시퀀스 실행 시작"));
-//    
-//    // 스펙터 모드로 전환
-//    PlayerController->ServerRPC_ChangeToSpector();
-//    P_LOG(PolluteLog, Warning, TEXT("PlayEscapeSequence 완료"));
-//}

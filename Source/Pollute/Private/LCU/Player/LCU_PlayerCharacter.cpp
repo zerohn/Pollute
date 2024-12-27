@@ -1049,35 +1049,3 @@ void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(ANSK_Parachu
         Parachute->Destroy();
     }
 }
-
-// NSK 탈출 포트 함수
-void ALCU_PlayerCharacter::PortEscape()
-{
-    P_LOG(PolluteLog, Warning, TEXT("%s: OnEscape 호출"), *GetName());
-
-    ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController());
-    if (!PlayerController)
-    {
-        P_LOG(PolluteLog, Warning, TEXT("PlayerController 캐스팅 실패"));
-        return;
-    }
-
-    // 스펙터 상태 전환
-    PlayerController->ServerRPC_ChangeToSpector();
-
-    // 시퀀스 재생
-    PlayEscapeSequence();
-}
-
-void ALCU_PlayerCharacter::PlayEscapeSequence()
-{
-    ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_Parachute.Seq_Parachute'"));
-    if (Sequence)
-    {
-        ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, FMovieSceneSequencePlaybackSettings(), nullptr);
-        if (SequencePlayer)
-        {
-            SequencePlayer->Play();
-        }
-    }
-}
