@@ -3,6 +3,9 @@
 
 #include "LCU/Player/LCU_PlayerController.h"
 
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
 #include "OnlineSubsystemUtils.h"
 #include "NavigationSystemTypes.h"
 #include "ShaderPrintParameters.h"
@@ -28,20 +31,13 @@ void ALCU_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-    IOnlineVoicePtr VoiceInterface = Online::GetVoiceInterface(GetWorld());
-
-    if (PlayerMode == EPlayerMode::Human)
+    // 음성채팅 입력 바인딩
+    UEnhancedInputLocalPlayerSubsystem* Subsys = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(this->GetLocalPlayer());
+    if (Subsys && IMC_VoiceChat)
     {
-        CurrentVoiceChannel = EVoiceChannel::PlayerChannel;
+        Subsys->AddMappingContext(IMC_VoiceChat, 1);
     }
-    if (PlayerMode == EPlayerMode::Spector)
-    {
-        CurrentVoiceChannel = EVoiceChannel::SpectatorChannel;
-    }
-    if (PlayerMode == EPlayerMode::Monster)
-    {
-        CurrentVoiceChannel = EVoiceChannel::MonsterChannel;
-    }
+    
     if(!IsLocalController()) return;
     if(UIManagerFactory)
     {
@@ -172,6 +168,57 @@ void ALCU_PlayerController::ChangeToMonster()
     if (GS)
     {
         GS->GetAllCharacters();
+    }
+}
+
+void ALCU_PlayerController::EnableVoiceChat()
+{
+    //P_LOG(PolluteLog, Warning, TEXT("EnableVoiceChat"))
+    IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
+    if (OnlineSubsystem)
+    {
+        IOnlineVoicePtr VoiceInterface = OnlineSubsystem->GetVoiceInterface();
+        if (VoiceInterface.IsValid())
+        {
+            VoiceInterface->StartNetworkedVoice(GetLocalPlayer()->GetControllerId());
+        }
+    }
+    // if (PlayerMode == EPlayerMode::Human)
+    // {
+    //     CurrentVoiceChannel = EVoiceChannel::PlayerChannel;
+    // }
+    // if (PlayerMode == EPlayerMode::Spector)
+    // {
+    //     CurrentVoiceChannel = EVoiceChannel::SpectatorChannel;
+    // }
+    // if (PlayerMode == EPlayerMode::Monster)
+    // {
+    //     CurrentVoiceChannel = EVoiceChannel::MonsterChannel;
+    // }
+}
+
+void ALCU_PlayerController::DisableVoiceChat()
+{
+    //P_LOG(PolluteLog, Warning, TEXT("DisableVoiceChat"))
+    IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
+    if (OnlineSubsystem)
+    {
+        IOnlineVoicePtr VoiceInterface = OnlineSubsystem->GetVoiceInterface();
+        if (VoiceInterface.IsValid())
+        {
+            VoiceInterface->StopNetworkedVoice(GetLocalPlayer()->GetControllerId());
+        }
+    }
+}
+
+void ALCU_PlayerController::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+
+    if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+    {
+        EnhancedInputComponent->BindAction(IA_PushToTalk, ETriggerEvent::Started, this, &ALCU_PlayerController::EnableVoiceChat);
+        EnhancedInputComponent->BindAction(IA_PushToTalk, ETriggerEvent::Completed, this, &ALCU_PlayerController::DisableVoiceChat);
     }
 }
 

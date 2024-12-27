@@ -7,6 +7,8 @@
 #include "LCU/LCU_Properties/LCU_Property.h"
 #include "LCU_PlayerController.generated.h"
 
+class UInputAction;
+class UInputMappingContext;
 enum class EVoiceChannel : uint8;
 class ALCU_UIManager;
 
@@ -45,6 +47,18 @@ public:
     TSubclassOf<class ALCU_MonsterCharacter> MonChar;
 
     // 음성 채팅
+    UPROPERTY(EditDefaultsOnly, Category = "VoiceChat")
+    UInputMappingContext* IMC_VoiceChat;
+    UPROPERTY(EditDefaultsOnly, Category = "VoiceChat")
+    UInputAction* IA_PushToTalk;
+
+    UFUNCTION()
+    void EnableVoiceChat();
+    UFUNCTION()
+    void DisableVoiceChat();
+
+    virtual void SetupInputComponent() override;
+    
     EVoiceChannel CurrentVoiceChannel;
 
     // UI 관련 작업
