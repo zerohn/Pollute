@@ -938,28 +938,12 @@ void ALCU_PlayerCharacter::InteractWithParachute()
         {
             if (IsValid(ItemInHand))
             {
-                //// 타입 확인
-                //ANSK_Parachute* Parachute = Cast<ANSK_Parachute>(ItemInHand);
-
-                //if (Parachute)
-                //{
-                //    P_LOG(PolluteLog, Warning, TEXT("낙하산 객체가 유효하고 타입도 맞음"));
-
-                //    // 서버에서 낙하산 제거
-                //    if (!HasAuthority())
-                //    {
-                //        P_LOG(PolluteLog, Warning, TEXT("클라에서 서버로 낙하산 제거 요청!!"));
-                //        ServerDestroyParachute(Parachute); // 서버로 낙하산 제거 요청
-                //    }
-                //}
-
                 if (HasAuthority())
                 {
                     P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
                     
                     ItemInHand->Destroy();  // 낙하산 액터 제거
                     ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
-                    //ForceNetUpdate(); // 동기화 강제 업데이트
 
                     P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
                 }
@@ -1063,5 +1047,37 @@ void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(ANSK_Parachu
     {
         // 클라에서 낙하산 객체 삭제
         Parachute->Destroy();
+    }
+}
+
+// NSK 탈출 포트 함수
+void ALCU_PlayerCharacter::PortEscape()
+{
+    P_LOG(PolluteLog, Warning, TEXT("%s: OnEscape 호출"), *GetName());
+
+    ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController());
+    if (!PlayerController)
+    {
+        P_LOG(PolluteLog, Warning, TEXT("PlayerController 캐스팅 실패"));
+        return;
+    }
+
+    // 스펙터 상태 전환
+    PlayerController->ServerRPC_ChangeToSpector();
+
+    // 시퀀스 재생
+    PlayEscapeSequence();
+}
+
+void ALCU_PlayerCharacter::PlayEscapeSequence()
+{
+    ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_Parachute.Seq_Parachute'"));
+    if (Sequence)
+    {
+        ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, FMovieSceneSequencePlaybackSettings(), nullptr);
+        if (SequencePlayer)
+        {
+            SequencePlayer->Play();
+        }
     }
 }
