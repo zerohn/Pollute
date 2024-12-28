@@ -14,12 +14,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "LCU/Player/LCU_PlayerCharacter.h"
 #include "HHR/UI/HHR_PlayerHUD.h"
+#include "NSK/NSK_Ladder.h"
 
 // Sets default values
 AHHR_ItemSpawnManager::AHHR_ItemSpawnManager()
 {
     // Item Data Table Load
-    LoadItemData();   
+    LoadItemData();
 
 }
 
@@ -104,8 +105,7 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
     // 랜덤 위치 뽑아줌 
     TArray<int32> RandomSpawnPointIdx;
     // SpawnPoint에서 스폰되는 아이템 만큼 랜덤 indx 뽑아줌
-    // TODO : 나중에 탈출 아이템 클래스 만들어지면 상수에서 MaxSpawnItem 으로 수정 
-    ShuffleIdx(RandomSpawnPointIdx, SpawnPoints.Num(),14 );
+    ShuffleIdx(RandomSpawnPointIdx, SpawnPoints.Num(),MaxSpawnItem );
 
     int32 spawnPointIdx = 0;
     // 아이템 생성 
@@ -155,12 +155,27 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
         else if(itemPair.Value.ItemType == EItemType::EscapeItem)
         {
             // 탈출 아이템 생성 (사다리 : 1개 / 낙하산 : 2개)
-            // TODO : 탈출 아이템 클래스로 생성, 개수 중복해서 생성 
-            item = GetWorld()->SpawnActor<AHHR_Item>(ItemBaseClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
-            ++spawnPointIdx;
-            ItemInsArray.Add(item);
-            item->SetItemData(itemPair.Value);
-            NetMuulticast_SetData(item, itemPair.Key);
+            // 낙하산, 사다리 생성 
+            if(itemPair.Value.ItemName.ToString().Contains("Ladder"))
+            {
+                item = GetWorld()->SpawnActor<ANSK_Ladder>(LadderClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
+                ++spawnPointIdx;
+                ItemInsArray.Add(item);
+                //item->SetItemData(itemPair.Value);
+                //NetMuulticast_SetData(item, itemPair.Key);
+            }
+            else if(itemPair.Value.ItemName.ToString().Contains("Parachute"))
+            {
+                for(int32 i = 0; i < MaxParachute; ++i)
+                {
+                    item = GetWorld()->SpawnActor<ANSK_Parachute>(ParachuteClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
+                    ++spawnPointIdx;
+                    ItemInsArray.Add(item);
+                    //item->SetItemData(itemPair.Value);
+                    //NetMuulticast_SetData(item, itemPair.Key);
+                }
+            }
+
         }
     }
     
@@ -256,7 +271,8 @@ void AHHR_ItemSpawnManager::ShuffleIdx(TArray<int32> &OutRandomIdx, int32 MaxNum
 void AHHR_ItemSpawnManager::NetMuulticast_SetData_Implementation(class AHHR_Item* Item, int32 idx)
 {
     //Item->SetItemData(ItemDataMap[idx]);
-    
+
+    // TODO : SpawnManager 변수로 안갖고 있었도 될듯
     Item->ItemSpawnManager = this;
     Item->DataIdx = idx;
 }

@@ -341,6 +341,8 @@ public:
 
     FORCEINLINE bool GetNearByAltar() const {return bNearByAltar;}
     FORCEINLINE void SetNearByAltar(bool InNearByAltar){bNearByAltar = InNearByAltar;}
+    UFUNCTION(BlueprintCallable)
+    FORCEINLINE EPlayerType GetPlayerType() const {return PlayerType;}
 //*RPC*
 public:
     UFUNCTION(Server, Reliable)

@@ -66,6 +66,11 @@ private:
     //UPROPERTY(Replicated)
     UPROPERTY(Replicated)
     bool bIsAltarItem = false;
+
+public:
+    // 임시
+    UPROPERTY(EditAnywhere, Category="Material")
+    class UMaterialInterface* ItemOverlayMaterial;
     
     
 // ###### Functions #######
