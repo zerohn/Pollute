@@ -69,7 +69,7 @@ void UKYH_CommonUserLobby::AddPlayerSlotUI(const FName PlayerName, const EPlayer
     UKYH_PlayerSlot* PlayerSlot = CreateWidget<UKYH_PlayerSlot>(GetWorld(), PlayerSlotClass);
     PlayerSlot->Init(PlayerName, PlayerType);
     
-    P_LOG(PolluteLog, Warning, TEXT("Get Name: %s Param Name: %s"), *GetWorld()->GetFirstPlayerController()->GetPlayerState<AP_PlayerState>()->GetPlayerName(), *PlayerName.ToString());
+    //P_LOG(PolluteLog, Warning, TEXT("Get Name: %s Param Name: %s"), *GetWorld()->GetFirstPlayerController()->GetPlayerState<AP_PlayerState>()->GetPlayerName(), *PlayerName.ToString());
     
     VerticalBox->AddChild(PlayerSlot);
     
