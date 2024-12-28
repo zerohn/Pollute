@@ -293,6 +293,8 @@ public:
 
     bool bCanUseParachute;
 
+    // NSK EscpaePort
+
 public:
 
     // KYH
