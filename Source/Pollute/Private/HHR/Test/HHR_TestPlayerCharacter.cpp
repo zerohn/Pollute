@@ -262,7 +262,6 @@ void AHHR_TestPlayerCharacter::PickUpDropDown()
 				FAttachmentTransformRules::SnapToTargetIncludingScale, 
 				FName("PickUpSocket")                   
 			);
-			P_SCREEN(1.f, FColor::Black, TEXT("TEST"));
 			bHasItem = true;
 	}
 	// 아이템을 가지고 있으니 드랍다운

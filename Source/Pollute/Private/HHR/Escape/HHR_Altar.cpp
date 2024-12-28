@@ -141,11 +141,6 @@ void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
         // !!!!! 클라에서는 Pawn이랑 Controller만 소유권 가짐.. 
         NetMulticast_AttachToAltar(Item);
         // TODO : Attach 해주면 그 Item의 collision 어떻게 해줄지 정해줘야 함 -> 일단 지금 구현으로는 안해도 됨
-
-        if(OnOpenDoor.IsBound())
-        {
-            OnOpenDoor.Execute();
-        }
         
         // 만약 CurrentItemCnt가 MaxItemCnt이면 Altar 아이템 체크
         // ! 이거 체크는 서버에서만 해주면 됨
@@ -153,7 +148,6 @@ void AHHR_Altar::OnAttachItem(AHHR_Item* Item)
         {
             CheckAltar();
         }
-        OnOpenDoor.Execute();
     }
 
 }

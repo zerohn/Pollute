@@ -157,7 +157,6 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
         LCU_Pc->UIManager->PlayerHUD->SetStaminaBarPercent(CurrentStemina);
     }
 
-    P_SCREEN(1.f, FColor::Black, TEXT("Stemina : %f"), CurrentStemina);
 }
 
 // Called to bind functionality to input
@@ -611,7 +610,7 @@ void ALCU_PlayerCharacter::AttachItem()
         ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(ItemInHand);
         if (Ladder && Ladder->bIsInstalled) // 사다리가 설치 됐다면
         {
-            P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
+            //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
             return;
         }
     }
@@ -644,6 +643,7 @@ void ALCU_PlayerCharacter::AttachItem()
         // Item의 Owner 설정
         ItemInHand->SetOwner(this);
         
+        ItemInHand->SetOverlayMaterialNull();
         if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
         {
             LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
@@ -675,6 +675,7 @@ void ALCU_PlayerCharacter::DetachItem()
     // 위치 및 회전 설정
     ItemInHand->SetActorLocation(DropLocation);
     ItemInHand->SetActorRotation(DropRotation);
+    ItemInHand->SetOverlayMaterial();
 
     // 드롭 이후 초기화
     ItemInHand = nullptr;

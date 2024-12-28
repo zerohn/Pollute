@@ -66,6 +66,7 @@ void AHHR_Item::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutL
     DOREPLIFETIME(AHHR_Item, ItemSpawnManager);
 
     DOREPLIFETIME(AHHR_Item, bIsAltarItem);
+    DOREPLIFETIME(AHHR_Item, ItemOverlayMaterial);
 }
 
 // Called every frame
@@ -88,6 +89,19 @@ void AHHR_Item::OnRep_ChangeIdx()
     }
 }
 
+
+void AHHR_Item::SetOverlayMaterial()
+{
+    if(ItemOverlayMaterial)
+    {
+        ItemMehsComp->SetOverlayMaterial(ItemOverlayMaterial);
+    }
+}
+
+void AHHR_Item::SetOverlayMaterialNull()
+{
+    ItemMehsComp->SetOverlayMaterial(nullptr);
+}
 
 // ItemSpawnManager에서 넣어주는 게 나을듯 
 void AHHR_Item::SetItemData(const FItemData& data)
