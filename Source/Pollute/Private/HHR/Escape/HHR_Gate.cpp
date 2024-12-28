@@ -12,7 +12,7 @@
 // Timeline
 #include "Components/TimelineComponent.h"
 #include "Engine/Engine.h"
-#include "GameFramework/Pawn.h"
+#include "LCU/Player/LCU_PlayerCharacter.h"
 #include "LCU/Player/LCU_PlayerController.h"
 
 // Sets default values
@@ -148,21 +148,20 @@ void AHHR_Gate::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent
     // ! 충돌한 pawn이 자기 자신 (firstController여야 함) 
     // sequence 싫행 후 spector 모드로 전환
 
-    // 플레이어 확인
-    APawn* playerPawn = Cast<APawn>(OtherActor);
-    if(playerPawn)
+    // 플레이어 확인 -> Spector 모드면 실행 안됨 
+    ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(OtherActor);
+    if(PlayerCharacter)
     {
         // !pawn이여야 하고 그 pawn이 First Controller여야 Sequence 실행
-        if(playerPawn->GetController() == GetWorld()->GetFirstPlayerController())
+        if(PlayerCharacter->GetController() == GetWorld()->GetFirstPlayerController())
         {
-            P_LOG(PolluteLog, Warning, TEXT("pawn owner : %s"), *playerPawn->GetOwner()->GetName());
-            P_LOG(PolluteLog, Warning, TEXT("Sequence 호출"));
-            // TODO : Sequence 실행
-            PlayEnding();
-            // player character 삭제 
+            // Sequence 실행 -> PlayerType에 따라 다른 시퀀스 실행 
+            P_LOG(PolluteLog, Warning, TEXT("pawn owner : %s"), *PlayerCharacter->GetOwner()->GetName());
+            // Sequence bp에 구현 
+            PlayEnding(PlayerCharacter);
                 
-            // TODO : spector 모드로 전환
-            ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(playerPawn->GetController());
+            // spector 모드로 전환
+            ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(PlayerCharacter->GetController());
             pc->ServerRPC_ChangeToSpector();
         }
     }

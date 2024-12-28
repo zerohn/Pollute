@@ -45,10 +45,10 @@ public:
     class UProgressBar* CarryCurseCool;
 
     UPROPERTY(meta=(BindWidget))
-    class UTextBlock* TESTCurse;
+    UProgressBar* SteminaBar;
     
-
     float MaxCoolDownTime = 20.f;
+    float MaxStemina = 5.f;
     
     bool CanShowDialog = true;
 
@@ -65,5 +65,7 @@ public:
     void ChangeItemImageNull();
 
     void SetCarryCurseCool(float Value);
+
+    void SetStaminaBarPercent(float value);
 
 };

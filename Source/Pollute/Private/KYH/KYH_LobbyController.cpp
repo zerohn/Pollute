@@ -29,7 +29,7 @@ void AKYH_LobbyController::BeginPlay()
         LobbyWidget->AddToViewport();
         if (HasAuthority()) LobbyWidget->Btn_Start->SetVisibility(ESlateVisibility::Visible);
         FTimerHandle DelayHandle;
-        GetWorldTimerManager().SetTimer(DelayHandle, this, &AKYH_LobbyController::InitLobbyWidget, 0.1f, false);
+        GetWorldTimerManager().SetTimer(DelayHandle, this, &AKYH_LobbyController::InitLobbyWidget, 0.2f, false);
     }
 }
 

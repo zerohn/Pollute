@@ -119,13 +119,6 @@ void ALCU_MonsterCharacter::ServerRPC_OnSuccessHit_Implementation(FHitResult Hit
 void ALCU_MonsterCharacter::OnNotifyAttack()
 {
     if(!IsLocallyControlled()) return;
-    // AttackSocket의 위치와 방향 가져오기
-    //FVector SocketLocation = GetMesh()->GetSocketLocation(TEXT("AttackSocket"));
-    //FVector SocketForwardVector = GetMesh()->GetSocketRotation(TEXT("AttackSocket")).Vector();
-    
-    // 트레이스 시작점과 끝점 계산
-    //FVector Start = SocketLocation;
-    //FVector End = Start + SocketForwardVector * 50.0f; // 소켓 ForwardVector 방향으로 1000 단위 거리
 
     FVector StartLocation = GetActorLocation();
     FVector EndLocation = StartLocation + GetActorForwardVector()* 200.f;
@@ -261,6 +254,5 @@ void ALCU_MonsterCharacter::ServerRPC_Attack_Implementation()
 void ALCU_MonsterCharacter::Multicast_Attack_Implementation()
 {
     if(!AttackMontage) return;
-    DieProcess();
-    //PlayAnimMontage(AttackMontage);
+    PlayAnimMontage(AttackMontage);
 }

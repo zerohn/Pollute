@@ -25,8 +25,6 @@ ANSK_SpawnPortPoint::ANSK_SpawnPortPoint()
     // 이 객체를 네트워크에서 복제하도록 설정
     // 로컬 테스트에서 정상 작동해도 멀티 환경에서 필요할 수 있음
     bReplicates = true;
-
-    bHasOverlapped = false;
 }
 
 void ANSK_SpawnPortPoint::BeginPlay()
@@ -38,7 +36,6 @@ void ANSK_SpawnPortPoint::BeginPlay()
     {
         P_LOG(PolluteLog, Warning, TEXT("포트 삭제 실행 파악"));
         RandomSpawnPortPoint(this);
-        //Multicast_SpawnPortSelected_Implementation(this);
     }
 }
 
@@ -79,42 +76,6 @@ void ANSK_SpawnPortPoint::RandomSpawnPortPoint(UObject* WorldContextObject)
             Multicast_SpawnPortSelected(SelectedSpawnPoint);
         }
     }
-
-    //if (!WorldContextObject || !WorldContextObject->GetWorld())
-    //{
-    //    return;
-    //}
-
-    //// 서버에서만 실행 체크
-    //if (!HasAuthority()) return;
-
-    //TArray<AActor*> AllSpawnPoints;
-    //UGameplayStatics::GetAllActorsOfClass(this, ANSK_SpawnPortPoint::StaticClass(), AllSpawnPoints);
-
-    //if (AllSpawnPoints.Num() > 0)
-    //{
-    //    // 랜덤으로 1개 선택
-    //    int32 RandomIndex = FMath::RandRange(0, AllSpawnPoints.Num() - 1);
-    //    ANSK_SpawnPortPoint* SelectedSpawnPoint = Cast<ANSK_SpawnPortPoint>(AllSpawnPoints[RandomIndex]);
-
-    //    for (AActor* Actor : AllSpawnPoints)
-    //    {
-    //        ANSK_SpawnPortPoint* SpawnPoint = Cast<ANSK_SpawnPortPoint>(Actor);
-    //        if (SpawnPoint && SpawnPoint != SelectedSpawnPoint)
-    //        {
-    //            SpawnPoint->HideSpawnPortMesh();
-    //            SpawnPoint->Destroy();
-    //        }
-    //    }
-
-    //    if (SelectedSpawnPoint)
-    //    {
-    //        SelectedSpawnPoint->bSpawnPortIsUsed = true;
-
-    //        // 서버에서 Multicast로 호출하여 클라에게 동기화
-    //        Multicast_SpawnPortSelected(SelectedSpawnPoint);
-    //    }
-    //}
 }
 
 void ANSK_SpawnPortPoint::Multicast_DestroyPort_Implementation()
@@ -151,87 +112,72 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
 {
     if (bHasOverlapped || bIsPendingDestroy)
     {
+        P_LOG(PolluteLog, Warning, TEXT("이미 오버랩 되었거나 파괴 대기 중"));
         return;
     }
 
-    // OtherActor가 플레이어 캐릭터인지 확인
-    ACharacter* OverlapCharacter = Cast<ALCU_PlayerCharacter>(OtherActor);
-    if (OverlapCharacter && HasAuthority())
+    // 캐릭터 캐스팅
+    ALCU_PlayerCharacter* OverlapCharacter = Cast<ALCU_PlayerCharacter>(OtherActor);
+    if (!OverlapCharacter)
     {
-        P_LOG(PolluteLog, Warning, TEXT(" 탈출자 : %s"), *OverlapCharacter->GetName());
+        P_LOG(PolluteLog, Warning, TEXT("캐릭터 캐스팅 실패"));
+        return;
+    }
 
-            bHasOverlapped = true;
-            bIsPendingDestroy = true;
+    // 서버에서 처리
+    if (HasAuthority())
+    {
+        bHasOverlapped = true;
+        bIsPendingDestroy = true;
 
-            P_LOG(PolluteLog, Warning, TEXT("탈출!!"));
+        Multicast_DestroyPort();
+    }
 
-            // 포트 삭제 동기화
-            Multicast_DestroyPort();
-
-        if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(OverlapCharacter->GetController()))
+    if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController()))
+    {
+        if (PlayerController->IsLocalController())
         {
-            if (PlayerController->IsLocalController())
+            // 시퀀스 파일을 로드 (경로 설정)
+            ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
+            
+            if (Sequence)
             {
-                // 시퀀스 파일 로드
-                ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
-                P_LOG(PolluteLog, Warning, TEXT("Sequence 로드 상태: %s"), Sequence ? TEXT("성공") : TEXT("실패"));
+                // 시퀀스를 재생할 Level Sequence Actor를 생성
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.Owner = this;
+                ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
 
-                if (Sequence)
+                if (SequenceActor)
                 {
-                    // 시퀀스를 재생할 Actor 생성
-                    FActorSpawnParameters SpawnParams;
-                    SpawnParams.Owner = this;
-                    ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
-                    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 상태: %s"), SequenceActor ? TEXT("성공") : TEXT("실패"));
+                    // 시퀀스를 Actor에 설정
+                    SequenceActor->SetSequence(Sequence);
 
-                    if (SequenceActor)
+                    // Level Sequence Player 생성
+                    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+                    ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
+
+                    if (SequencePlayer)
                     {
-                        // 시퀀스를 Actor에 설정
-                        SequenceActor->SetSequence(Sequence);
+                        // 시퀀스 재생 시작
+                        SequencePlayer->Play();
 
-                        // Level Sequence Player 생성
-                        FMovieSceneSequencePlaybackSettings PlaybackSettings;
-                        ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
-                        P_LOG(PolluteLog, Warning, TEXT("SequencePlayer 생성 상태: %s"), SequencePlayer ? TEXT("성공") : TEXT("실패"));
-
-                        if (SequencePlayer)
-                        {
-                            // 시퀀스 재생
-                            SequencePlayer->Play();
-                            P_LOG(PolluteLog, Warning, TEXT("시퀀스 실행 시작"));
-
-                            // 시퀀스 재생 후 스펙터 모드로 전환
-                            PlayerController->ServerRPC_ChangeToSpector();
-                        }
-                        else
-                        {
-                            P_LOG(PolluteLog, Warning, TEXT("Level Sequence Player 생성 실패"));
-                        }
+                        // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
+                        PlayerController->ServerRPC_ChangeToSpector();
                     }
                     else
                     {
-                        P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+                        P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
                     }
                 }
                 else
                 {
-                    P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+                    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
                 }
+            }
+            else
+            {
+                P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
             }
         }
     }
-}
-
-void ANSK_SpawnPortPoint::ServerNotifyPortDestruction_Implementation()
-{
-    P_LOG(PolluteLog, Warning, TEXT("서버: 포트 삭제 요청"));
-
-    // 클라에서 함수가 호출될 때 포트를 삭제
-    Destroy();
-}
-
-void ANSK_SpawnPortPoint::ClientNotifyPortDestruction_Implementation()
-{
-    //서버에서 호출된 후, 클라에서 포트 삭제
-    Destroy();
 }

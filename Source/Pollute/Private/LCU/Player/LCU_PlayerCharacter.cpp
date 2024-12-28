@@ -150,6 +150,13 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
             }
         }
     }
+  
+    if(IsLocallyControlled())
+    {
+        RecoverStemina();
+        LCU_Pc->UIManager->PlayerHUD->SetStaminaBarPercent(CurrentStemina);
+    }
+
 }
 
 // Called to bind functionality to input
@@ -163,9 +170,9 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_CarryCurse, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::CarryCurse);
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
-        //EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
 	    EnhancedInputComponent->BindAction(IA_PutItemOnAltar, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PutItemOnAltar);
-	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
+	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunOn);
+	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Completed, this, &ALCU_PlayerCharacter::RunOff);
         EnhancedInputComponent->BindAction(IA_Ladder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInstallLadder);
         EnhancedInputComponent->BindAction(IA_ClimingLadder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithLadder);
         EnhancedInputComponent->BindAction(IA_Parachute, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithParachute);
@@ -193,13 +200,29 @@ void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
     FVector2D MovementVector = Value.Get<FVector2D>();
     
     if (Controller != nullptr)
-    {        
+    {
         // 입력 방향 벡터 가져오기
         const float MoveForwardValue = MovementVector.Y;
         const float MoveRightValue = MovementVector.X;
 
         if(IsLocallyControlled())
         {
+            if (MoveForwardValue > 0 && bIsRunning)
+            {
+                if(CurrentStemina > 0)
+                {
+                    CurrentStemina -= GetWorld()->GetDeltaSeconds() * 3.2f;
+                    if(CurrentStemina <= 0 )
+                    {
+                        CurrentStemina = 0;
+                        bCanRecoverStamina = false;
+                        FTimerHandle StaminaTimerHandle;
+                        GetWorld()->GetTimerManager().SetTimer(StaminaTimerHandle,this, &ALCU_PlayerCharacter::SetCanRecoverStemina,3.f);
+                        ServerRPC_SetRunning(false);
+                    }
+                }
+            }
+            
             ServerRPC_UpdateSpeed(MoveForwardValue, MoveRightValue);
         }
         
@@ -216,12 +239,37 @@ void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
     }
 }
 
-void ALCU_PlayerCharacter::RunShiftToggle()
+void ALCU_PlayerCharacter::RecoverStemina()
 {
-   if(IsLocallyControlled())
+    if(bCanRecoverStamina && !bIsRunning)
+    {
+        CurrentStemina += GetWorld()->GetDeltaSeconds();
+        if(CurrentStemina >= MaxStemina)
+        {
+            CurrentStemina = MaxStemina;
+        }
+    }
+}
+
+void ALCU_PlayerCharacter::SetCanRecoverStemina()
+{
+    bCanRecoverStamina = true;
+}
+
+void ALCU_PlayerCharacter::RunOn()
+{
+   if(IsLocallyControlled() && bCanRecoverStamina)
    {
-       ServerRPC_SetRunning(!bIsRunning);
+       ServerRPC_SetRunning(true);
    }
+}
+
+void ALCU_PlayerCharacter::RunOff()
+{
+    if(IsLocallyControlled())
+    {
+        ServerRPC_SetRunning(false);
+    }
 }
 
 void ALCU_PlayerCharacter::ServerRPC_SetRunning_Implementation(bool run)
@@ -235,7 +283,7 @@ void ALCU_PlayerCharacter::ServerRPC_UpdateSpeed_Implementation(float MoveForwar
     float NewSpeed = WalkSpeed;
     
     // 달리기 조건 확인
-    if (MoveForwardValue > 0 && MoveRightValue <= 0.3f && MoveRightValue >= -0.3f  && bIsRunning)
+    if (MoveForwardValue > 0 && bIsRunning)
     {
         NewSpeed = RunSpeed;
     }
@@ -266,7 +314,6 @@ void ALCU_PlayerCharacter::Interact()
         bInjuredBody = true;
         WalkSpeed = 300.f;
         RunSpeed = 600.f;
-        P_SCREEN(5.f, FColor::Black, TEXT("SpeedChange %f , %f"), WalkSpeed, RunSpeed);
     }
     if(HealthCount <= 0)
     {
@@ -563,7 +610,7 @@ void ALCU_PlayerCharacter::AttachItem()
         ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(ItemInHand);
         if (Ladder && Ladder->bIsInstalled) // 사다리가 설치 됐다면
         {
-            P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
+            //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
             return;
         }
     }
@@ -596,6 +643,7 @@ void ALCU_PlayerCharacter::AttachItem()
         // Item의 Owner 설정
         ItemInHand->SetOwner(this);
         
+        ItemInHand->SetOverlayMaterialNull();
         if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
         {
             LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
@@ -627,6 +675,7 @@ void ALCU_PlayerCharacter::DetachItem()
     // 위치 및 회전 설정
     ItemInHand->SetActorLocation(DropLocation);
     ItemInHand->SetActorRotation(DropRotation);
+    ItemInHand->SetOverlayMaterial();
 
     // 드롭 이후 초기화
     ItemInHand = nullptr;
@@ -938,28 +987,12 @@ void ALCU_PlayerCharacter::InteractWithParachute()
         {
             if (IsValid(ItemInHand))
             {
-                //// 타입 확인
-                //ANSK_Parachute* Parachute = Cast<ANSK_Parachute>(ItemInHand);
-
-                //if (Parachute)
-                //{
-                //    P_LOG(PolluteLog, Warning, TEXT("낙하산 객체가 유효하고 타입도 맞음"));
-
-                //    // 서버에서 낙하산 제거
-                //    if (!HasAuthority())
-                //    {
-                //        P_LOG(PolluteLog, Warning, TEXT("클라에서 서버로 낙하산 제거 요청!!"));
-                //        ServerDestroyParachute(Parachute); // 서버로 낙하산 제거 요청
-                //    }
-                //}
-
                 if (HasAuthority())
                 {
                     P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
                     
                     ItemInHand->Destroy();  // 낙하산 액터 제거
                     ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
-                    //ForceNetUpdate(); // 동기화 강제 업데이트
 
                     P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
                 }
