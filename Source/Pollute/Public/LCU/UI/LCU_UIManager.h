@@ -39,7 +39,6 @@ public:
     
     // 사람 HUD END!!
 
-
     // 공통으로 사용할 멤버 및 메서드
     UPROPERTY()
     class ALCU_PlayerController* LCU_Pc;

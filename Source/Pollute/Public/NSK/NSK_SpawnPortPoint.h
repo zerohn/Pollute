@@ -7,6 +7,7 @@
 #include "NSK_SpawnPortPoint.generated.h"
 
 class UBoxComponent;
+class ALCU_PlayerCharacter;
 
 UCLASS()
 class POLLUTE_API ANSK_SpawnPortPoint : public AActor
@@ -41,20 +42,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
     UBoxComponent* OverlapBox;
 
-    // 서버에서 클라로 삭제를 알리는 RPC 함수
-    UFUNCTION(Server, Reliable)
-    void ServerNotifyPortDestruction();
-
-    // 클라에서 서버로 포트 삭제 요청 함수
-    UFUNCTION(Client, Reliable)
-    void ClientNotifyPortDestruction();
-
 private:
 
-    bool bHasOverlapped;
+    bool bHasOverlapped = false;
 
     bool bIsPendingDestroy = false;
 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
