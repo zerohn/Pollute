@@ -32,7 +32,6 @@ void UKYH_CommonUserLobby::NativeConstruct()
     
     // FTimerHandle AddSlotHandle;
     // GetWorld()->GetTimerManager().SetTimer(AddSlotHandle, this, &UKYH_CommonUserLobby::Init, 0.1f, false);
-
 }
 
 void UKYH_CommonUserLobby::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

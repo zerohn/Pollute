@@ -83,3 +83,6 @@ Plugins/Developer/RiderLink/
 Content/FirstPerson/*
 Content/FirstPersonArms/*
 Content/StarterContent/*
+
+#Batch File
+*.bat
