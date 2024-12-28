@@ -98,6 +98,11 @@ void AHHR_Item::SetItemData(const FItemData& data)
 		// StaticMesh도 할당
 		ItemData = data;
 		ItemMehsComp->SetStaticMesh(ItemData.ItemMesh);
+	    // 임시
+	    if(ItemOverlayMaterial)
+	    {
+	        ItemMehsComp->SetOverlayMaterial(ItemOverlayMaterial);
+	    }
 	}
 }
 
