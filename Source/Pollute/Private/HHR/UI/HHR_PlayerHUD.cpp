@@ -18,8 +18,7 @@ void UHHR_PlayerHUD::NativeConstruct()
 	Super::NativeConstruct();
 
 	ItemDialog->SetVisibility(ESlateVisibility::Hidden);
-    CurseOverlay->SetVisibility(ESlateVisibility::Hidden);    
-    TESTCurse->SetVisibility(ESlateVisibility::Hidden);
+    CurseOverlay->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UHHR_PlayerHUD::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -59,6 +58,12 @@ void UHHR_PlayerHUD::SetCarryCurseCool(float Value)
 {
     float percent = UKismetMathLibrary::NormalizeToRange(Value, 0, MaxCoolDownTime);
     CarryCurseCool->SetPercent(percent);
+}
+
+void UHHR_PlayerHUD::SetStaminaBarPercent(float value)
+{
+    float percent = UKismetMathLibrary::NormalizeToRange(value, 0, MaxStemina);
+    SteminaBar->SetPercent(percent);
 }
 
 void UHHR_PlayerHUD::ChangeItemImage(class UTexture2D* Texture)

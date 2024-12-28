@@ -150,6 +150,14 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
             }
         }
     }
+  
+    if(IsLocallyControlled())
+    {
+        RecoverStemina();
+        LCU_Pc->UIManager->PlayerHUD->SetStaminaBarPercent(CurrentStemina);
+    }
+
+    P_SCREEN(1.f, FColor::Black, TEXT("Stemina : %f"), CurrentStemina);
 }
 
 // Called to bind functionality to input
@@ -163,9 +171,9 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(IA_CarryCurse, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::CarryCurse);
 		EnhancedInputComponent->BindAction(IA_PickUpDropDown, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PickUpDropDown);
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
-        //EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
 	    EnhancedInputComponent->BindAction(IA_PutItemOnAltar, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PutItemOnAltar);
 	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunOn);
+	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Completed, this, &ALCU_PlayerCharacter::RunOff);
         EnhancedInputComponent->BindAction(IA_Ladder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInstallLadder);
         EnhancedInputComponent->BindAction(IA_ClimingLadder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithLadder);
         EnhancedInputComponent->BindAction(IA_Parachute, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithParachute);
@@ -193,13 +201,29 @@ void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
     FVector2D MovementVector = Value.Get<FVector2D>();
     
     if (Controller != nullptr)
-    {        
+    {
         // 입력 방향 벡터 가져오기
         const float MoveForwardValue = MovementVector.Y;
         const float MoveRightValue = MovementVector.X;
 
         if(IsLocallyControlled())
         {
+            if (MoveForwardValue > 0 && bIsRunning)
+            {
+                if(CurrentStemina > 0)
+                {
+                    CurrentStemina -= GetWorld()->GetDeltaSeconds() * 3.2f;
+                    if(CurrentStemina <= 0 )
+                    {
+                        CurrentStemina = 0;
+                        bCanRecoverStamina = false;
+                        FTimerHandle StaminaTimerHandle;
+                        GetWorld()->GetTimerManager().SetTimer(StaminaTimerHandle,this, &ALCU_PlayerCharacter::SetCanRecoverStemina,3.f);
+                        ServerRPC_SetRunning(false);
+                    }
+                }
+            }
+            
             ServerRPC_UpdateSpeed(MoveForwardValue, MoveRightValue);
         }
         
@@ -216,12 +240,37 @@ void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
     }
 }
 
+void ALCU_PlayerCharacter::RecoverStemina()
+{
+    if(bCanRecoverStamina && !bIsRunning)
+    {
+        CurrentStemina += GetWorld()->GetDeltaSeconds();
+        if(CurrentStemina >= MaxStemina)
+        {
+            CurrentStemina = MaxStemina;
+        }
+    }
+}
+
+void ALCU_PlayerCharacter::SetCanRecoverStemina()
+{
+    bCanRecoverStamina = true;
+}
+
 void ALCU_PlayerCharacter::RunOn()
 {
-   if(IsLocallyControlled())
+   if(IsLocallyControlled() && bCanRecoverStamina)
    {
-       ServerRPC_SetRunning(!bIsRunning);
+       ServerRPC_SetRunning(true);
    }
+}
+
+void ALCU_PlayerCharacter::RunOff()
+{
+    if(IsLocallyControlled())
+    {
+        ServerRPC_SetRunning(false);
+    }
 }
 
 void ALCU_PlayerCharacter::ServerRPC_SetRunning_Implementation(bool run)
@@ -235,7 +284,7 @@ void ALCU_PlayerCharacter::ServerRPC_UpdateSpeed_Implementation(float MoveForwar
     float NewSpeed = WalkSpeed;
     
     // 달리기 조건 확인
-    if (MoveForwardValue > 0 && MoveRightValue <= 0.3f && MoveRightValue >= -0.3f  && bIsRunning)
+    if (MoveForwardValue > 0 && bIsRunning)
     {
         NewSpeed = RunSpeed;
     }
