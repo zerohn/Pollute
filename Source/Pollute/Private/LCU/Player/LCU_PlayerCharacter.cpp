@@ -165,7 +165,7 @@ void ALCU_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	    EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::Attack);
         //EnhancedInputComponent->BindAction(IA_G, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInteract);
 	    EnhancedInputComponent->BindAction(IA_PutItemOnAltar, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::PutItemOnAltar);
-	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunShiftToggle);
+	    EnhancedInputComponent->BindAction(IA_RunToggle, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::RunOn);
         EnhancedInputComponent->BindAction(IA_Ladder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::OnInstallLadder);
         EnhancedInputComponent->BindAction(IA_ClimingLadder, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithLadder);
         EnhancedInputComponent->BindAction(IA_Parachute, ETriggerEvent::Started, this, &ALCU_PlayerCharacter::InteractWithParachute);
@@ -216,7 +216,7 @@ void ALCU_PlayerCharacter::Move(const FInputActionValue& Value)
     }
 }
 
-void ALCU_PlayerCharacter::RunShiftToggle()
+void ALCU_PlayerCharacter::RunOn()
 {
    if(IsLocallyControlled())
    {
@@ -266,7 +266,6 @@ void ALCU_PlayerCharacter::Interact()
         bInjuredBody = true;
         WalkSpeed = 300.f;
         RunSpeed = 600.f;
-        P_SCREEN(5.f, FColor::Black, TEXT("SpeedChange %f , %f"), WalkSpeed, RunSpeed);
     }
     if(HealthCount <= 0)
     {

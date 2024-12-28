@@ -44,7 +44,7 @@ public:
 
     // 움직임 관련 함수들
     virtual void Move(const FInputActionValue& Value) override;
-    void RunShiftToggle();
+    void RunOn();
     UFUNCTION(Server, Reliable)
     void ServerRPC_SetRunning(bool run);
     UFUNCTION(Server, Reliable)
