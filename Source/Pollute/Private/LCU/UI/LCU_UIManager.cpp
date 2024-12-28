@@ -30,7 +30,6 @@ void ALCU_UIManager::ShowCurseWidget(bool bShow)
     {
         if(PlayerHUD)
         {
-            PlayerHUD->TESTCurse->SetVisibility(ESlateVisibility::Visible);
             PlayerHUD->CurseOverlay->SetVisibility(ESlateVisibility::Visible);
             PlayerHUD->CarryCurseCool->SetPercent(1.0f);
         }
@@ -39,7 +38,6 @@ void ALCU_UIManager::ShowCurseWidget(bool bShow)
     {
         if(PlayerHUD)
         {
-            PlayerHUD->TESTCurse->SetVisibility(ESlateVisibility::Hidden);
             PlayerHUD->CurseOverlay->SetVisibility(ESlateVisibility::Hidden);
             PlayerHUD->CarryCurseCool->SetPercent(0.0f);
         }

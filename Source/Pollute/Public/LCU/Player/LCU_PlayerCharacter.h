@@ -44,7 +44,10 @@ public:
 
     // 움직임 관련 함수들
     virtual void Move(const FInputActionValue& Value) override;
-    void RunShiftToggle();
+    void RecoverStemina();
+    void SetCanRecoverStemina();
+    void RunOn();
+    void RunOff();
     UFUNCTION(Server, Reliable)
     void ServerRPC_SetRunning(bool run);
     UFUNCTION(Server, Reliable)
@@ -211,8 +214,15 @@ private:
     float WalkSpeed = 400.f;
     UPROPERTY(EditAnywhere)
     float RunSpeed = 700.f;
+    UPROPERTY()
+    float CurrentStemina = 5.f;
+    UPROPERTY()
+    float MaxStemina = 5.f;
     UPROPERTY(EditAnywhere, Replicated)
     bool bIsRunning = false;
+    UPROPERTY()
+    bool bCanRecoverStamina = true;
+    
     
 public:
     
