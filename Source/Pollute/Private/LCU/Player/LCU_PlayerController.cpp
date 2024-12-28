@@ -8,7 +8,6 @@
 #include "InputMappingContext.h"
 #include "OnlineSubsystemUtils.h"
 #include "NavigationSystemTypes.h"
-#include "ShaderPrintParameters.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
@@ -169,6 +168,14 @@ void ALCU_PlayerController::ChangeToMonster()
     {
         GS->GetAllCharacters();
     }
+}
+
+void ALCU_PlayerController::CaptureVoiceData()
+{
+}
+
+void ALCU_PlayerController::PlayVoiceData(const TArray<uint8>& VoiceData)
+{
 }
 
 void ALCU_PlayerController::EnableVoiceChat()

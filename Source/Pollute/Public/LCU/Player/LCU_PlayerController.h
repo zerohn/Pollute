@@ -7,6 +7,8 @@
 #include "LCU/LCU_Properties/LCU_Property.h"
 #include "LCU_PlayerController.generated.h"
 
+class USoundWaveProcedural;
+class UAudioComponent;
 class UInputAction;
 class UInputMappingContext;
 enum class EVoiceChannel : uint8;
@@ -36,8 +38,6 @@ public:
 	UFUNCTION()
 	void ChangeToMonster();
 
-     
-
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player State")
 	EPlayerMode PlayerMode = EPlayerMode::Human;
@@ -51,7 +51,14 @@ public:
     UInputMappingContext* IMC_VoiceChat;
     UPROPERTY(EditDefaultsOnly, Category = "VoiceChat")
     UInputAction* IA_PushToTalk;
-
+    UPROPERTY()
+    UAudioComponent* VoiceChatComponent;
+    UPROPERTY()
+    USoundWaveProcedural* VoiceChatSoundWave;
+    
+    void CaptureVoiceData();
+    void PlayVoiceData(const TArray<uint8>& VoiceData);
+    
     UFUNCTION()
     void EnableVoiceChat();
     UFUNCTION()
