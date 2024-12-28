@@ -16,8 +16,8 @@ void UKYH_PlayerSlot::NativeConstruct()
 
     Btn_Left->OnClicked().AddUObject(this, &UKYH_PlayerSlot::ChangeCharacterLeft);
     Btn_Right->OnClicked().AddUObject(this, &UKYH_PlayerSlot::ChangeCharacterRight);
-    //Btn_Left->SetVisibility(ESlateVisibility::Hidden);
-    //Btn_Right->SetVisibility(ESlateVisibility::Hidden);
+    Btn_Left->SetVisibility(ESlateVisibility::Hidden);
+    Btn_Right->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UKYH_PlayerSlot::Init(FName InPlayerName, EPlayerType InPlayerType)
