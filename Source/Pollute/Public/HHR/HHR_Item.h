@@ -66,7 +66,11 @@ private:
     //UPROPERTY(Replicated)
     UPROPERTY(Replicated)
     bool bIsAltarItem = false;
-    
+
+    // attached 되어 있으면 주울 수 없음 
+    UPROPERTY(Replicated)
+    bool bIsAttached = false;
+
 public:
     // 임시
     UPROPERTY(Replicated ,EditAnywhere, Category="Material")
@@ -77,9 +81,11 @@ public:
 // ###### Functions #######
 public:
     // set, get
-    FORCEINLINE UWidgetComponent* GetItemInteractWidgetComponent() { return ItemInteractWidgetComp; }
+    FORCEINLINE UWidgetComponent* GetItemInteractWidgetComponent() const { return ItemInteractWidgetComp; }
     FORCEINLINE void SetIsAltarItem(bool bIsAltar) {bIsAltarItem = bIsAltar;}
-    FORCEINLINE bool GetIsAltarItem() {return bIsAltarItem;}
+    FORCEINLINE bool GetIsAltarItem() const {return bIsAltarItem;}
+    FORCEINLINE bool GetIsAttached() const {return bIsAttached;}
+    FORCEINLINE void SetIsAttached(bool b) {bIsAttached = b;}
     // 
 
 	// Item Data Sets

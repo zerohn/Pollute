@@ -35,6 +35,7 @@
 #include "LevelSequence.h"
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
+#include "NSK/NSK_SPawnPortPoint.h"
 
 // Sets default values
 ALCU_PlayerCharacter::ALCU_PlayerCharacter()
@@ -120,9 +121,9 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
     if(IsValid(FinalOverapItem) && IsLocallyControlled() && !ItemInHand)
     {
         AHHR_Item* item = Cast<AHHR_Item>(FinalOverapItem);
-        if(item)
+        if(item && !item->GetIsAttached())
         {
-            LCU_Pc->UIManager->PlayerHUD->ItemDialog->SetText(item->ItemData.ItemName);
+            LCU_Pc->UIManager->PlayerHUD->ItemDialog->SetText(item->ItemData.ItemUIName);
             LCU_Pc->UIManager->PlayerHUD->SetItemDialogVisibility(true);
         }
     }
@@ -185,6 +186,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 
     DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
+    DOREPLIFETIME(ALCU_PlayerCharacter, FinalOverapItem);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
     DOREPLIFETIME(ALCU_PlayerCharacter, StartCurseCool);
@@ -553,11 +555,13 @@ void ALCU_PlayerCharacter::DropDown()
 
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
+
     ServerRPC_PickUpDropDown();
 }
 
 void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 {
+    P_LOG(PolluteLog, Warning, TEXT("ServerRPC PickupDown"));
     
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
@@ -578,7 +582,13 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
             }
         }
         //}
-        NetMulticast_AttachItem();
+        AHHR_Item* item = Cast<AHHR_Item>(FinalOverapItem);
+        // 아이템이 attached 되어 있으면 못함
+        if(!item->GetIsAttached())
+        {
+            ItemInHand = item;
+            NetMulticast_AttachItem(ItemInHand);
+        }
 
     }
     // 아이템을 가지고 있으니 드랍다운
@@ -591,23 +601,24 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 }
 
 
-void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
+void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation(AHHR_Item* itemInHand)
 {
-    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+    
     /*if(ItemInHand)
     {
         ItemInHand->SetOwner(this);
     }*/
-    AttachItem();
+    AttachItem(itemInHand);
 }
 
 
-void ALCU_PlayerCharacter::AttachItem()
+void ALCU_PlayerCharacter::AttachItem(AHHR_Item* itemInHand)
 {
 
-    if (ItemInHand && ItemInHand->IsA<ANSK_Ladder>())
+
+    if (itemInHand && itemInHand->IsA<ANSK_Ladder>())
     {
-        ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(ItemInHand);
+        ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(itemInHand);
         if (Ladder && Ladder->bIsInstalled) // 사다리가 설치 됐다면
         {
             //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
@@ -615,11 +626,6 @@ void ALCU_PlayerCharacter::AttachItem()
         }
     }
 
-    // Item의 Interactive 허용
-    if(IsLocallyControlled())
-    {
-        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(false);
-    }
 
     USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
     if (!SkeletalMeshComp)
@@ -628,25 +634,36 @@ void ALCU_PlayerCharacter::AttachItem()
     }
 
     // HHR 수정 
-    if(ItemInHand)
+    if(itemInHand)
     {
+        // Item의 Interactive 허용
+        if(IsLocallyControlled())
+        {
+            itemInHand->GetItemInteractWidgetComponent()->SetVisibility(false);
+        }
+        
         // TODO : Attach를 Multicast로 싸줘야 함 
-        ItemInHand->AttachToComponent(
+        itemInHand->AttachToComponent(
             SkeletalMeshComp,                      
             FAttachmentTransformRules::SnapToTargetIncludingScale, 
             FName("PickUpSocket")                   
         );
         bHasItem = true;
         // 각 아이템 마다 위치 수정
-        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
-        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+        itemInHand->SetActorRelativeLocation(itemInHand->ItemData.ItemLocation);
+        itemInHand->SetActorRelativeRotation(itemInHand->ItemData.ItemRotation);
         // Item의 Owner 설정
-        ItemInHand->SetOwner(this);
+        itemInHand->SetOwner(this);
+
+        // Material 수정
+        itemInHand->SetOverlayMaterialNull();
+        P_LOG(PolluteLog, Warning, TEXT("ItemInHand 가지고 있음"));
+        // Attached 설정
+        itemInHand->SetIsAttached(true);
         
-        ItemInHand->SetOverlayMaterialNull();
         if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
         {
-            LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
+            LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(itemInHand->ItemData.ItemImage);
         }
     }
 }
@@ -677,6 +694,7 @@ void ALCU_PlayerCharacter::DetachItem()
     ItemInHand->SetOverlayMaterial();
 
     // 드롭 이후 초기화
+    ItemInHand->SetIsAttached(false);
     ItemInHand = nullptr;
     bHasItem = false;
 
@@ -984,21 +1002,28 @@ void ALCU_PlayerCharacter::InteractWithParachute()
         // 캐릭터를 탈출 처리 상태로 설정
         if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
         {
-            if (IsValid(ItemInHand))
-            {
-                if (HasAuthority())
-                {
-                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
-                    
-                    ItemInHand->Destroy();  // 낙하산 액터 제거
-                    ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
-
-                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
-                }
-            }
-
             if (PlayerController->IsLocalController())
             {
+                if (IsValid(ItemInHand))
+                {
+                    // 히든 처리
+                    ItemInHand->SetActorHiddenInGame(true);
+                    ItemInHand->SetActorEnableCollision(false);
+                    ItemInHand->SetActorTickEnabled(false); // 틱 비활성화로 성능 최적화
+
+                    // TODO : 아이템 E 상호작용 콜리전 끄기
+
+                    // 삭제 처리 (미구현)
+                    //ItemInHand->Destroy();
+                    //ItemInHand = nullptr;
+
+                    // 서버에 상태 전달
+                    if (!HasAuthority())
+                    {
+                        ServerDestroyParachute(ItemInHand, true);
+                    }
+                }
+
                 // 시퀀스 파일을 로드 (경로 설정)
                 ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_Parachute.Seq_Parachute'"));
 
@@ -1066,34 +1091,88 @@ void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
     }
 }
 
-void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(ANSK_Parachute* Parachute)
-{
-    P_LOG(PolluteLog, Warning, TEXT("서버에서 낙하산 제거 요청"));
-
-    if (IsValid(Parachute))
-    {
-        P_LOG(PolluteLog, Warning, TEXT("낙하산 유효, 삭제 진행"));
-        Parachute->Destroy();
-
-        // 모든 클라에게 낙하산 삭제를 얼려주는 멀티 캐스트
-        MulticastDestroyParachute(Parachute);
-    }
-    else
-    {
-        P_LOG(PolluteLog, Warning, TEXT("낙하산이 유효하지 않음"));
-    }
-}
-
-bool ALCU_PlayerCharacter::ServerDestroyParachute_Validate(ANSK_Parachute* Parachute)
-{
-    return true; // 간단한 유효성 검사를 추가할 수 있음.
-}
-
-void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(ANSK_Parachute* Parachute)
+void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsHidden)
 {
     if (IsValid(Parachute))
     {
-        // 클라에서 낙하산 객체 삭제
-        Parachute->Destroy();
+        // 서버에서 히든 처리
+        Parachute->SetActorHiddenInGame(bIsHidden);
+        Parachute->SetActorEnableCollision(!bIsHidden);
+        Parachute->SetActorTickEnabled(!bIsHidden);
+
+        // TODO : 아이템 E 상호작용 콜리전 끄기
+
+        // 삭제 처리
+        //Parachute->Destroy();
+        //Parachute = nullptr;
+
+        // 모든 클라이언트에 동기화
+        MulticastDestroyParachute(Parachute, bIsHidden);
     }
 }
+
+void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsHidden)
+{
+    if (IsValid(Parachute))
+    {
+        Parachute->SetActorHiddenInGame(bIsHidden);
+        Parachute->SetActorEnableCollision(!bIsHidden);
+        Parachute->SetActorTickEnabled(!bIsHidden);
+
+        // TODO : 아이템 E 상호작용 콜리전 끄기
+
+        // 삭제 처리
+        // Parachute->Destroy();
+    }
+}
+
+//void ALCU_PlayerCharacter::PlayPortSequence()
+//{
+//    if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
+//    {
+//        if (PlayerController->IsLocalController())
+//        {
+//            // 시퀀스 파일을 로드 (경로 설정)
+//            ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
+//
+//            if (Sequence)
+//            {
+//                // 시퀀스를 재생할 Level Sequence Actor를 생성
+//                FActorSpawnParameters SpawnParams;
+//                SpawnParams.Owner = this;
+//                ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
+//
+//                if (SequenceActor)
+//                {
+//                    // 시퀀스를 Actor에 설정
+//                    SequenceActor->SetSequence(Sequence);
+//
+//                    // Level Sequence Player 생성
+//                    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+//                    ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
+//
+//                    if (SequencePlayer)
+//                    {
+//                        // 시퀀스 재생 시작
+//                        SequencePlayer->Play();
+//
+//                        // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
+//                        PlayerController->ServerRPC_ChangeToSpector();
+//                    }
+//                    else
+//                    {
+//                        P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
+//                    }
+//                }
+//                else
+//                {
+//                    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+//                }
+//            }
+//            else
+//            {
+//                P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+//            }
+//        }
+//    }
+//}

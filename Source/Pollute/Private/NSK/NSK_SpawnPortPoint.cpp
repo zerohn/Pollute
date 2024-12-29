@@ -116,24 +116,14 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
         return;
     }
 
-    // 캐릭터 캐스팅
-    ALCU_PlayerCharacter* OverlapCharacter = Cast<ALCU_PlayerCharacter>(OtherActor);
-    if (!OverlapCharacter)
-    {
-        P_LOG(PolluteLog, Warning, TEXT("캐릭터 캐스팅 실패"));
-        return;
-    }
+    //Cast<ALCU_PlayerCharacter>(OtherActor)->GetController();
 
-    // 서버에서 처리
-    if (HasAuthority())
-    {
-        bHasOverlapped = true;
-        bIsPendingDestroy = true;
+    // 첫 캐릭터인 서버 0번만 가져와서 시퀀스가 서버에서 실행되고 모든 클라에 전파되어서 사용할 수 없다
+    //if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController()))
 
-        Multicast_DestroyPort();
-    }
+    AController* PlayerController = Cast<ALCU_PlayerCharacter>(OtherActor)->GetController();
 
-    if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController()))
+    if(PlayerController)
     {
         if (PlayerController->IsLocalController())
         {
@@ -161,8 +151,11 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
                         // 시퀀스 재생 시작
                         SequencePlayer->Play();
 
+                        // 스펙터 함수 가져오기
+                        Cast<ALCU_PlayerController>(PlayerController)->ServerRPC_ChangeToSpector();
+
                         // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
-                        PlayerController->ServerRPC_ChangeToSpector();
+                        //PlayerController->ServerRPC_ChangeToSpector();
                     }
                     else
                     {
@@ -178,6 +171,37 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
             {
                 P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
             }
+
+            this->SetActorHiddenInGame(true);
+            this->SetActorEnableCollision(false);
+            this->SetActorTickEnabled(false);
+
+            // 서버에 상태 전달
+            if (!HasAuthority())
+            {
+                Server_HiddenPort(this, true);
+            }
+
+            // 캐릭터에 구현된 시퀀스 실행 함수 ( 현재는 캐스트로 불러올 필요가 없게 돼서 주석처리 )
+            //Cast<ALCU_PlayerCharacter>(OtherActor)->PlayPortSequence();
         }
     }
+}
+
+// 포트 히든 처리 함수 (서버)
+void ANSK_SpawnPortPoint::Server_HiddenPort_Implementation(ANSK_SpawnPortPoint* Port,bool bIsHidden)
+{
+    Port->SetActorHiddenInGame(bIsHidden);
+    Port->SetActorEnableCollision(!bIsHidden);
+    Port->SetActorTickEnabled(!bIsHidden);
+
+    Multicast_HiddenPort(Port, bIsHidden);
+}
+
+// 포트 히든 처리 함수 (클라 
+void ANSK_SpawnPortPoint::Multicast_HiddenPort_Implementation(ANSK_SpawnPortPoint* Port, bool bIsHidden)
+{
+    Port->SetActorHiddenInGame(bIsHidden);
+    Port->SetActorEnableCollision(!bIsHidden);
+    Port->SetActorTickEnabled(!bIsHidden);
 }
