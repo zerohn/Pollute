@@ -24,10 +24,9 @@ public class Pollute : ModuleRules
             "Json",
             "JsonUtilities",
             "LevelSequence",
-            "MovieScene"
+            "MovieScene",
+            "Voice"
 		});
-
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
 		
 		PrivatePCHHeaderFile = "Pollute.h";
 		
