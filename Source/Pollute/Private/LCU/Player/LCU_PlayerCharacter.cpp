@@ -919,12 +919,11 @@ void ALCU_PlayerCharacter::InstallAndDeleteItem()
     // 아이템이 손에 있을 때만 드랍 처리
     if (bHasItem && ItemInHand)
     {
+        AHHR_Item* tmp = ItemInHand;
         DetachItem();
-        ItemInHand->Destroy();
-        ItemInHand = nullptr;
+        tmp->Destroy();
         bHasItem = false;
 
-        P_LOG(PolluteLog, Warning, TEXT("아이템을 손에서 해제했습니다."));
     }
 }
 
