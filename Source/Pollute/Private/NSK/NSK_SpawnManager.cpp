@@ -38,7 +38,6 @@ void ANSK_SpawnManager::BeginPlay() // 게임이 시작된 후 호출 -> 스폰 
     TestPlayerHUDIns->AddToViewport();
     // character에서 임시로 hud 생성
     ALCU_PlayerCharacter* player = Cast<ALCU_PlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    player->PlayerHUD = TestPlayerHUDIns;
     //--
 
     if (!HasAuthority()) return;
