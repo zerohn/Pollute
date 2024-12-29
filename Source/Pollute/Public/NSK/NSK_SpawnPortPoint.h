@@ -36,6 +36,13 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_DestroyPort();
 
+    // ### 포트 히든 처리 ### 
+    UFUNCTION(Server, Reliable)
+    void Server_HiddenPort(ANSK_SpawnPortPoint* Port, bool bIsHidden);
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_HiddenPort(ANSK_SpawnPortPoint* Port, bool bIsHidden);
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Port")
     UStaticMeshComponent* SpawnPortMesh;
 
@@ -45,7 +52,6 @@ public:
 private:
 
     bool bHasOverlapped = false;
-
     bool bIsPendingDestroy = false;
 
     UFUNCTION(BlueprintCallable)
