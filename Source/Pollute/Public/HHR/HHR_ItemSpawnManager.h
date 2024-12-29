@@ -48,7 +48,7 @@ protected:
 // *Item, Hint 저장*
 public:
     // 아이템 데이터 저장
-    UPROPERTY(VisibleDefaultsOnly, Category="Items")
+    UPROPERTY(EditDefaultsOnly, Category="Items")
     TMap<int32, FItemData> ItemDataMap;
 private:
     // 생성된 아이템 저장

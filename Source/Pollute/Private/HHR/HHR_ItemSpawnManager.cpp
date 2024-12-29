@@ -161,8 +161,8 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                 item = GetWorld()->SpawnActor<ANSK_Ladder>(LadderClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                 ++spawnPointIdx;
                 ItemInsArray.Add(item);
-                //item->SetItemData(itemPair.Value);
-                //NetMuulticast_SetData(item, itemPair.Key);
+                item->SetItemData(itemPair.Value);
+                NetMuulticast_SetData(item, itemPair.Key);
             }
             else if(itemPair.Value.ItemName.ToString().Contains("Parachute"))
             {
@@ -171,8 +171,8 @@ void AHHR_ItemSpawnManager::SpawnRandomItem()
                     item = GetWorld()->SpawnActor<ANSK_Parachute>(ParachuteClass, SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorLocation(), SpawnPoints[RandomSpawnPointIdx[spawnPointIdx]]->GetActorRotation());
                     ++spawnPointIdx;
                     ItemInsArray.Add(item);
-                    //item->SetItemData(itemPair.Value);
-                    //NetMuulticast_SetData(item, itemPair.Key);
+                    item->SetItemData(itemPair.Value);
+                    NetMuulticast_SetData(item, itemPair.Key);
                 }
             }
 

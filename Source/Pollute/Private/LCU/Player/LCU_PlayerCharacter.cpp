@@ -35,6 +35,7 @@
 #include "LevelSequence.h"
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
+#include "Components/SphereComponent.h"
 #include "NSK/NSK_SPawnPortPoint.h"
 
 // Sets default values
@@ -1010,6 +1011,7 @@ void ALCU_PlayerCharacter::InteractWithParachute()
                     ItemInHand->SetActorHiddenInGame(true);
                     ItemInHand->SetActorEnableCollision(false);
                     ItemInHand->SetActorTickEnabled(false); // 틱 비활성화로 성능 최적화
+                    ItemInHand->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
                     // TODO : 아이템 E 상호작용 콜리전 끄기
 
@@ -1099,6 +1101,7 @@ void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(AHHR_Item* Para
         Parachute->SetActorHiddenInGame(bIsHidden);
         Parachute->SetActorEnableCollision(!bIsHidden);
         Parachute->SetActorTickEnabled(!bIsHidden);
+        Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
         // TODO : 아이템 E 상호작용 콜리전 끄기
 
@@ -1118,6 +1121,7 @@ void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(AHHR_Item* P
         Parachute->SetActorHiddenInGame(bIsHidden);
         Parachute->SetActorEnableCollision(!bIsHidden);
         Parachute->SetActorTickEnabled(!bIsHidden);
+        Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
         // TODO : 아이템 E 상호작용 콜리전 끄기
 

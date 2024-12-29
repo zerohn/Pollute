@@ -44,11 +44,11 @@ protected:
 	// Item mesh Component
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
 	UStaticMeshComponent* ItemMehsComp;
-
+public:
 	// Item Collision Component
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
 	class USphereComponent* ItemSphereComp;
-
+protected:
     // Item Interaction Widget Component
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")
     class UWidgetComponent* ItemInteractWidgetComp;

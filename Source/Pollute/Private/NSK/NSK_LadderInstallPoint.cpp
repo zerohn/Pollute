@@ -7,6 +7,8 @@
 #include "NSK/NSK_Ladder.h"
 #include <Net/UnrealNetwork.h>
 
+#include "Math/TransformCalculus3D.h"
+
 ANSK_LadderInstallPoint::ANSK_LadderInstallPoint()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -99,9 +101,12 @@ void ANSK_LadderInstallPoint::InstallLadder(ALCU_PlayerCharacter* Player)
             // 사다리 액터를 설치 지점에 스폰
             FVector SpawnLocation = InstallMesh->GetComponentLocation(); // 설치 지점 위치
             FRotator SpawnRotation = InstallMesh->GetComponentRotation(); // 설치 지점의 회전
-
+            FTransform SpawnTransform;
+            SpawnTransform.SetLocation(SpawnLocation);
+            SpawnTransform.SetRotation(SpawnRotation.Quaternion());
+            SpawnTransform.SetScale3D(FVector(1, 1, 1));
             // 실제로 액터를 스폰
-            AActor* SpawnedActor = GetWorld()->SpawnActor<ANSK_Ladder>(BP_LadderClass, SpawnLocation, SpawnRotation, SpawnParams);
+            AActor* SpawnedActor = GetWorld()->SpawnActor<ANSK_Ladder>(BP_LadderClass, SpawnTransform, SpawnParams);
 
             // 가져오는게 잘못됨 메쉬가 빠짐 -> 원인 : C++ 자체를 가지고 오고 있어서 Mesh가 빠졌는데 BP를 가져와서 생성해줘야함!!
 
