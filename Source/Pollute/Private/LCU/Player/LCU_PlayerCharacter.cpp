@@ -671,7 +671,6 @@ void ALCU_PlayerCharacter::DetachItem()
     // 아이템의 부모-자식 관계 해제
     // TODO : Detach를 Multicast로 싸줘야 함 
     ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
     // 위치 및 회전 설정
     ItemInHand->SetActorLocation(DropLocation);
     ItemInHand->SetActorRotation(DropRotation);
@@ -805,13 +804,13 @@ void ALCU_PlayerCharacter::MulticastRPC_UpdatePlayerMesh_Implementation(EPlayerT
 void ALCU_PlayerCharacter::SetCurrentSlotIndex(int32 SlotIndex)
 {
     SelectedSlotIndex = SlotIndex;
-    P_LOG(PolluteLog, Warning, TEXT("현재 슬롯 인덱스 설정: %d"), SelectedSlotIndex);
+    //P_LOG(PolluteLog, Warning, TEXT("현재 슬롯 인덱스 설정: %d"), SelectedSlotIndex);
 }
 
 void ALCU_PlayerCharacter::ClearCurrentSlotIndex()
 {
     SelectedSlotIndex = INDEX_NONE; // 유효하지 않은 값으로 초기화
-    P_LOG(PolluteLog, Warning, TEXT("현재 슬롯 인덱스 초기화"));
+    //P_LOG(PolluteLog, Warning, TEXT("현재 슬롯 인덱스 초기화"));
 }
 
 // NSK 캐릭터 제단 상호작용 로직
