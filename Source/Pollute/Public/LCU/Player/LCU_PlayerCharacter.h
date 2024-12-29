@@ -108,8 +108,8 @@ public:
     void ClientRPC_SetCurseScalar(float scalar);
     
     UFUNCTION(NetMulticast, Reliable)
-    void NetMulticast_AttachItem();
-    void AttachItem();
+    void NetMulticast_AttachItem(class AHHR_Item* itemInHand);
+    void AttachItem(class AHHR_Item* itemInHand);
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticast_DetachItem();
     void DetachItem();
@@ -150,7 +150,7 @@ private:
 	// 최종 선택된 액터를 관리하는 변수
 	UPROPERTY()
 	ALCU_PlayerCharacter* FinalOverapPlayer;
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AActor* FinalOverapItem;
     UPROPERTY(Replicated)
     class AHHR_Item* ItemInHand;

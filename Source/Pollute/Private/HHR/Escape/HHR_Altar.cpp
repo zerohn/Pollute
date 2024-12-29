@@ -188,6 +188,7 @@ void AHHR_Altar::NetMulticast_AttachToAltar_Implementation(AHHR_Item* Item)
         Item->AttachToComponent(SphereCollisionComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         Item->SetActorRelativeLocation(ItemAttachPos[idx]);
         // 정보 업뎃
+        Item->SetOverlayMaterialNull();
         AttachedItems[idx] = Item;
         ++CurrentItemCnt;
     }

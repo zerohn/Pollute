@@ -120,9 +120,9 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
     if(IsValid(FinalOverapItem) && IsLocallyControlled() && !ItemInHand)
     {
         AHHR_Item* item = Cast<AHHR_Item>(FinalOverapItem);
-        if(item)
+        if(item && !item->GetIsAttached())
         {
-            LCU_Pc->UIManager->PlayerHUD->ItemDialog->SetText(item->ItemData.ItemName);
+            LCU_Pc->UIManager->PlayerHUD->ItemDialog->SetText(item->ItemData.ItemUIName);
             LCU_Pc->UIManager->PlayerHUD->SetItemDialogVisibility(true);
         }
     }
@@ -185,6 +185,7 @@ void ALCU_PlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 
     DOREPLIFETIME(ALCU_PlayerCharacter, HealthCount);
     DOREPLIFETIME(ALCU_PlayerCharacter, ItemInHand);
+    DOREPLIFETIME(ALCU_PlayerCharacter, FinalOverapItem);
     DOREPLIFETIME(ALCU_PlayerCharacter, bHasCurse);
     DOREPLIFETIME(ALCU_PlayerCharacter, bIsRunning);
     DOREPLIFETIME(ALCU_PlayerCharacter, StartCurseCool);
@@ -553,11 +554,13 @@ void ALCU_PlayerCharacter::DropDown()
 
 void ALCU_PlayerCharacter::PickUpDropDown()
 {
+
     ServerRPC_PickUpDropDown();
 }
 
 void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 {
+    P_LOG(PolluteLog, Warning, TEXT("ServerRPC PickupDown"));
     
     // 주울 수 있는 아이템이 없으면 나가야함
     if(!FinalOverapItem) return;
@@ -578,7 +581,13 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
             }
         }
         //}
-        NetMulticast_AttachItem();
+        AHHR_Item* item = Cast<AHHR_Item>(FinalOverapItem);
+        // 아이템이 attached 되어 있으면 못함
+        if(!item->GetIsAttached())
+        {
+            ItemInHand = item;
+            NetMulticast_AttachItem(ItemInHand);
+        }
 
     }
     // 아이템을 가지고 있으니 드랍다운
@@ -591,23 +600,24 @@ void ALCU_PlayerCharacter::ServerRPC_PickUpDropDown_Implementation()
 }
 
 
-void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation()
+void ALCU_PlayerCharacter::NetMulticast_AttachItem_Implementation(AHHR_Item* itemInHand)
 {
-    ItemInHand = Cast<AHHR_Item>(FinalOverapItem);
+    
     /*if(ItemInHand)
     {
         ItemInHand->SetOwner(this);
     }*/
-    AttachItem();
+    AttachItem(itemInHand);
 }
 
 
-void ALCU_PlayerCharacter::AttachItem()
+void ALCU_PlayerCharacter::AttachItem(AHHR_Item* itemInHand)
 {
 
-    if (ItemInHand && ItemInHand->IsA<ANSK_Ladder>())
+
+    if (itemInHand && itemInHand->IsA<ANSK_Ladder>())
     {
-        ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(ItemInHand);
+        ANSK_Ladder* Ladder = Cast<ANSK_Ladder>(itemInHand);
         if (Ladder && Ladder->bIsInstalled) // 사다리가 설치 됐다면
         {
             //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되어 있어 아이템을 다시 들 수 없다"));
@@ -615,11 +625,6 @@ void ALCU_PlayerCharacter::AttachItem()
         }
     }
 
-    // Item의 Interactive 허용
-    if(IsLocallyControlled())
-    {
-        ItemInHand->GetItemInteractWidgetComponent()->SetVisibility(false);
-    }
 
     USkeletalMeshComponent* SkeletalMeshComp = GetMesh();
     if (!SkeletalMeshComp)
@@ -628,25 +633,36 @@ void ALCU_PlayerCharacter::AttachItem()
     }
 
     // HHR 수정 
-    if(ItemInHand)
+    if(itemInHand)
     {
+        // Item의 Interactive 허용
+        if(IsLocallyControlled())
+        {
+            itemInHand->GetItemInteractWidgetComponent()->SetVisibility(false);
+        }
+        
         // TODO : Attach를 Multicast로 싸줘야 함 
-        ItemInHand->AttachToComponent(
+        itemInHand->AttachToComponent(
             SkeletalMeshComp,                      
             FAttachmentTransformRules::SnapToTargetIncludingScale, 
             FName("PickUpSocket")                   
         );
         bHasItem = true;
         // 각 아이템 마다 위치 수정
-        ItemInHand->SetActorRelativeLocation(ItemInHand->ItemData.ItemLocation);
-        ItemInHand->SetActorRelativeRotation(ItemInHand->ItemData.ItemRotation);
+        itemInHand->SetActorRelativeLocation(itemInHand->ItemData.ItemLocation);
+        itemInHand->SetActorRelativeRotation(itemInHand->ItemData.ItemRotation);
         // Item의 Owner 설정
-        ItemInHand->SetOwner(this);
+        itemInHand->SetOwner(this);
+
+        // Material 수정
+        itemInHand->SetOverlayMaterialNull();
+        P_LOG(PolluteLog, Warning, TEXT("ItemInHand 가지고 있음"));
+        // Attached 설정
+        itemInHand->SetIsAttached(true);
         
-        ItemInHand->SetOverlayMaterialNull();
         if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
         {
-            LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(ItemInHand->ItemData.ItemImage);
+            LCU_Pc->UIManager->PlayerHUD->ChangeItemImage(itemInHand->ItemData.ItemImage);
         }
     }
 }
@@ -678,6 +694,7 @@ void ALCU_PlayerCharacter::DetachItem()
     ItemInHand->SetOverlayMaterial();
 
     // 드롭 이후 초기화
+    ItemInHand->SetIsAttached(false);
     ItemInHand = nullptr;
     bHasItem = false;
 
