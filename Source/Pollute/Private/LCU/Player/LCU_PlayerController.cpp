@@ -8,7 +8,9 @@
 #include "InputMappingContext.h"
 #include "OnlineSubsystemUtils.h"
 #include "NavigationSystemTypes.h"
+#include "VoiceModule.h"
 #include "Animation/AnimInstance.h"
+#include "Components/AudioComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
@@ -20,10 +22,24 @@
 #include "LCU/UI/LCU_UIManager.h"
 #include "Net/UnrealNetwork.h"
 #include "P_Settings/P_GameState.h"
+#include "P_Settings/P_PlayerState.h"
+#include "Runtime/Online/Voice/Public/Interfaces/VoiceCapture.h"
+#include "Sound/SoundWaveProcedural.h"
 
 ALCU_PlayerController::ALCU_PlayerController()
 {
     bReplicates = true;
+
+    VoiceChatComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("VoiceChatComponent"));
+    VoiceChatComponent->bAutoActivate = false;
+    VoiceChatComponent->bAllowSpatialization = true;
+
+    VoiceChatSoundWave = NewObject<USoundWaveProcedural>();
+    VoiceChatSoundWave->SetSampleRate(16000);
+    VoiceChatSoundWave->NumChannels = 2;
+    VoiceChatSoundWave->Duration = INDEFINITELY_LOOPING_DURATION;
+
+    VoiceChatComponent->SetSound(VoiceChatSoundWave);
 }
 
 void ALCU_PlayerController::BeginPlay()
@@ -36,6 +52,11 @@ void ALCU_PlayerController::BeginPlay()
     {
         Subsys->AddMappingContext(IMC_VoiceChat, 1);
     }
+
+    // if (VoiceChatComponent)
+    // {
+    //     VoiceChatComponent->Activate();
+    // }
     
     if(!IsLocalController()) return;
     if(UIManagerFactory)
@@ -172,6 +193,8 @@ void ALCU_PlayerController::ChangeToMonster()
 
 void ALCU_PlayerController::CaptureVoiceData()
 {
+    TSharedPtr<IVoiceCapture> VoiceCapture = FVoiceModule::Get().CreateVoiceCapture(GetPlayerState<AP_PlayerState>()->GetPlayerName());
+    
 }
 
 void ALCU_PlayerController::PlayVoiceData(const TArray<uint8>& VoiceData)
@@ -180,42 +203,30 @@ void ALCU_PlayerController::PlayVoiceData(const TArray<uint8>& VoiceData)
 
 void ALCU_PlayerController::EnableVoiceChat()
 {
-    //P_LOG(PolluteLog, Warning, TEXT("EnableVoiceChat"))
-    IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
-    if (OnlineSubsystem)
-    {
-        IOnlineVoicePtr VoiceInterface = OnlineSubsystem->GetVoiceInterface();
-        if (VoiceInterface.IsValid())
-        {
-            VoiceInterface->StartNetworkedVoice(GetLocalPlayer()->GetControllerId());
-        }
-    }
-    // if (PlayerMode == EPlayerMode::Human)
-    // {
-    //     CurrentVoiceChannel = EVoiceChannel::PlayerChannel;
-    // }
-    // if (PlayerMode == EPlayerMode::Spector)
-    // {
-    //     CurrentVoiceChannel = EVoiceChannel::SpectatorChannel;
-    // }
-    // if (PlayerMode == EPlayerMode::Monster)
-    // {
-    //     CurrentVoiceChannel = EVoiceChannel::MonsterChannel;
-    // }
+    P_LOG(PolluteLog, Warning, TEXT("EnableVoiceChat"))
+     IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
+     if (OnlineSubsystem)
+     {
+         IOnlineVoicePtr VoiceInterface = OnlineSubsystem->GetVoiceInterface();
+         if (VoiceInterface.IsValid())
+         {
+             VoiceInterface->StartNetworkedVoice(GetLocalPlayer()->GetControllerId());
+         }
+     }
 }
 
 void ALCU_PlayerController::DisableVoiceChat()
 {
-    //P_LOG(PolluteLog, Warning, TEXT("DisableVoiceChat"))
-    IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
-    if (OnlineSubsystem)
-    {
-        IOnlineVoicePtr VoiceInterface = OnlineSubsystem->GetVoiceInterface();
-        if (VoiceInterface.IsValid())
-        {
-            VoiceInterface->StopNetworkedVoice(GetLocalPlayer()->GetControllerId());
-        }
-    }
+    P_LOG(PolluteLog, Warning, TEXT("DisableVoiceChat"))
+     IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
+     if (OnlineSubsystem)
+     {
+         IOnlineVoicePtr VoiceInterface = OnlineSubsystem->GetVoiceInterface();
+         if (VoiceInterface.IsValid())
+         {
+             VoiceInterface->StopNetworkedVoice(GetLocalPlayer()->GetControllerId());
+         }
+     }
 }
 
 void ALCU_PlayerController::SetupInputComponent()
