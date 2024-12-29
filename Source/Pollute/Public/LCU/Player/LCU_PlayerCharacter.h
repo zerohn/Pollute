@@ -353,12 +353,4 @@ protected:
     void PutItemOnAltar();
 // ** hhr
     
-
-// 임시 playerhud
-public:
-    class UHHR_PlayerHUD* PlayerHUD;
-
-    // 픽업 대상 아이템 by lcu
-    class AHHR_Item* RetrievedItem;
-
 };

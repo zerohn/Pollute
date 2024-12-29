@@ -133,11 +133,6 @@ void ALCU_PlayerCharacter::Tick(float DeltaTime)
        LCU_Pc->UIManager->PlayerHUD->SetItemDialogVisibility(false);
     }
 
-    if(FinalOverapItem)
-    {
-        RetrievedItem = Cast<AHHR_Item>(FinalOverapItem);
-    }
-    
     if(StartCurseCool)
     {
         if(IsLocallyControlled())
@@ -924,7 +919,7 @@ void ALCU_PlayerCharacter::InstallAndDeleteItem()
     // 아이템이 손에 있을 때만 드랍 처리
     if (bHasItem && ItemInHand)
     {
-        ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        DetachItem();
         ItemInHand->Destroy();
         ItemInHand = nullptr;
         bHasItem = false;
