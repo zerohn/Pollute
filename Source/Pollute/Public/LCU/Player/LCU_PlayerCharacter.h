@@ -13,6 +13,7 @@
 class ALCU_PlayerController;
 class UMaterialInstanceDynamic;
 class UMaterialInstance;
+
 enum class EPlayerType : uint8;
 
 
@@ -295,15 +296,16 @@ public:
     UFUNCTION()
     void CanUseParachute(bool bCanUse);
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void ServerDestroyParachute(ANSK_Parachute* Parachute);
+    UFUNCTION(Server, Reliable)
+    void ServerDestroyParachute(class AHHR_Item* Parachute, bool bIsHidden);
 
     UFUNCTION(NetMulticast, Reliable)
-    void MulticastDestroyParachute(ANSK_Parachute* Parachute);
+    void MulticastDestroyParachute(class AHHR_Item* Parachute, bool bIsHidden);
 
     bool bCanUseParachute;
 
     // NSK EscpaePort
+    void PlayPortSequence();
 
 public:
 
@@ -316,11 +318,9 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerRPC_SetPlayerType(EPlayerType InPlayerType);
     UFUNCTION(NetMulticast, Reliable)
+
     void MulticastRPC_UpdatePlayerMesh(EPlayerType InPlayerType);
 
-
-
- 
 // ** 제단 ** by HHR
     // Delegates
 public:

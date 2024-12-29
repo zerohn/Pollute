@@ -35,6 +35,7 @@
 #include "LevelSequence.h"
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
+#include "NSK/NSK_SPawnPortPoint.h"
 
 // Sets default values
 ALCU_PlayerCharacter::ALCU_PlayerCharacter()
@@ -985,21 +986,28 @@ void ALCU_PlayerCharacter::InteractWithParachute()
         // 캐릭터를 탈출 처리 상태로 설정
         if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
         {
-            if (IsValid(ItemInHand))
-            {
-                if (HasAuthority())
-                {
-                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 전"));
-                    
-                    ItemInHand->Destroy();  // 낙하산 액터 제거
-                    ItemInHand = nullptr;  // 참조를 초기화하여 안전하게 처리
-
-                    P_LOG(PolluteLog, Warning, TEXT("낙하산 액터 제거 후"));
-                }
-            }
-
             if (PlayerController->IsLocalController())
             {
+                if (IsValid(ItemInHand))
+                {
+                    // 히든 처리
+                    ItemInHand->SetActorHiddenInGame(true);
+                    ItemInHand->SetActorEnableCollision(false);
+                    ItemInHand->SetActorTickEnabled(false); // 틱 비활성화로 성능 최적화
+
+                    // TODO : 아이템 E 상호작용 콜리전 끄기
+
+                    // 삭제 처리 (미구현)
+                    //ItemInHand->Destroy();
+                    //ItemInHand = nullptr;
+
+                    // 서버에 상태 전달
+                    if (!HasAuthority())
+                    {
+                        ServerDestroyParachute(ItemInHand, true);
+                    }
+                }
+
                 // 시퀀스 파일을 로드 (경로 설정)
                 ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_Parachute.Seq_Parachute'"));
 
@@ -1067,34 +1075,88 @@ void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
     }
 }
 
-void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(ANSK_Parachute* Parachute)
-{
-    P_LOG(PolluteLog, Warning, TEXT("서버에서 낙하산 제거 요청"));
-
-    if (IsValid(Parachute))
-    {
-        P_LOG(PolluteLog, Warning, TEXT("낙하산 유효, 삭제 진행"));
-        Parachute->Destroy();
-
-        // 모든 클라에게 낙하산 삭제를 얼려주는 멀티 캐스트
-        MulticastDestroyParachute(Parachute);
-    }
-    else
-    {
-        P_LOG(PolluteLog, Warning, TEXT("낙하산이 유효하지 않음"));
-    }
-}
-
-bool ALCU_PlayerCharacter::ServerDestroyParachute_Validate(ANSK_Parachute* Parachute)
-{
-    return true; // 간단한 유효성 검사를 추가할 수 있음.
-}
-
-void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(ANSK_Parachute* Parachute)
+void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsHidden)
 {
     if (IsValid(Parachute))
     {
-        // 클라에서 낙하산 객체 삭제
-        Parachute->Destroy();
+        // 서버에서 히든 처리
+        Parachute->SetActorHiddenInGame(bIsHidden);
+        Parachute->SetActorEnableCollision(!bIsHidden);
+        Parachute->SetActorTickEnabled(!bIsHidden);
+
+        // TODO : 아이템 E 상호작용 콜리전 끄기
+
+        // 삭제 처리
+        //Parachute->Destroy();
+        //Parachute = nullptr;
+
+        // 모든 클라이언트에 동기화
+        MulticastDestroyParachute(Parachute, bIsHidden);
     }
 }
+
+void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsHidden)
+{
+    if (IsValid(Parachute))
+    {
+        Parachute->SetActorHiddenInGame(bIsHidden);
+        Parachute->SetActorEnableCollision(!bIsHidden);
+        Parachute->SetActorTickEnabled(!bIsHidden);
+
+        // TODO : 아이템 E 상호작용 콜리전 끄기
+
+        // 삭제 처리
+        // Parachute->Destroy();
+    }
+}
+
+//void ALCU_PlayerCharacter::PlayPortSequence()
+//{
+//    if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
+//    {
+//        if (PlayerController->IsLocalController())
+//        {
+//            // 시퀀스 파일을 로드 (경로 설정)
+//            ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
+//
+//            if (Sequence)
+//            {
+//                // 시퀀스를 재생할 Level Sequence Actor를 생성
+//                FActorSpawnParameters SpawnParams;
+//                SpawnParams.Owner = this;
+//                ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
+//
+//                if (SequenceActor)
+//                {
+//                    // 시퀀스를 Actor에 설정
+//                    SequenceActor->SetSequence(Sequence);
+//
+//                    // Level Sequence Player 생성
+//                    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+//                    ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
+//
+//                    if (SequencePlayer)
+//                    {
+//                        // 시퀀스 재생 시작
+//                        SequencePlayer->Play();
+//
+//                        // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
+//                        PlayerController->ServerRPC_ChangeToSpector();
+//                    }
+//                    else
+//                    {
+//                        P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
+//                    }
+//                }
+//                else
+//                {
+//                    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
+//                }
+//            }
+//            else
+//            {
+//                P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
+//            }
+//        }
+//    }
+//}
