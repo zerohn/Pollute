@@ -667,7 +667,6 @@ void ALCU_PlayerCharacter::AttachItem(AHHR_Item* itemInHand)
 void ALCU_PlayerCharacter::NetMulticast_DetachItem_Implementation()
 {
     DetachItem();
-   
 }
 
 void ALCU_PlayerCharacter::DetachItem()
@@ -697,7 +696,6 @@ void ALCU_PlayerCharacter::DetachItem()
     if(IsLocallyControlled() && LCU_Pc && LCU_Pc->UIManager)
     {
         LCU_Pc->UIManager->PlayerHUD->ChangeItemImageNull();
-        
     }
 }
 
@@ -803,7 +801,6 @@ void ALCU_PlayerCharacter::PutItemOnAltar()
     }
 }
 
-
 void ALCU_PlayerCharacter::ServerRPC_SetPlayerType_Implementation(EPlayerType InPlayerType)
 {
     MulticastRPC_UpdatePlayerMesh(InPlayerType);
@@ -891,13 +888,6 @@ void ALCU_PlayerCharacter::OnInstallLadder()
             ANSK_LadderInstallPoint* InstallPoint = *It;
             if (InstallPoint && InstallPoint->bPlayerIsNear)
             {
-                // 인스톨 포인트에 사다리 액터 생성 추가 로직
-                //InstallPoint->SetupInteraction();
-
-                //InstallAndDeleteItem();
-
-                //P_LOG(PolluteLog, Warning, TEXT("사다리가 설치되었습니다."));
-
                 ServerInstallLadder(InstallPoint);
                 break;
             }
@@ -923,7 +913,6 @@ void ALCU_PlayerCharacter::InstallAndDeleteItem()
         DetachItem();
         tmp->Destroy();
         bHasItem = false;
-
     }
 }
 
