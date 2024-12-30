@@ -198,7 +198,7 @@ void ANSK_SpawnPortPoint::Server_HiddenPort_Implementation(ANSK_SpawnPortPoint* 
     Multicast_HiddenPort(Port, bIsHidden);
 }
 
-// 포트 히든 처리 함수 (클라 
+// 포트 히든 처리 함수 (클라) 
 void ANSK_SpawnPortPoint::Multicast_HiddenPort_Implementation(ANSK_SpawnPortPoint* Port, bool bIsHidden)
 {
     Port->SetActorHiddenInGame(bIsHidden);
