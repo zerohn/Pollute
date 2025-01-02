@@ -292,7 +292,7 @@ public:
 
 
     // NSK Parachute
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION()
     void InteractWithParachute();
 
     UFUNCTION()

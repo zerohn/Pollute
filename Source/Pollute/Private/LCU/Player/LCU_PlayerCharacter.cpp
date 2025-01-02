@@ -994,13 +994,11 @@ void ALCU_PlayerCharacter::InteractWithParachute()
                     ItemInHand->SetActorHiddenInGame(true);
                     ItemInHand->SetActorEnableCollision(false);
                     ItemInHand->SetActorTickEnabled(false); // 틱 비활성화로 성능 최적화
-                    ItemInHand->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-                    // TODO : 아이템 E 상호작용 콜리전 끄기
-
-                    // 삭제 처리 (미구현)
-                    //ItemInHand->Destroy();
-                    //ItemInHand = nullptr;
+                    if (ItemInHand->ItemSphereComp)
+                    {
+                        ItemInHand->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                    }
 
                     // 서버에 상태 전달
                     if (!HasAuthority())
@@ -1086,12 +1084,6 @@ void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(AHHR_Item* Para
         Parachute->SetActorTickEnabled(!bIsHidden);
         Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-        // TODO : 아이템 E 상호작용 콜리전 끄기
-
-        // 삭제 처리
-        //Parachute->Destroy();
-        //Parachute = nullptr;
-
         // 모든 클라이언트에 동기화
         MulticastDestroyParachute(Parachute, bIsHidden);
     }
@@ -1105,61 +1097,5 @@ void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(AHHR_Item* P
         Parachute->SetActorEnableCollision(!bIsHidden);
         Parachute->SetActorTickEnabled(!bIsHidden);
         Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-        // TODO : 아이템 E 상호작용 콜리전 끄기
-
-        // 삭제 처리
-        // Parachute->Destroy();
     }
 }
-
-//void ALCU_PlayerCharacter::PlayPortSequence()
-//{
-//    if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetController()))
-//    {
-//        if (PlayerController->IsLocalController())
-//        {
-//            // 시퀀스 파일을 로드 (경로 설정)
-//            ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, TEXT("LevelSequence'/Game/NSK/Sequence/Seq_EscapePort.Seq_EscapePort'"));
-//
-//            if (Sequence)
-//            {
-//                // 시퀀스를 재생할 Level Sequence Actor를 생성
-//                FActorSpawnParameters SpawnParams;
-//                SpawnParams.Owner = this;
-//                ALevelSequenceActor* SequenceActor = GetWorld()->SpawnActor<ALevelSequenceActor>(ALevelSequenceActor::StaticClass(), SpawnParams);
-//
-//                if (SequenceActor)
-//                {
-//                    // 시퀀스를 Actor에 설정
-//                    SequenceActor->SetSequence(Sequence);
-//
-//                    // Level Sequence Player 생성
-//                    FMovieSceneSequencePlaybackSettings PlaybackSettings;
-//                    ULevelSequencePlayer* SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), Sequence, PlaybackSettings, SequenceActor);
-//
-//                    if (SequencePlayer)
-//                    {
-//                        // 시퀀스 재생 시작
-//                        SequencePlayer->Play();
-//
-//                        // 시퀀스 재생이 시작된 후 스펙터 모드로 전환
-//                        PlayerController->ServerRPC_ChangeToSpector();
-//                    }
-//                    else
-//                    {
-//                        P_LOG(PolluteLog, Warning, TEXT("시퀀스를 LevelSequenceActor에서 추출 실패"));
-//                    }
-//                }
-//                else
-//                {
-//                    P_LOG(PolluteLog, Warning, TEXT("SequenceActor 생성 실패"));
-//                }
-//            }
-//            else
-//            {
-//                P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
-//            }
-//        }
-//    }
-//}

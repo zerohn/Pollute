@@ -12,7 +12,6 @@ ANSK_Ladder::ANSK_Ladder()
     // 위치 조정 : 사다리 높이에 맞게
     TopPosition->SetRelativeLocation(FVector(0.f, 0.f, 1000.f));
 
-
     // 콜리전 컴포넌트를 생성하는 코드
     Collision = CreateDefaultSubobject<UBoxComponent>(TEXT("LadderCollision"));
     Collision->SetupAttachment(RootComponent);
