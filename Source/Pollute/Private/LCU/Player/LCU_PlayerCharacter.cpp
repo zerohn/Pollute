@@ -682,7 +682,9 @@ void ALCU_PlayerCharacter::DetachItem()
 		
     // 아이템의 부모-자식 관계 해제
     // TODO : Detach를 Multicast로 싸줘야 함 
+
     ItemInHand->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
     // 위치 및 회전 설정
     ItemInHand->SetActorLocation(DropLocation);
     ItemInHand->SetActorRotation(DropRotation);
@@ -1000,6 +1002,13 @@ void ALCU_PlayerCharacter::InteractWithParachute()
                         ItemInHand->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
                     }
 
+                    // 낙하산이 사용된 상태 업데이트
+                    AHHR_Item* ParachuteItem = Cast<AHHR_Item>(ItemInHand);
+                    if (ParachuteItem)
+                    {
+                        ParachuteItem->SetItemUsed(true); // 아이템 사용 상태 업데이트
+                    }
+
                     // 서버에 상태 전달
                     if (!HasAuthority())
                     {
@@ -1082,7 +1091,16 @@ void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(AHHR_Item* Para
         Parachute->SetActorHiddenInGame(bIsHidden);
         Parachute->SetActorEnableCollision(!bIsHidden);
         Parachute->SetActorTickEnabled(!bIsHidden);
+
+        // 상태 업데이트
         Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        // 서버에서 아이템 사용 상태 전달
+        AHHR_Item* ParachuteItem = Cast<AHHR_Item>(Parachute);
+        if (ParachuteItem)
+        {
+            ParachuteItem->SetItemUsed(true);
+        }
 
         // 모든 클라이언트에 동기화
         MulticastDestroyParachute(Parachute, bIsHidden);
@@ -1096,6 +1114,18 @@ void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(AHHR_Item* P
         Parachute->SetActorHiddenInGame(bIsHidden);
         Parachute->SetActorEnableCollision(!bIsHidden);
         Parachute->SetActorTickEnabled(!bIsHidden);
-        Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        if (Parachute->ItemSphereComp)
+        {
+            Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        }
+
+        // 아이템 사용 상태 업데이트 (클라 동일 적용)
+        AHHR_Item* ParachuteItem = Cast<AHHR_Item>(Parachute);
+        if (ParachuteItem)
+        {
+            ParachuteItem->SetItemUsed(true);
+        }
     }
 }
+

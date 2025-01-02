@@ -269,7 +269,7 @@ public:
     
     
 
-    // NSK Ladder
+    // ### NSK Ladder ###
     void OnInstallLadder();
 
     void InstallAndDeleteItem();
@@ -291,7 +291,7 @@ public:
 
 
 
-    // NSK Parachute
+    // ### NSK Parachute ###
     UFUNCTION()
     void InteractWithParachute();
 
@@ -306,7 +306,7 @@ public:
 
     bool bCanUseParachute;
 
-    // NSK EscpaePort
+    // ### NSK EscpaePort ###
     void PlayPortSequence();
 
 public:
