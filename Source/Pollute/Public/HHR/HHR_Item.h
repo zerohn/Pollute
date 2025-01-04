@@ -49,20 +49,6 @@ public:
 	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadWrite, Category="Component")
 	class USphereComponent* ItemSphereComp;
 
-    // 아이템 사용 여부
-    UPROPERTY(ReplicatedUsing = OnRep_ItemUsed, EditAnywhere, BlueprintReadWrite)
-    bool bItemUsed;
-
-    UFUNCTION()
-    void SetItemUsed(bool bUsed);
-
-    // 아이템 사용 상태가 변경될 때 호출되는 함수
-    UFUNCTION()
-    void OnRep_ItemUsed();
-
-    UFUNCTION(Server, Reliable)
-    void ServerSetItemUsed(bool bUsed);
-
 protected:
     // Item Interaction Widget Component
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Component")

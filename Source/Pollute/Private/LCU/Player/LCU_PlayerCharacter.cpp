@@ -992,27 +992,15 @@ void ALCU_PlayerCharacter::InteractWithParachute()
             {
                 if (IsValid(ItemInHand))
                 {
-                    // 히든 처리
-                    ItemInHand->SetActorHiddenInGame(true);
-                    ItemInHand->SetActorEnableCollision(false);
-                    ItemInHand->SetActorTickEnabled(false); // 틱 비활성화로 성능 최적화
-
-                    if (ItemInHand->ItemSphereComp)
-                    {
-                        ItemInHand->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-                    }
-
-                    // 낙하산이 사용된 상태 업데이트
-                    AHHR_Item* ParachuteItem = Cast<AHHR_Item>(ItemInHand);
-                    if (ParachuteItem)
-                    {
-                        ParachuteItem->SetItemUsed(true); // 아이템 사용 상태 업데이트
-                    }
-
-                    // 서버에 상태 전달
+                    // 서버에 낙하산 삭제 요청
                     if (!HasAuthority())
                     {
-                        ServerDestroyParachute(ItemInHand, true);
+                        ServerDestroyParachute(ItemInHand,true);
+                    }
+                    else
+                    {
+                        // 서버 권한이 있는 경우 직접 삭제
+                        ItemInHand->Destroy();
                     }
                 }
 
@@ -1083,49 +1071,22 @@ void ALCU_PlayerCharacter::CanUseParachute(bool bCanUse)
     }
 }
 
-void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsHidden)
+void ALCU_PlayerCharacter::ServerDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsDestory)
 {
-    if (IsValid(Parachute))
+    if (IsValid(Parachute) && bIsDestory)
     {
-        // 서버에서 히든 처리
-        Parachute->SetActorHiddenInGame(bIsHidden);
-        Parachute->SetActorEnableCollision(!bIsHidden);
-        Parachute->SetActorTickEnabled(!bIsHidden);
-
-        // 상태 업데이트
-        Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-        // 서버에서 아이템 사용 상태 전달
-        AHHR_Item* ParachuteItem = Cast<AHHR_Item>(Parachute);
-        if (ParachuteItem)
-        {
-            ParachuteItem->SetItemUsed(true);
-        }
+        // 낙하산 객체 삭제
+        Parachute->Destroy();
 
         // 모든 클라이언트에 동기화
-        MulticastDestroyParachute(Parachute, bIsHidden);
+        MulticastDestroyParachute(Parachute, bIsDestory);
     }
 }
 
-void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsHidden)
+void ALCU_PlayerCharacter::MulticastDestroyParachute_Implementation(AHHR_Item* Parachute, bool bIsDestory)
 {
-    if (IsValid(Parachute))
+    if (IsValid(Parachute) && bIsDestory)
     {
-        Parachute->SetActorHiddenInGame(bIsHidden);
-        Parachute->SetActorEnableCollision(!bIsHidden);
-        Parachute->SetActorTickEnabled(!bIsHidden);
-
-        if (Parachute->ItemSphereComp)
-        {
-            Parachute->ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        }
-
-        // 아이템 사용 상태 업데이트 (클라 동일 적용)
-        AHHR_Item* ParachuteItem = Cast<AHHR_Item>(Parachute);
-        if (ParachuteItem)
-        {
-            ParachuteItem->SetItemUsed(true);
-        }
+        Parachute->Destroy();
     }
 }
-

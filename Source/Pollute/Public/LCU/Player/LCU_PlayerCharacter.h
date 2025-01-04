@@ -299,10 +299,10 @@ public:
     void CanUseParachute(bool bCanUse);
 
     UFUNCTION(Server, Reliable)
-    void ServerDestroyParachute(class AHHR_Item* Parachute, bool bIsHidden);
+    void ServerDestroyParachute(class AHHR_Item* Parachute, bool bIsDestory);
 
     UFUNCTION(NetMulticast, Reliable)
-    void MulticastDestroyParachute(class AHHR_Item* Parachute, bool bIsHidden);
+    void MulticastDestroyParachute(class AHHR_Item* Parachute, bool bIsDestory);
 
     bool bCanUseParachute;
 

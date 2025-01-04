@@ -90,42 +90,6 @@ void AHHR_Item::OnRep_ChangeIdx()
     }
 }
 
-void AHHR_Item::SetItemUsed(bool bUsed)
-{
-    if (bItemUsed != bUsed)
-    {
-        bItemUsed = bUsed;
-
-        // 서버에서만 상태 업데이트 후 동기화
-        if (HasAuthority())
-        {
-            OnRep_ItemUsed();
-        }
-        else
-        {
-            ServerSetItemUsed(bUsed);
-        }
-    }
-}
-
-void AHHR_Item::ServerSetItemUsed_Implementation(bool bUsed)
-{
-    SetItemUsed(bUsed);
-}
-
-void AHHR_Item::OnRep_ItemUsed()
-{
-    // 클라에서 bItemUsed가 변경될 때 실행됨
-    if (bItemUsed)
-    {
-        ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
-    else
-    {
-        ItemSphereComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    }
-}
-
 void AHHR_Item::SetOverlayMaterial()
 {
     if(ItemOverlayMaterial)
