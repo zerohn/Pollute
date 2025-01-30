@@ -49,6 +49,10 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
     UBoxComponent* OverlapBox;
 
+protected:
+    UFUNCTION(BlueprintImplementableEvent)
+    void PlayEscapePortSequence(class ALCU_PlayerCharacter* PlayerCharacter);
+
 private:
 
     bool bHasOverlapped = false;
