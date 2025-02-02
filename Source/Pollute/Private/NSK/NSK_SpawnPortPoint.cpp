@@ -121,9 +121,9 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
     // 첫 캐릭터인 서버 0번만 가져와서 시퀀스가 서버에서 실행되고 모든 클라에 전파되어서 사용할 수 없다
     //if (ALCU_PlayerController* PlayerController = Cast<ALCU_PlayerController>(GetWorld()->GetFirstPlayerController()))
 
-    AController* PlayerController = Cast<ALCU_PlayerCharacter>(OtherActor)->GetController();
+    //AController* PlayerController = Cast<ALCU_PlayerCharacter>(OtherActor)->GetController();
 
-    if(PlayerController)
+    /* if (PlayerController)
     {
         if (PlayerController->IsLocalController())
         {
@@ -170,7 +170,17 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
             else
             {
                 P_LOG(PolluteLog, Warning, TEXT("시퀀스를 찾을 수 없습니다."));
-            }
+            } */
+
+    ALCU_PlayerCharacter* PlayerCharacter = Cast<ALCU_PlayerCharacter>(OtherActor);
+    if(PlayerCharacter)
+    {
+        if(PlayerCharacter->GetController() == GetWorld()->GetFirstPlayerController())
+        {
+            PlayEscapePortSequence(PlayerCharacter);
+
+            ALCU_PlayerController* pc = Cast<ALCU_PlayerController>(PlayerCharacter->GetController());
+            pc->ServerRPC_ChangeToSpector();
 
             this->SetActorHiddenInGame(true);
             this->SetActorEnableCollision(false);
@@ -181,9 +191,6 @@ void ANSK_SpawnPortPoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
             {
                 Server_HiddenPort(this, true);
             }
-
-            // 캐릭터에 구현된 시퀀스 실행 함수 ( 현재는 캐스트로 불러올 필요가 없게 돼서 주석처리 )
-            //Cast<ALCU_PlayerCharacter>(OtherActor)->PlayPortSequence();
         }
     }
 }
